@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdivinaTodo.live - Juego Multijugador Asíncrono</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fdf2f8',
+                            500: '#ec4899',
+                            600: '#db2777',
+                            900: '#831843',
+                        },
+                        fiesta: {
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                        },
+                        pareja: {
+                            500: '#f43f5e',
+                            600: '#e11d48',
+                        }
+                    },
+                    animation: {
+                        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-slow': 'bounce 2s infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                    },
+                    keyframes: {
+                        glow: {
+                            '0%': { boxShadow: '0 0 15px rgba(236, 72, 153, 0.4)' },
+                            '100%': { boxShadow: '0 0 30px rgba(139, 92, 246, 0.8)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at top center, #1e1b4b 0%, #0f172a 60%, #020617 100%);
+            min-height: 100vh;
+            color: #f8fafc;
+        }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glass-input {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: white;
+        }
+        .glass-input:focus {
+            border-color: #ec4899;
+            outline: none;
+            box-shadow: 0 0 12px rgba(236, 72, 153, 0.3);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+        .timer-svg circle {
+            transition: stroke-dashoffset 1s linear;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-slate-100 antialiased selection:bg-pink-500 selection:text-white">
+
+    <!-- Top Navigation Header -->
+    <header class="w-full glass-card border-b border-slate-800/80 sticky top-0 z-40 px-4 py-3 shadow-lg">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="app.navTo('menu')">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-pink-500 via-purple-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-pink-500/30">
+                    <i class="fa-solid font-bold text-white text-xl fa-gamepad"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black tracking-tight bg-gradient-to-r from-pink-400 via-purple-300 to-indigo-400 bg-clip-text text-transparent">
+                        AdivinaTodo<span class="text-xs ml-1 px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 font-semibold border border-pink-500/30">LIVE</span>
+                    </h1>
+                    <p class="text-[10px] text-slate-400 font-medium">Multijugador Asíncrono con IA</p>
+                </div>
+            </div>
+
+            <!-- Active Room Badge & Controls -->
+            <div class="flex items-center gap-2">
+                <div id="room-badge" class="hidden flex items-center gap-2 bg-slate-800/90 border border-slate-700/80 px-3 py-1 rounded-full text-xs">
+                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span class="text-slate-400 font-semibold">Sala:</span>
+                    <span id="room-badge-id" class="font-mono font-bold text-pink-400">------</span>
+                    <button onclick="app.copyRoomLink()" title="Copiar enlace de invitación" class="ml-1 text-slate-400 hover:text-white transition">
+                        <i class="fa-regular fa-copy"></i>
+                    </button>
+                </div>
+                
+                <button onclick="app.openSettings()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition shadow-sm">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center">
+
+        <!-- Toast Notification Area -->
+        <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+        <!-- ========================================== -->
+        <!-- VIEW: MAIN MENU                            -->
+        <!-- ========================================== -->
+        <section id="view-menu" class="space-y-8 py-4">
+            <!-- Hero Banner -->
+            <div class="text-center space-y-3">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-semibold">
+                    <i class="fa-solid fa-bolt text-amber-400"></i> ¡Juega a tu propio ritmo, sin prisas!
+                </div>
+                <h2 class="text-3xl sm:text-5xl font-black tracking-tight text-white">
+                    Elige tu <span class="bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">Modo de Juego</span>
+                </h2>
+                <p class="text-slate-400 text-sm sm:text-base max-w-md mx-auto">
+                    Entra a responder cuando tengas tiempo. El temporizador individual de 30s inicia solo al revelar la pregunta.
+                </p>
+            </div>
+
+            <!-- Game Mode Cards Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <!-- Modo Fiesta Card -->
+                <div onclick="app.navTo('create-fiesta')" class="group relative glass-card p-6 rounded-3xl border border-purple-500/20 hover:border-purple-500/60 transition-all duration-300 cursor-pointer overflow-hidden shadow-xl hover:shadow-purple-500/10 hover:-translate-y-1">
+                    <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-purple-600/10 rounded-full blur-2xl group-hover:bg-purple-600/20 transition"></div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-2xl text-white shadow-lg shadow-purple-500/30">
+                            🎉
+                        </div>
+                        <span class="text-xs font-bold px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">1 - 4 Jugadores</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2 group-hover:text-purple-300 transition">Modo Fiesta Trivia</h3>
+                    <p class="text-slate-400 text-xs leading-relaxed mb-4">
+                        Desafíos de cine, música y cultura general. Adivina antes que tus amigos. ¡La IA premiará las respuestas más rápidas y precisas!
+                    </p>
+                    <div class="flex items-center text-xs font-bold text-purple-400 group-hover:translate-x-1 transition">
+                        Crear Sala de Fiesta <i class="fa-solid fa-arrow-right ml-2"></i>
+                    </div>
+                </div>
+
+                <!-- Modo Pareja Card -->
+                <div onclick="app.navTo('create-pareja')" class="group relative glass-card p-6 rounded-3xl border border-pink-500/20 hover:border-pink-500/60 transition-all duration-300 cursor-pointer overflow-hidden shadow-xl hover:shadow-pink-500/10 hover:-translate-y-1">
+                    <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-pink-600/10 rounded-full blur-2xl group-hover:bg-pink-600/20 transition"></div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-2xl text-white shadow-lg shadow-pink-500/30">
+                            ❤️
+                        </div>
+                        <span class="text-xs font-bold px-3 py-1 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/30">2 Jugadores (Íntimo)</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2 group-hover:text-pink-300 transition">Modo Pareja & Fantasías</h3>
+                    <p class="text-slate-400 text-xs leading-relaxed mb-4">
+                        Test de compatibilidad, preguntas picantes y erotismo consensuado. Elige el nivel de temperatura e intenten coincidir.
+                    </p>
+                    <div class="flex items-center text-xs font-bold text-pink-400 group-hover:translate-x-1 transition">
+                        Crear Sala de Pareja <i class="fa-solid fa-heart ml-2"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Join Existing Room Box -->
+            <div class="glass-card p-6 rounded-3xl border border-slate-700/60 shadow-lg">
+                <h4 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-door-open text-emerald-400"></i> Entrar a una Sala Existente
+                </h4>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <input type="text" id="join-room-id" placeholder="Código de 6 letras (ej: AB12CD)" 
+                        class="glass-input flex-1 px-4 py-3 rounded-xl font-mono text-center uppercase tracking-widest text-lg font-bold">
+                    <button onclick="app.joinRoomFromInput()" class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-extrabold px-6 py-3 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
+                        <i class="fa-solid fa-right-to-bracket"></i> Unirme
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW: CREATE FIESTA ROOM                   -->
+        <!-- ========================================== -->
+        <section id="view-create-fiesta" class="hidden space-y-6 max-w-xl mx-auto py-4">
+            <div class="flex items-center gap-3 mb-2">
+                <button onclick="app.navTo('menu')" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <span>🎉</span> Configurar Sala Fiesta
+                </h2>
+            </div>
+
+            <div class="glass-card p-6 rounded-3xl space-y-5 border border-purple-500/30 shadow-xl">
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Tu Nickname / Nombre</label>
+                    <input type="text" id="fiesta-host-name" placeholder="Ej: Alex" class="glass-input w-full px-4 py-3 rounded-xl text-white font-semibold">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Tema de la Adivinanza (Generado por IA)</label>
+                    <div class="grid grid-cols-2 gap-2" id="fiesta-topic-selector">
+                        <button type="button" onclick="app.selectTopic(this, 'Canciones Famosas')" class="topic-btn border border-purple-500/40 bg-purple-500/20 text-purple-200 p-3 rounded-xl text-xs font-bold text-left flex items-center justify-between">
+                            <span>🎵 Canciones</span> <i class="fa-solid fa-check text-purple-400"></i>
+                        </button>
+                        <button type="button" onclick="app.selectTopic(this, 'Películas y Series Iconicas')" class="topic-btn border border-slate-700 bg-slate-800/60 text-slate-300 p-3 rounded-xl text-xs font-bold text-left flex items-center justify-between">
+                            <span>🎬 Cine / Series</span>
+                        </button>
+                        <button type="button" onclick="app.selectTopic(this, 'Cultura General Divertida')" class="topic-btn border border-slate-700 bg-slate-800/60 text-slate-300 p-3 rounded-xl text-xs font-bold text-left flex items-center justify-between">
+                            <span>🧠 Cultura Pop</span>
+                        </button>
+                        <button type="button" onclick="app.selectTopic(this, 'Memes y Tendencias de Internet')" class="topic-btn border border-slate-700 bg-slate-800/60 text-slate-300 p-3 rounded-xl text-xs font-bold text-left flex items-center justify-between">
+                            <span>🔥 Memes & Viral</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Cantidad de Jugadores</label>
+                    <div class="flex gap-3">
+                        <button type="button" onclick="app.selectPlayerCount(this, 2)" class="player-cnt-btn flex-1 py-2.5 rounded-xl border border-purple-500/40 bg-purple-500/20 font-bold text-sm text-purple-200">2 Jugadores</button>
+                        <button type="button" onclick="app.selectPlayerCount(this, 3)" class="player-cnt-btn flex-1 py-2.5 rounded-xl border border-slate-700 bg-slate-800/60 font-bold text-sm text-slate-300">3 Jugadores</button>
+                        <button type="button" onclick="app.selectPlayerCount(this, 4)" class="player-cnt-btn flex-1 py-2.5 rounded-xl border border-slate-700 bg-slate-800/60 font-bold text-sm text-slate-300">4 Jugadores</button>
+                    </div>
+                </div>
+
+                <button onclick="app.createFiestaRoom()" id="btn-create-fiesta" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg shadow-purple-600/30 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-sparkles"></i> Generar Pregunta con IA & Crear Sala
+                </button>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW: CREATE PAREJA ROOM                  -->
+        <!-- ========================================== -->
+        <section id="view-create-pareja" class="hidden space-y-6 max-w-xl mx-auto py-4">
+            <div class="flex items-center gap-3 mb-2">
+                <button onclick="app.navTo('menu')" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <span>❤️</span> Configurar Modo Pareja
+                </h2>
+            </div>
+
+            <div class="glass-card p-6 rounded-3xl space-y-5 border border-pink-500/30 shadow-xl">
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Tu Nombre (Jugador 1)</label>
+                    <input type="text" id="pareja-p1-name" placeholder="Ej: Sofía" class="glass-input w-full px-4 py-3 rounded-xl text-white font-semibold">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Nombre de tu Pareja (Jugador 2)</label>
+                    <input type="text" id="pareja-p2-name" placeholder="Ej: Mateo" class="glass-input w-full px-4 py-3 rounded-xl text-white font-semibold">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Nivel de Temperatura / Intensidad</label>
+                    <div class="space-y-2" id="pareja-temp-selector">
+                        <button type="button" onclick="app.selectTemperature(this, 'Romántico')" class="temp-btn w-full border border-pink-500/40 bg-pink-500/20 text-pink-200 p-3.5 rounded-xl text-left flex items-center justify-between">
+                            <div>
+                                <div class="font-bold text-sm">🧊 Romántico & Conocimiento</div>
+                                <div class="text-[11px] opacity-80 font-normal">Gustos personales, detalles tiernos y recuerdos.</div>
+                            </div>
+                            <i class="fa-solid fa-check text-pink-400"></i>
+                        </button>
+                        <button type="button" onclick="app.selectTemperature(this, 'Picante')" class="temp-btn w-full border border-slate-700 bg-slate-800/60 text-slate-300 p-3.5 rounded-xl text-left flex items-center justify-between">
+                            <div>
+                                <div class="font-bold text-sm">🔥 Picante & Juego Erotizante</div>
+                                <div class="text-[11px] opacity-80 font-normal">Besos, lencería, coqueteo y escenarios atrevidos.</div>
+                            </div>
+                        </button>
+                        <button type="button" onclick="app.selectTemperature(this, 'Sin Filtros')" class="temp-btn w-full border border-slate-700 bg-slate-800/60 text-slate-300 p-3.5 rounded-xl text-left flex items-center justify-between">
+                            <div>
+                                <div class="font-bold text-sm">🧨 Sin Filtros & Fantasías Sexuadas</div>
+                                <div class="text-[11px] opacity-80 font-normal">Deseos consensuados, fetiches y exploración en la cama.</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <button onclick="app.createParejaRoom()" id="btn-create-pareja" class="w-full bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg shadow-pink-600/30 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-heart-pulse"></i> Crear Sala Íntima con IA
+                </button>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW: ROOM LOBBY / PRE-START               -->
+        <!-- ========================================== -->
+        <section id="view-lobby" class="hidden space-y-6 max-w-xl mx-auto py-4">
+            <div class="glass-card p-6 rounded-3xl border border-slate-700 space-y-6 text-center shadow-xl">
+                <!-- Room Header -->
+                <div>
+                    <span id="lobby-mode-tag" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                        Modo Fiesta
+                    </span>
+                    <div id="lobby-round-badge" class="hidden mt-2">
+                        <span id="lobby-round-text" class="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">Ronda 1 de 3</span>
+                    </div>
+                    <h2 id="lobby-title" class="text-3xl font-black text-white mt-3">Sala de Espera</h2>
+                    <p id="lobby-subtitle" class="text-xs text-slate-400 mt-1">Comparte este código con tus amigos para que jueguen cuando puedan.</p>
+                </div>
+                <!-- Between-rounds scores -->
+                <div id="lobby-round-scores" class="hidden glass-card p-4 rounded-2xl border border-amber-500/30 bg-amber-950/10 space-y-2 text-left">
+                    <div class="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-star"></i> Puntajes acumulados</div>
+                    <div id="lobby-round-scores-list" class="space-y-1"></div>
+                </div>
+
+                <!-- Code display box -->
+                <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-700/80 inline-flex flex-col items-center gap-2">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Código de la Sala</span>
+                    <div id="lobby-code-display" class="font-mono text-3xl font-black text-pink-400 tracking-widest">------</div>
+                    <button onclick="app.copyRoomLink()" class="text-xs text-slate-300 hover:text-white bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 flex items-center gap-1.5">
+                        <i class="fa-regular fa-copy"></i> Copiar Enlace Directo
+                    </button>
+                </div>
+
+                <!-- Player Slots Status -->
+                <div class="space-y-3">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider text-left">Estado de los Jugadores</h3>
+                    <div id="lobby-players-list" class="space-y-2 text-left">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Action Button -->
+                <div id="lobby-action-area" class="pt-2">
+                    <button onclick="app.prepareToPlay()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black py-4 rounded-xl text-lg shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2 animate-bounce-slow">
+                        <i class="fa-solid fa-play"></i> ¡ESTOY LISTO PARA MI TURNO!
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW: PRE-QUESTION WARNING / READY TIMER  -->
+        <!-- ========================================== -->
+        <section id="view-pre-question" class="hidden space-y-6 max-w-lg mx-auto py-6">
+            <div class="glass-card p-6 sm:p-8 rounded-3xl border border-amber-500/30 text-center space-y-6 shadow-2xl relative overflow-hidden">
+                <div class="w-16 h-16 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center text-3xl mx-auto shadow-lg shadow-amber-500/20">
+                    <i class="fa-solid fa-stopwatch animate-pulse"></i>
+                </div>
+                
+                <div class="space-y-2">
+                    <h2 class="text-2xl font-black text-white">¿Todo listo para responder?</h2>
+                    <p class="text-sm text-slate-300 leading-relaxed">
+                        Al hacer clic en <strong class="text-amber-400">"REVELAR PREGUNTA"</strong>, la pregunta se mostrará y tu <strong class="text-amber-400">temporizador individual de 30 segundos</strong> comenzará de inmediato.
+                    </p>
+                </div>
+
+                <div class="p-4 bg-slate-900/60 rounded-2xl border border-slate-800 text-xs text-slate-400 text-left space-y-1">
+                    <div class="flex items-center gap-2 font-bold text-slate-300">
+                        <i class="fa-solid fa-shield-halved text-emerald-400"></i> Control Antitrampas Activo:
+                    </div>
+                    <p>Tu hora de inicio se registra en el servidor. Si cierras la pestaña o tardas más de 30s, el sistema marcará tiempo agotado.</p>
+                </div>
+
+                <button onclick="app.startTurnTimer()" class="w-full bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 hover:from-amber-400 hover:to-pink-400 text-slate-950 font-black py-4 rounded-xl text-lg shadow-xl shadow-amber-500/20 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-eye"></i> REVELAR PREGUNTA Y EMPEZAR (30s)
+                </button>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW: ACTIVE QUESTION & COUNTDOWN TIMER    -->
+        <!-- ========================================== -->
+        <section id="view-gameplay" class="hidden space-y-6 max-w-xl mx-auto py-4">
+            <!-- Timer Display -->
+            <div class="glass-card p-4 rounded-3xl border border-slate-700 flex items-center justify-between shadow-xl">
+                <div class="flex items-center gap-3">
+                    <div class="relative w-14 h-14 flex items-center justify-center">
+                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                            <path class="text-slate-800" stroke-width="4" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path id="timer-progress-circle" class="text-pink-500" stroke-dasharray="100, 100" stroke-linecap="round" stroke-width="4" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        </svg>
+                        <span id="timer-number-display" class="absolute font-mono font-black text-lg text-white">30</span>
+                    </div>
+                    <div>
+                        <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Tiempo Restante</div>
+                        <div id="gameplay-player-label" class="text-xs font-semibold text-pink-400">Turno Activo</div>
+                    </div>
+                </div>
+
+                <span id="gameplay-category-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                    Canciones
+                </span>
+                <span id="gameplay-round-badge" class="px-2 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    R1/3
+                </span>
+            </div>
+
+            <!-- Question Card -->
+            <div class="glass-card p-6 sm:p-8 rounded-3xl border border-pink-500/30 space-y-5 shadow-2xl relative">
+                <div class="text-xs font-bold text-pink-400 uppercase tracking-widest flex items-center gap-2">
+                    <i class="fa-solid fa-circle-question"></i> Adivinanza / Pregunta IA
+                </div>
+                <h3 id="gameplay-question-text" class="text-xl sm:text-2xl font-black text-white leading-snug">
+                    Cargando la adivinanza...
+                </h3>
+                <div id="gameplay-hint-box" class="hidden p-3 bg-purple-900/30 border border-purple-500/30 rounded-xl text-xs text-purple-200">
+                    <i class="fa-solid fa-lightbulb text-amber-300 mr-1"></i> <span id="gameplay-hint-text">Pista...</span>
+                </div>
+            </div>
+
+            <!-- Answer Input Form -->
+            <div class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-700 space-y-4 shadow-xl">
+                <label id="input-label-text" class="block text-xs font-bold text-slate-300 uppercase">Escribe tu respuesta exacta o confesión:</label>
+                <textarea id="gameplay-answer-input" rows="3" placeholder="Escribe aquí sin rodeos..." class="glass-input w-full p-4 rounded-xl text-white font-medium resize-none"></textarea>
+                
+                <button onclick="app.submitAnswer()" id="btn-submit-answer" class="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg shadow-pink-500/30 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-paper-plane"></i> ENVIAR MI RESPUESTA
+                </button>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW: ASYNC WAITING ROOM (OTHERS FINISHING)-->
+        <!-- ========================================== -->
+        <section id="view-waiting-others" class="hidden space-y-6 max-w-lg mx-auto py-6">
+            <div class="glass-card p-6 sm:p-8 rounded-3xl border border-purple-500/30 text-center space-y-6 shadow-2xl">
+                <div class="w-16 h-16 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 flex items-center justify-center text-3xl mx-auto">
+                    <i class="fa-solid fa-hourglass-half animate-spin"></i>
+                </div>
+
+                <div class="space-y-2">
+                    <h2 class="text-2xl font-black text-white">¡Respuesta Guardada!</h2>
+                    <p class="text-sm text-slate-300">
+                        Tu respuesta se registró con éxito. Ahora estamos esperando a que los demás completen su turno.
+                    </p>
+                </div>
+
+                <!-- Live checklist -->
+                <div class="space-y-3 text-left">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Avance del Grupo</h3>
+                    <div id="waiting-players-status" class="space-y-2">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button onclick="app.copyRoomLink()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2">
+                        <i class="fa-brands fa-whatsapp text-emerald-400 text-sm"></i> Avisar a mis amigos por WhatsApp
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW: RESULTS MODE FIESTA                  -->
+        <!-- ========================================== -->
+        <section id="view-results-fiesta" class="hidden space-y-6 max-w-2xl mx-auto py-4">
+            <div class="text-center space-y-2">
+                <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    ¡Juego Terminado!
+                </span>
+                <h2 class="text-3xl font-black text-white">Resultados Finales</h2>
+            </div>
+
+            <!-- Winner Banner -->
+            <div id="fiesta-winner-banner" class="glass-card p-5 rounded-3xl border border-amber-400/50 bg-amber-950/20 text-center space-y-1">
+                <div class="text-3xl">🏆</div>
+                <div class="text-xs font-bold text-amber-400 uppercase tracking-widest">Ganador</div>
+                <div id="fiesta-winner-name" class="text-2xl font-black text-amber-300">---</div>
+                <div id="fiesta-winner-score" class="text-sm text-amber-200">0 puntos totales</div>
+            </div>
+
+            <!-- Correct Answer Card -->
+            <div class="glass-card p-5 rounded-2xl border border-emerald-500/40 bg-emerald-950/20 text-center space-y-1">
+                <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Respuesta Correcta Original</span>
+                <div id="fiesta-correct-answer-text" class="text-xl font-black text-white">------</div>
+            </div>
+
+            <!-- AI Comedy Commentary -->
+            <div class="glass-card p-5 rounded-2xl border border-purple-500/30 text-xs text-purple-200 space-y-2">
+                <div class="font-bold flex items-center gap-2 text-purple-300">
+                    <i class="fa-solid fa-robot"></i> Verdict & Comentario del Juez IA:
+                </div>
+                <p id="fiesta-ai-summary" class="italic leading-relaxed">Analizando respuestas...</p>
+            </div>
+
+            <!-- Scoreboard Leaderboard -->
+            <div class="glass-card p-6 rounded-3xl border border-slate-700 space-y-4">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tabla de Posiciones</h3>
+                <div id="fiesta-leaderboard" class="space-y-3">
+                    <!-- Dynamic item layout -->
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="app.navTo('menu')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 rounded-xl border border-slate-700">
+                    Volver al Menú
+                </button>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW: RESULTS MODE PAREJA                 -->
+        <!-- ========================================== -->
+        <section id="view-results-pareja" class="hidden space-y-6 max-w-2xl mx-auto py-4">
+            <div class="text-center space-y-2">
+                <span id="pareja-results-temp-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-pink-500/20 text-pink-300 border border-pink-500/30">
+                    ❤️ Modo Pareja
+                </span>
+                <h2 class="text-3xl font-black text-white">Revelación & Química</h2>
+            </div>
+
+            <!-- Unmasking Button (If not revealed yet) -->
+            <div id="pareja-unmask-container" class="glass-card p-8 rounded-3xl border border-pink-500/40 text-center space-y-4 shadow-2xl">
+                <div class="w-16 h-16 rounded-full bg-pink-500/20 text-pink-400 border border-pink-500/40 flex items-center justify-center text-3xl mx-auto">
+                    <i class="fa-solid fa-lock animate-pulse"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white">Ambos ya han respondido</h3>
+                <p class="text-xs text-slate-300 max-w-xs mx-auto">
+                    Abran esta pantalla juntos para descubrir lo que cada uno confesó en 30 segundos.
+                </p>
+                <button onclick="app.revealParejaAnswers()" class="bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-400 hover:to-rose-500 text-white font-black px-8 py-4 rounded-xl shadow-lg shadow-pink-500/30 transition text-lg flex items-center justify-center gap-2 mx-auto">
+                    <i class="fa-solid fa-heart-circle-check"></i> REVELAR RESPUESTAS JUNTOS
+                </button>
+            </div>
+
+            <!-- Revealed Content Block -->
+            <div id="pareja-revealed-content" class="hidden space-y-6">
+                <!-- Dual Answer Comparison Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="glass-card p-5 rounded-2xl border border-pink-500/30 space-y-2">
+                        <div class="text-xs font-bold text-pink-400 flex items-center justify-between">
+                            <span id="pareja-p1-card-name">Jugador 1</span>
+                            <i class="fa-solid fa-quote-right opacity-40"></i>
+                        </div>
+                        <p id="pareja-p1-card-answer" class="text-sm font-semibold text-white italic">"..."</p>
+                    </div>
+
+                    <div class="glass-card p-5 rounded-2xl border border-rose-500/30 space-y-2">
+                        <div class="text-xs font-bold text-rose-400 flex items-center justify-between">
+                            <span id="pareja-p2-card-name">Jugador 2</span>
+                            <i class="fa-solid fa-quote-right opacity-40"></i>
+                        </div>
+                        <p id="pareja-p2-card-answer" class="text-sm font-semibold text-white italic">"..."</p>
+                    </div>
+                </div>
+
+                <!-- Compatibility Gauge -->
+                <div class="glass-card p-6 rounded-3xl border border-purple-500/30 text-center space-y-3">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Nivel de Compatibilidad / Sintonía</span>
+                    <div class="flex items-center justify-center gap-2">
+                        <span id="pareja-compatibility-score" class="text-5xl font-black bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden p-0.5 border border-slate-700">
+                        <div id="pareja-compatibility-bar" class="h-full bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                    </div>
+                    <p id="pareja-ai-analysis" class="text-xs text-slate-300 leading-relaxed pt-2 italic">Analizando compatibilidad con IA...</p>
+                </div>
+
+                <!-- Reward / Punishment Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="glass-card p-5 rounded-2xl border border-emerald-500/30 bg-emerald-950/10 space-y-2">
+                        <div class="text-xs font-bold text-emerald-400 flex items-center gap-2">
+                            <i class="fa-solid fa-gift"></i> 🎁 Premio Ganado:
+                        </div>
+                        <p id="pareja-reward-text" class="text-xs text-emerald-200 leading-relaxed">Cargando premio...</p>
+                    </div>
+                    <div class="glass-card p-5 rounded-2xl border border-amber-500/30 bg-amber-950/10 space-y-2">
+                        <div class="text-xs font-bold text-amber-400 flex items-center gap-2">
+                            <i class="fa-solid fa-fire text-amber-500"></i> 😈 Castigo / Reto Sugerido:
+                        </div>
+                        <p id="pareja-punishment-text" class="text-xs text-amber-200 leading-relaxed">Cargando reto...</p>
+                    </div>
+                </div>
+
+                <button onclick="app.navTo('menu')" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 rounded-xl border border-slate-700">
+                    Volver al Menú Principal
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal: Settings (Gemini API & Firebase Config) -->
+    <div id="settings-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="glass-card max-w-lg w-full p-6 rounded-3xl border border-slate-700 space-y-5 shadow-2xl relative">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-pink-400"></i> Configuración de API & Firebase
+                </h3>
+                <button onclick="app.closeSettings()" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-300 uppercase mb-1">Clave de API de Gemini (Opcional)</label>
+                    <input type="password" id="input-gemini-key" placeholder="Dejar en blanco para usar la clave de entorno runtime" class="glass-input w-full p-3 rounded-xl font-mono">
+                    <p class="text-[10px] text-slate-400 mt-1">Si la dejas vacía, el sistema utilizará la clave de API configurada en el entorno.</p>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-300 uppercase mb-1">Configuración Personalizada de Firebase (JSON)</label>
+                    <textarea id="input-firebase-config" rows="4" placeholder='{"apiKey": "...", "authDomain": "...", "projectId": "..."}' class="glass-input w-full p-3 rounded-xl font-mono text-[11px]"></textarea>
+                    <p class="text-[10px] text-slate-400 mt-1">Si la dejas vacía, la aplicación se iniciará con la configuración global o utilizará el motor de demostración local.</p>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                <button onclick="app.closeSettings()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white font-semibold text-xs">
+                    Cancelar
+                </button>
+                <button onclick="app.saveSettings()" class="px-5 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold text-xs shadow-lg shadow-pink-500/20">
+                    Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Modular Imports -->
+    <script type="module">
+        import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global sound synthesizer engine (Web Audio API)
+        const soundEngine = {
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            },
+            playTick() {
+                try {
+                    this.init();
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(800, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.05);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.05);
+                } catch(e){}
+            },
+            playStart() {
+                try {
+                    this.init();
+                    [440, 554, 659].forEach((freq, i) => {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.frequency.setValueAtTime(freq, this.ctx.currentTime + i * 0.08);
+                        gain.gain.setValueAtTime(0.1, this.ctx.currentTime + i * 0.08);
+                        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + i * 0.08 + 0.2);
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start(this.ctx.currentTime + i * 0.08);
+                        osc.stop(this.ctx.currentTime + i * 0.08 + 0.2);
+                    });
+                } catch(e){}
+            },
+            playFinish() {
+                try {
+                    this.init();
+                    [523, 659, 783, 1046].forEach((freq, i) => {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.frequency.setValueAtTime(freq, this.ctx.currentTime + i * 0.1);
+                        gain.gain.setValueAtTime(0.12, this.ctx.currentTime + i * 0.1);
+                        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + i * 0.1 + 0.3);
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start(this.ctx.currentTime + i * 0.1);
+                        osc.stop(this.ctx.currentTime + i * 0.1 + 0.3);
+                    });
+                } catch(e){}
+            }
+        };
+
+        // Application Engine State
+        window.app = {
+            db: null,
+            auth: null,
+            appId: typeof __app_id !== 'undefined' ? __app_id : 'adivina-todo-default',
+            currentRoomId: null,
+            currentRoomData: null,
+            playerId: localStorage.getItem('adivina_player_id') || ('p_' + Math.random().toString(36).substring(2, 9)),
+            playerNickname: localStorage.getItem('adivina_nickname') || '',
+            unsubscribeRoom: null,
+            timerInterval: null,
+            timerSeconds: 30,
+
+            // Selected options in forms
+            selectedTopic: 'Canciones Famosas',
+            selectedPlayerCount: 2,
+            selectedTemperature: 'Romántico',
+
+            async init() {
+                localStorage.setItem('adivina_player_id', this.playerId);
+                const hasFirebase = this.initFirebase();
+                if (!hasFirebase) this.checkUrlRoomCode(); // fallback localStorage
+            },
+
+            initFirebase() {
+                try {
+                    let config = {
+                    apiKey: "AIzaSyBiCHYq22sJcvLOw-Q56gyymWxjuBeQaRo",
+                    authDomain: "juego-adivina-6320d.firebaseapp.com",
+                    projectId: "juego-adivina-6320d",
+                    storageBucket: "juego-adivina-6320d.firebasestorage.app",
+                    messagingSenderId: "1001769764477",
+                    appId: "1:1001769764477:web:cd444d49f94637c4d41314",
+                    measurementId: "G-SW3LNPL28S"
+        };
+        
+                    const savedConfig = localStorage.getItem('custom_firebase_config');
+                    if (savedConfig) {
+                        try { config = JSON.parse(savedConfig); } catch(e){}
+                    }
+                    if (!config && typeof __firebase_config !== 'undefined') {
+                        try { config = JSON.parse(__firebase_config); } catch(e){}
+                    }
+
+                    if (config && config.apiKey) {
+                        const appInstance = getApps().length === 0 ? initializeApp(config) : getApps()[0];
+                        this.db = getFirestore(appInstance);
+                        this.auth = getAuth(appInstance);
+
+                        // Wait for auth before attempting any Firestore reads from URL
+                        onAuthStateChanged(this.auth, (user) => {
+                            if (user && !this._authInitDone) {
+                                this._authInitDone = true;
+                                this.checkUrlRoomCode();
+                            }
+                        });
+
+                        // Authenticate
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            signInWithCustomToken(this.auth, __initial_auth_token).catch(() => signInAnonymously(this.auth));
+                        } else {
+                            signInAnonymously(this.auth).catch(e => console.warn('Auth fallback:', e));
+                        }
+                    } else {
+                        console.log('Firebase not configured. Using local engine fallback.');
+                    }
+                } catch(e) {
+                    console.error('Firebase init error:', e);
+                }
+                return !!(this.db);
+            },
+
+            // Navigation controller
+            navTo(viewId) {
+                const views = ['menu', 'create-fiesta', 'create-pareja', 'lobby', 'pre-question', 'gameplay', 'waiting-others', 'results-fiesta', 'results-pareja'];
+                views.forEach(v => {
+                    const el = document.getElementById(`view-${v}`);
+                    if (el) el.classList.add('hidden');
+                });
+                const target = document.getElementById(`view-${viewId}`);
+                if (target) target.classList.remove('hidden');
+            },
+
+            // Settings Modal
+            openSettings() {
+                document.getElementById('input-gemini-key').value = localStorage.getItem('custom_gemini_key') || '';
+                document.getElementById('input-firebase-config').value = localStorage.getItem('custom_firebase_config') || '';
+                document.getElementById('settings-modal').classList.remove('hidden');
+            },
+
+            closeSettings() {
+                document.getElementById('settings-modal').classList.add('hidden');
+            },
+
+            saveSettings() {
+                const gemKey = document.getElementById('input-gemini-key').value.trim();
+                const fbCfg = document.getElementById('input-firebase-config').value.trim();
+                if (gemKey) localStorage.setItem('custom_gemini_key', gemKey);
+                else localStorage.removeItem('custom_gemini_key');
+
+                if (fbCfg) localStorage.setItem('custom_firebase_config', fbCfg);
+                else localStorage.removeItem('custom_firebase_config');
+
+                this.closeSettings();
+                this.showToast('Configuración guardada.', 'success');
+                this.initFirebase();
+            },
+
+            showToast(message, type = 'info') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = `px-4 py-2.5 rounded-xl text-xs font-bold text-white shadow-xl pointer-events-auto flex items-center gap-2 border transition-all transform translate-y-2 opacity-0 ${
+                    type === 'error' ? 'bg-rose-900/90 border-rose-500' : 
+                    type === 'success' ? 'bg-emerald-900/90 border-emerald-500' : 
+                    'bg-slate-800/90 border-slate-700'
+                }`;
+                toast.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-circle-exclamation text-rose-400' : type === 'success' ? 'fa-circle-check text-emerald-400' : 'fa-circle-info text-sky-400'}"></i> ${message}`;
+                container.appendChild(toast);
+                setTimeout(() => { toast.classList.remove('translate-y-2', 'opacity-0'); }, 10);
+                setTimeout(() => {
+                    toast.classList.add('opacity-0', 'translate-y-2');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            },
+
+            // UI Selectors
+            selectTopic(btn, topic) {
+                document.querySelectorAll('.topic-btn').forEach(b => {
+                    b.className = 'topic-btn border border-slate-700 bg-slate-800/60 text-slate-300 p-3 rounded-xl text-xs font-bold text-left flex items-center justify-between';
+                    const icon = b.querySelector('.fa-check');
+                    if (icon) icon.remove();
+                });
+                btn.className = 'topic-btn border border-purple-500/40 bg-purple-500/20 text-purple-200 p-3 rounded-xl text-xs font-bold text-left flex items-center justify-between';
+                btn.innerHTML += ' <i class="fa-solid fa-check text-purple-400"></i>';
+                this.selectedTopic = topic;
+            },
+
+            selectPlayerCount(btn, cnt) {
+                document.querySelectorAll('.player-cnt-btn').forEach(b => {
+                    b.className = 'player-cnt-btn flex-1 py-2.5 rounded-xl border border-slate-700 bg-slate-800/60 font-bold text-sm text-slate-300';
+                });
+                btn.className = 'player-cnt-btn flex-1 py-2.5 rounded-xl border border-purple-500/40 bg-purple-500/20 font-bold text-sm text-purple-200';
+                this.selectedPlayerCount = cnt;
+            },
+
+            selectTemperature(btn, temp) {
+                document.querySelectorAll('.temp-btn').forEach(b => {
+                    b.className = 'temp-btn w-full border border-slate-700 bg-slate-800/60 text-slate-300 p-3.5 rounded-xl text-left flex items-center justify-between';
+                    const icon = b.querySelector('.fa-check');
+                    if (icon) icon.remove();
+                });
+                btn.className = 'temp-btn w-full border border-pink-500/40 bg-pink-500/20 text-pink-200 p-3.5 rounded-xl text-left flex items-center justify-between';
+                btn.innerHTML += ' <i class="fa-solid fa-check text-pink-400"></i>';
+                this.selectedTemperature = temp;
+            },
+
+            // Gemini API Helper
+            async callGemini(promptText, systemInstructionText = "") {
+                const apiKey = localStorage.getItem('custom_gemini_key') || "AQ.Ab8RN6IYfB3kze8SfpbRYW6-21fEkHFTyhLu98_kzMziR5nb5w";
+                if (!apiKey) { this.openSettings(); throw new Error('Configura tu API Key en ⚙️ Ajustes.'); }
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: promptText }] }],
+                    systemInstruction: systemInstructionText ? { parts: [{ text: systemInstructionText }] } : undefined,
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        thinkingConfig: { thinkingBudget: 0 }
+                    }
+                };
+
+                for (let attempt = 1; attempt <= 5; attempt++) {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.status === 429) {
+                        throw new Error('Límite de la API alcanzado. Espera 1 minuto e intenta de nuevo.');
+                    }
+                    if (response.status === 503) {
+                        if (attempt < 5) { await new Promise(r => setTimeout(r, Math.min(attempt * 3000, 12000))); continue; }
+                        throw new Error('El servidor de IA está saturado. Intenta en unos minutos.');
+                    }
+                    if (!response.ok) throw new Error(`Error de la API: ${response.status}`);
+
+                    const data = await response.json();
+                    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (!rawText) throw new Error('Respuesta vacía de la IA');
+                    return JSON.parse(rawText);
+                }
+            },
+            },
+
+            // Mode 1: Create Fiesta Room
+            async createFiestaRoom() {
+                const hostName = document.getElementById('fiesta-host-name').value.trim() || 'Jugador 1';
+                this.playerNickname = hostName;
+                localStorage.setItem('adivina_nickname', hostName);
+
+                const btn = document.getElementById('btn-create-fiesta');
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Generando adivinanza con IA...`;
+
+                try {
+                    const sysPrompt = "Eres un diseñador de trivias cómico y creativo.";
+                    const rounds = [];
+                    for (let i = 0; i < 3; i++) {
+                        btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Generando pregunta ${i + 1} de 3...`;
+                        const used = rounds.map(r => r.question).join(' | ');
+                        const prompt = `Genera UNA adivinanza ingeniosa sobre el tema "${this.selectedTopic}"${used ? `. NO repitas estas preguntas ya usadas: ${used}` : ''}. Retorna JSON: {"question":"texto de la adivinanza","correctAnswer":"respuesta breve","hint":"una pista"}`;
+                        const r = await this.callGemini(prompt, sysPrompt);
+                        rounds.push({ question: r.question, correctAnswer: r.correctAnswer, hint: r.hint || '' });
+                        if (i < 2) await new Promise(res => setTimeout(res, 2000)); // evitar rate limit
+                    }
+
+                    const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+                    const roomData = {
+                        roomId,
+                        mode: 'fiesta',
+                        topic: this.selectedTopic,
+                        maxPlayers: this.selectedPlayerCount,
+                        totalRounds: 3,
+                        currentRound: 0,
+                        rounds,
+                        status: 'waiting',
+                        players: {
+                            [this.playerId]: {
+                                id: this.playerId,
+                                nickname: hostName,
+                                status: 'waiting',
+                                startTime: null,
+                                answer: '',
+                                duration: 0,
+                                score: 0,
+                                totalScore: 0,
+                                roundScores: {}
+                            }
+                        },
+                        createdAt: Date.now()
+                    };
+
+                    await this.saveRoomDoc(roomId, roomData);
+                    this.listenToRoom(roomId);
+                    this.showToast('¡Sala Fiesta creada con éxito!', 'success');
+                } catch(e) {
+                    console.error(e);
+                    this.showToast('Error al conectar con la IA de Gemini: ' + e.message, 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-sparkles"></i> Generar Pregunta con IA & Crear Sala`;
+                }
+            },
+
+            // Mode 2: Create Pareja Room
+            async createParejaRoom() {
+                const p1Name = document.getElementById('pareja-p1-name').value.trim() || 'Jugador 1';
+                const p2Name = document.getElementById('pareja-p2-name').value.trim() || 'Jugador 2';
+                this.playerNickname = p1Name;
+                localStorage.setItem('adivina_nickname', p1Name);
+
+                const btn = document.getElementById('btn-create-pareja');
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Creando desafío íntimo...`;
+
+                try {
+                    const sysPrompt = "Eres un facilitador de juegos de pareja empático, elegante y atrevido.";
+                    const rounds = [];
+                    for (let i = 0; i < 3; i++) {
+                        btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Generando pregunta ${i + 1} de 3...`;
+                        const used = rounds.map(r => r.question).join(' | ');
+                        const prompt = `Genera UNA pregunta íntima para una pareja. Temperatura: "${this.selectedTemperature}".
+- "Romántico": gustos, manías o recuerdos bonitos.
+- "Picante": coqueteo, besos o escenarios eróticos suaves.
+- "Sin Filtros": fantasías eróticas consensuadas o deseos.
+${used ? `NO repitas estas preguntas: ${used}` : ''}
+Retorna JSON: {"question":"texto","category":"${this.selectedTemperature}"}`;
+                        const r = await this.callGemini(prompt, sysPrompt);
+                        rounds.push({ question: r.question, category: r.category || this.selectedTemperature });
+                        if (i < 2) await new Promise(res => setTimeout(res, 2000)); // evitar rate limit
+                    }
+
+                    const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+                    const roomData = {
+                        roomId,
+                        mode: 'pareja',
+                        temperature: this.selectedTemperature,
+                        maxPlayers: 2,
+                        totalRounds: 3,
+                        currentRound: 0,
+                        rounds,
+                        status: 'waiting',
+                        p1Name,
+                        p2Name,
+                        players: {
+                            [this.playerId]: {
+                                id: this.playerId,
+                                nickname: p1Name,
+                                status: 'waiting',
+                                answer: '',
+                                duration: 0
+                            }
+                        },
+                        createdAt: Date.now()
+                    };
+
+                    await this.saveRoomDoc(roomId, roomData);
+                    this.listenToRoom(roomId);
+                    this.showToast('¡Sala de Pareja creada!', 'success');
+                } catch(e) {
+                    console.error(e);
+                    this.showToast('Error al conectar con la IA de Gemini: ' + e.message, 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-heart-pulse"></i> Crear Sala Íntima con IA`;
+                }
+            },
+
+            // Firestore / Storage doc writer
+            async saveRoomDoc(roomId, data) {
+                this.currentRoomId = roomId;
+                this.currentRoomData = data;
+                this.updateRoomBadge(roomId);
+
+                if (this.db) {
+                    const docRef = doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', roomId);
+                    await setDoc(docRef, data, { merge: true });
+                } else {
+                    localStorage.setItem(`room_${roomId}`, JSON.stringify(data));
+                }
+            },
+
+            // Room listener
+            listenToRoom(roomId) {
+                this.currentRoomId = roomId;
+                this.updateRoomBadge(roomId);
+                window.location.hash = `room=${roomId}`;
+
+                if (this.unsubscribeRoom) this.unsubscribeRoom();
+
+                if (this.db) {
+                    const docRef = doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', roomId);
+                    this.unsubscribeRoom = onSnapshot(docRef, (snapshot) => {
+                        if (snapshot.exists()) {
+                            this.handleRoomUpdate(snapshot.data());
+                        } else {
+                            this.showToast('La sala especificada no existe.', 'error');
+                        }
+                    }, (err) => {
+                        console.error('Snapshot error:', err);
+                    });
+                } else {
+                    // Poll local storage fallback
+                    const updateFromLocal = () => {
+                        const raw = localStorage.getItem(`room_${roomId}`);
+                        if (raw) this.handleRoomUpdate(JSON.parse(raw));
+                    };
+                    updateFromLocal();
+                    const interval = setInterval(updateFromLocal, 2000);
+                    this.unsubscribeRoom = () => clearInterval(interval);
+                }
+            },
+
+            joinRoomFromInput() {
+                const code = document.getElementById('join-room-id').value.trim().toUpperCase();
+                if (code.length < 4) {
+                    this.showToast('Ingresa un código de sala válido.', 'error');
+                    return;
+                }
+                this.joinRoom(code);
+            },
+
+            async joinRoom(roomId) {
+                this.showToast(`Conectando a sala ${roomId}...`, 'info');
+                try {
+                    let data = null;
+                    if (this.db) {
+                        const docRef = doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', roomId);
+                        const snap = await getDoc(docRef);
+                        if (snap.exists()) data = snap.data();
+                    } else {
+                        const raw = localStorage.getItem(`room_${roomId}`);
+                        if (raw) data = JSON.parse(raw);
+                    }
+
+                    if (!data) {
+                        this.showToast('No se encontró la sala.', 'error');
+                        return;
+                    }
+
+                    // Add current player if not already joined
+                    if (!data.players[this.playerId]) {
+                        const existingCount = Object.keys(data.players).length;
+                        if (existingCount >= data.maxPlayers) {
+                            this.showToast('La sala ya alcanzó el límite de jugadores.', 'error');
+                            return;
+                        }
+
+                        const nick = this.playerNickname || (data.mode === 'pareja' ? data.p2Name : `Jugador ${existingCount + 1}`);
+                        data.players[this.playerId] = {
+                            id: this.playerId,
+                            nickname: nick,
+                            status: 'waiting',
+                            answer: '',
+                            duration: 0
+                        };
+                        await this.saveRoomDoc(roomId, data);
+                    }
+
+                    this.listenToRoom(roomId);
+                } catch(e) {
+                    this.showToast(`Error al unirse a la sala: ${e.message}`, 'error');
+                    console.error('joinRoom error:', e);
+                }
+            },
+
+            // Room state handler dispatcher
+            handleRoomUpdate(data) {
+                this.currentRoomData = data;
+                const me = data.players[this.playerId];
+
+                // Check if all players completed this round
+                const playerList = Object.values(data.players);
+                const allFinished = playerList.length >= data.maxPlayers && playerList.every(p => p.status === 'finished');
+
+                if (allFinished && data.status !== 'evaluating' && data.status !== 'evaluated') {
+                    this.triggerRoundEvaluation(data);
+                    return;
+                }
+
+                if (data.status === 'between_rounds') {
+                    if (!me || me.status === 'waiting') {
+                        this.renderBetweenRounds(data);
+                        return;
+                    }
+                    // me is playing/finished in new round — fall through to state machine
+                }
+
+                if (data.status === 'evaluated') {
+                    if (data.mode === 'fiesta') this.renderFiestaResults(data);
+                    else this.renderParejaResults(data);
+                    return;
+                }
+
+                // State machine for current player
+                if (!me || me.status === 'waiting') {
+                    this.renderLobby(data);
+                } else if (me.status === 'playing') {
+                    this.renderGameplay(data);
+                } else if (me.status === 'finished') {
+                    this.renderWaitingOthers(data);
+                }
+            },
+
+            renderLobby(data) {
+                document.getElementById('lobby-mode-tag').innerText = data.mode === 'fiesta' ? `🎉 ${data.topic}` : `❤️ Temperatura: ${data.temperature}`;
+                document.getElementById('lobby-code-display').innerText = data.roomId;
+                document.getElementById('lobby-title').innerText = 'Sala de Espera';
+                document.getElementById('lobby-subtitle').innerText = 'Comparte este código con tus amigos para que jueguen cuando puedan.';
+                document.getElementById('lobby-round-scores').classList.add('hidden');
+
+                const roundBadge = document.getElementById('lobby-round-badge');
+                const roundText = document.getElementById('lobby-round-text');
+                if (data.totalRounds) {
+                    roundBadge.classList.remove('hidden');
+                    roundText.innerText = `Ronda ${(data.currentRound || 0) + 1} de ${data.totalRounds}`;
+                }
+
+                const playerContainer = document.getElementById('lobby-players-list');
+                playerContainer.innerHTML = '';
+
+                Object.values(data.players).forEach(p => {
+                    const statusBadge = p.status === 'finished' ? `<span class="text-xs text-emerald-400 font-bold"><i class="fa-solid fa-circle-check"></i> Turno Listo</span>` :
+                                       p.status === 'playing' ? `<span class="text-xs text-amber-400 font-bold animate-pulse"><i class="fa-solid fa-spinner animate-spin"></i> En su turno</span>` :
+                                       `<span class="text-xs text-slate-400 font-medium"><i class="fa-regular fa-clock"></i> Pendiente</span>`;
+                    const scoreInfo = (p.totalScore > 0) ? `<span class="text-[10px] text-amber-400 font-bold ml-1">${p.totalScore}pts</span>` : '';
+
+                    playerContainer.innerHTML += `
+                        <div class="glass-input p-3 rounded-xl flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-purple-500/20 text-purple-300 flex items-center justify-center font-bold text-xs">${p.nickname.charAt(0).toUpperCase()}</div>
+                                <span class="font-bold text-xs text-white">${p.nickname} ${p.id === this.playerId ? '<span class="text-pink-400">(Tú)</span>' : ''}${scoreInfo}</span>
+                            </div>
+                            ${statusBadge}
+                        </div>
+                    `;
+                });
+
+                this.navTo('lobby');
+            },
+
+            prepareToPlay() {
+                this.navTo('pre-question');
+            },
+
+            // Step: Start individual 30-second timer
+            async startTurnTimer() {
+                soundEngine.playStart();
+                const me = this.currentRoomData.players[this.playerId];
+                me.status = 'playing';
+                me.startTime = Date.now();
+
+                this.currentRoomData.players[this.playerId] = me;
+                // Transition away from between_rounds so snapshots don't override gameplay view
+                if (this.currentRoomData.status === 'between_rounds') {
+                    this.currentRoomData.status = 'waiting';
+                }
+                await this.saveRoomDoc(this.currentRoomId, this.currentRoomData);
+
+                this.renderGameplay(this.currentRoomData);
+            },
+
+            renderGameplay(data) {
+                const roundIdx = data.currentRound || 0;
+                const roundData = (data.rounds && data.rounds[roundIdx]) ? data.rounds[roundIdx] : data;
+
+                document.getElementById('gameplay-category-badge').innerText = data.mode === 'fiesta' ? data.topic : data.temperature;
+                document.getElementById('gameplay-round-badge').innerText = `R${roundIdx + 1}/${data.totalRounds || 1}`;
+                document.getElementById('gameplay-question-text').innerText = roundData.question;
+
+                const hintBox = document.getElementById('gameplay-hint-box');
+                if (roundData.hint) {
+                    document.getElementById('gameplay-hint-text').innerText = roundData.hint;
+                    hintBox.classList.remove('hidden');
+                } else {
+                    hintBox.classList.add('hidden');
+                }
+
+                document.getElementById('gameplay-player-label').innerText = `Jugador: ${this.playerNickname}`;
+                this.navTo('gameplay');
+
+                // Start Visual Countdown
+                this.startCountdown();
+            },
+
+            startCountdown() {
+                if (this.timerInterval) clearInterval(this.timerInterval);
+                this.timerSeconds = 30;
+
+                const numberDisp = document.getElementById('timer-number-display');
+                const circle = document.getElementById('timer-progress-circle');
+
+                numberDisp.innerText = '30';
+                circle.setAttribute('stroke-dasharray', '100, 100');
+
+                this.timerInterval = setInterval(() => {
+                    this.timerSeconds--;
+                    soundEngine.playTick();
+
+                    numberDisp.innerText = this.timerSeconds;
+                    const pct = (this.timerSeconds / 30) * 100;
+                    circle.setAttribute('stroke-dasharray', `${pct}, 100`);
+
+                    if (this.timerSeconds <= 0) {
+                        clearInterval(this.timerInterval);
+                        this.showToast('¡Tiempo agotado! Enviando respuesta...', 'error');
+                        this.submitAnswer(true);
+                    }
+                }, 1000);
+            },
+
+            async submitAnswer(isTimeout = false) {
+                if (this.timerInterval) clearInterval(this.timerInterval);
+                soundEngine.playFinish();
+
+                const answerText = isTimeout ? '(Sin respuesta - Tiempo agotado)' : (document.getElementById('gameplay-answer-input').value.trim() || '(Vacío)');
+                const durationSeconds = 30 - this.timerSeconds;
+
+                const me = this.currentRoomData.players[this.playerId];
+                me.status = 'finished';
+                me.answer = answerText;
+                me.duration = durationSeconds;
+
+                this.currentRoomData.players[this.playerId] = me;
+                await this.saveRoomDoc(this.currentRoomId, this.currentRoomData);
+
+                this.renderWaitingOthers(this.currentRoomData);
+            },
+
+            renderWaitingOthers(data) {
+                const container = document.getElementById('waiting-players-status');
+                container.innerHTML = '';
+
+                Object.values(data.players).forEach(p => {
+                    const isDone = p.status === 'finished';
+                    container.innerHTML += `
+                        <div class="glass-input p-3 rounded-xl flex items-center justify-between text-xs">
+                            <span class="font-bold text-white">${p.nickname}</span>
+                            <span class="${isDone ? 'text-emerald-400 font-bold' : 'text-amber-400 animate-pulse'}">
+                                ${isDone ? `<i class="fa-solid fa-check"></i> Respondió en ${p.duration}s` : `<i class="fa-solid fa-spinner animate-spin"></i> Respondiendo...`}
+                            </span>
+                        </div>
+                    `;
+                });
+
+                this.navTo('waiting-others');
+            },
+
+            // Trigger AI evaluation when all players respond
+            async triggerRoundEvaluation(data) {
+                if (data.status === 'evaluating') return;
+                data.status = 'evaluating';
+                await this.saveRoomDoc(data.roomId, data);
+
+                const roundIdx = data.currentRound || 0;
+                const roundQuestion = (data.rounds && data.rounds[roundIdx]) ? data.rounds[roundIdx] : data;
+                this.showToast(`Ronda ${roundIdx + 1} terminada. Evaluando con IA...`, 'info');
+
+                try {
+                    if (data.mode === 'fiesta') {
+                        const playersFormatted = Object.values(data.players)
+                            .map(p => `- ID: ${p.id}, Nombre: ${p.nickname}, Respuesta: "${p.answer}", Tiempo: ${p.duration}s`)
+                            .join('\n');
+
+                        const prompt = `Eres el juez cómico y justo de un juego de adivinanzas.
+La pregunta fue: "${roundQuestion.question}".
+La respuesta correcta era: "${roundQuestion.correctAnswer}".
+Evalúa las siguientes respuestas y asigna un puntaje del 0 al 100. Otorga bonificación si respondieron rápido.
+
+Jugadores:
+${playersFormatted}
+
+Responde ÚNICAMENTE en este JSON:
+{
+  "evaluations": [{"playerId": "...", "score": 85, "comment": "Comentario divertido"}],
+  "funnySummary": "Resumen chistoso del desempeño general"
+}`;
+
+                        const res = await this.callGemini(prompt, "Juez de trivia sarcástico pero justo");
+                        res.evaluations.forEach(ev => {
+                            if (data.players[ev.playerId]) {
+                                const p = data.players[ev.playerId];
+                                p.score = ev.score;
+                                p.comment = ev.comment;
+                                if (!p.roundScores) p.roundScores = {};
+                                p.roundScores[roundIdx] = ev.score;
+                                p.totalScore = Object.values(p.roundScores).reduce((a, b) => a + b, 0);
+                            }
+                        });
+                        data.lastRoundSummary = res.funnySummary;
+                        data.funnySummary = res.funnySummary;
+
+                    } else if (data.mode === 'pareja') {
+                        const pList = Object.values(data.players);
+                        const p1 = pList[0];
+                        const p2 = pList[1];
+
+                        const prompt = `Evalúa la sintonía amorosa entre estas dos respuestas a la pregunta: "${roundQuestion.question}" (Temperatura: ${data.temperature}).
+Respuesta de ${p1.nickname}: "${p1.answer}"
+Respuesta de ${p2.nickname}: "${p2.answer}"
+
+Responde ÚNICAMENTE en JSON:
+{"compatibilityScore": 88, "analysis": "Breve análisis cariñoso", "reward": "Premio divertido", "punishment": "Reto travieso"}`;
+
+                        const res = await this.callGemini(prompt, "Gurú de parejas coqueto y reflexivo");
+                        if (!data.roundCompatibility) data.roundCompatibility = {};
+                        data.roundCompatibility[roundIdx] = res.compatibilityScore;
+                        data.compatibilityScore = Math.round(Object.values(data.roundCompatibility).reduce((a,b)=>a+b,0) / Object.keys(data.roundCompatibility).length);
+                        data.analysis = res.analysis;
+                        data.reward = res.reward;
+                        data.punishment = res.punishment;
+                    }
+
+                    const nextRound = roundIdx + 1;
+                    if (nextRound < (data.totalRounds || 1)) {
+                        // Reset players for next round
+                        Object.keys(data.players).forEach(pid => {
+                            data.players[pid].status = 'waiting';
+                            data.players[pid].answer = '';
+                            data.players[pid].duration = 0;
+                        });
+                        data.currentRound = nextRound;
+                        data.status = 'between_rounds';
+                    } else {
+                        data.status = 'evaluated';
+                    }
+
+                    await this.saveRoomDoc(data.roomId, data);
+                } catch(e) {
+                    console.error('Evaluation error:', e);
+                    data.status = 'evaluated';
+                    await this.saveRoomDoc(data.roomId, data);
+                }
+            },
+
+            renderBetweenRounds(data) {
+                // Re-use lobby view with between-rounds context
+                document.getElementById('lobby-mode-tag').innerText = data.mode === 'fiesta' ? `🎉 ${data.topic}` : `❤️ Temperatura: ${data.temperature}`;
+                document.getElementById('lobby-code-display').innerText = data.roomId;
+
+                const completedRound = data.currentRound - 1;
+                const roundBadge = document.getElementById('lobby-round-badge');
+                const roundText = document.getElementById('lobby-round-text');
+                roundBadge.classList.remove('hidden');
+                roundText.innerText = `✅ Ronda ${completedRound + 1} completada — siguiente: Ronda ${data.currentRound + 1} de ${data.totalRounds}`;
+
+                document.getElementById('lobby-title').innerText = '¡Ronda Completada!';
+                document.getElementById('lobby-subtitle').innerText = 'Revisa los puntajes y prepárate para la siguiente ronda.';
+
+                // Show accumulated scores
+                const scoresSection = document.getElementById('lobby-round-scores');
+                const scoresList = document.getElementById('lobby-round-scores-list');
+                if (data.mode === 'fiesta') {
+                    scoresSection.classList.remove('hidden');
+                    const sorted = Object.values(data.players).sort((a,b) => (b.totalScore||0) - (a.totalScore||0));
+                    scoresList.innerHTML = sorted.map((p, i) => {
+                        const medals = ['🥇','🥈','🥉'];
+                        return `<div class="flex justify-between text-xs font-bold">
+                            <span class="text-white">${medals[i]||'·'} ${p.nickname}</span>
+                            <span class="text-amber-400">${p.totalScore||0} pts</span>
+                        </div>`;
+                    }).join('');
+                } else {
+                    scoresSection.classList.add('hidden');
+                }
+
+                const playerContainer = document.getElementById('lobby-players-list');
+                playerContainer.innerHTML = '';
+                Object.values(data.players).forEach(p => {
+                    playerContainer.innerHTML += `
+                        <div class="glass-input p-3 rounded-xl flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-purple-500/20 text-purple-300 flex items-center justify-center font-bold text-xs">${p.nickname.charAt(0).toUpperCase()}</div>
+                                <span class="font-bold text-xs text-white">${p.nickname} ${p.id === this.playerId ? '<span class="text-pink-400">(Tú)</span>' : ''}</span>
+                            </div>
+                            <span class="text-xs text-slate-400"><i class="fa-regular fa-clock"></i> Pendiente</span>
+                        </div>`;
+                });
+
+                this.navTo('lobby');
+            },
+
+            renderFiestaResults(data) {
+                const lastRoundIdx = (data.totalRounds || 1) - 1;
+                const lastRound = (data.rounds && data.rounds[lastRoundIdx]) ? data.rounds[lastRoundIdx] : data;
+                document.getElementById('fiesta-correct-answer-text').innerText = lastRound.correctAnswer || data.correctAnswer || '---';
+                document.getElementById('fiesta-ai-summary').innerText = `"${data.funnySummary || '¡Buena partida a todos!'}"`;
+
+                const sortedPlayers = Object.values(data.players).sort((a, b) => (b.totalScore || b.score || 0) - (a.totalScore || a.score || 0));
+
+                // Winner banner
+                if (sortedPlayers.length > 0) {
+                    const winner = sortedPlayers[0];
+                    document.getElementById('fiesta-winner-name').innerText = winner.nickname;
+                    document.getElementById('fiesta-winner-score').innerText = `${winner.totalScore || winner.score || 0} puntos totales`;
+                }
+
+                const leaderboard = document.getElementById('fiesta-leaderboard');
+                leaderboard.innerHTML = '';
+
+                sortedPlayers.forEach((p, idx) => {
+                    const medals = ['🥇', '🥈', '🥉', '4️⃣'];
+                    const roundBreakdown = p.roundScores ? Object.entries(p.roundScores).map(([r, s]) => `R${parseInt(r)+1}:${s}`).join(' · ') : '';
+                    leaderboard.innerHTML += `
+                        <div class="glass-input p-4 rounded-2xl flex items-center justify-between border-l-4 ${idx === 0 ? 'border-amber-400 bg-amber-500/10' : 'border-slate-700'}">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">${medals[idx] || '👤'}</span>
+                                <div>
+                                    <div class="font-bold text-white text-sm flex items-center gap-2">
+                                        ${p.nickname} <span class="text-[10px] text-slate-400">(${p.duration}s)</span>
+                                    </div>
+                                    <div class="text-xs text-slate-300 italic">"${p.answer}"</div>
+                                    <div class="text-[11px] text-purple-300 mt-1">${p.comment || ''}</div>
+                                    ${roundBreakdown ? `<div class="text-[10px] text-amber-400/70 mt-0.5">${roundBreakdown}</div>` : ''}
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xl font-black text-amber-400">${p.totalScore || p.score || 0}</div>
+                                <div class="text-[9px] uppercase font-bold text-slate-400">Puntos</div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                this.navTo('results-fiesta');
+            },
+
+            renderParejaResults(data) {
+                document.getElementById('pareja-results-temp-badge').innerText = `❤️ Modo Pareja - ${data.temperature}`;
+                
+                const pList = Object.values(data.players);
+                const p1 = pList[0] || { nickname: 'Jugador 1', answer: '' };
+                const p2 = pList[1] || { nickname: 'Jugador 2', answer: '' };
+
+                document.getElementById('pareja-p1-card-name').innerText = p1.nickname;
+                document.getElementById('pareja-p1-card-answer').innerText = `"${p1.answer}"`;
+
+                document.getElementById('pareja-p2-card-name').innerText = p2.nickname;
+                document.getElementById('pareja-p2-card-answer').innerText = `"${p2.answer}"`;
+
+                document.getElementById('pareja-compatibility-score').innerText = `${data.compatibilityScore || 80}%`;
+                document.getElementById('pareja-compatibility-bar').style.width = `${data.compatibilityScore || 80}%`;
+                document.getElementById('pareja-ai-analysis').innerText = `"${data.analysis || 'Tienen una sintonía genial.'}"`;
+
+                document.getElementById('pareja-reward-text').innerText = data.reward || 'Un abrazo de 1 minuto y un masaje.';
+                document.getElementById('pareja-punishment-text').innerText = data.punishment || 'Preparar el desayuno mañana.';
+
+                this.navTo('results-pareja');
+            },
+
+            revealParejaAnswers() {
+                document.getElementById('pareja-unmask-container').classList.add('hidden');
+                document.getElementById('pareja-revealed-content').classList.remove('hidden');
+                confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+            },
+
+            checkUrlRoomCode() {
+                const hash = window.location.hash;
+                if (hash && hash.includes('room=')) {
+                    const code = hash.split('room=')[1].substring(0, 6);
+                    if (code) {
+                        const input = document.getElementById('join-room-id');
+                        if (input) input.value = code;
+                        this.joinRoom(code);
+                    }
+                }
+            },
+
+            updateRoomBadge(roomId) {
+                document.getElementById('room-badge-id').innerText = roomId;
+                document.getElementById('room-badge').classList.remove('hidden');
+            },
+
+            copyRoomLink() {
+                if (!this.currentRoomId) return;
+                const link = `${window.location.origin}${window.location.pathname}#room=${this.currentRoomId}`;
+                
+                const dummy = document.createElement('input');
+                document.body.appendChild(dummy);
+                dummy.value = link;
+                dummy.select();
+                document.execCommand('copy');
+                document.body.removeChild(dummy);
+
+                this.showToast('¡Enlace de sala copiado al portapapeles!', 'success');
+            }
+        };
+
+        // Initialize App on DOM Load
+        window.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+    </script>
+</body>
+</html>
