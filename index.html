@@ -1007,6 +1007,7 @@
                     const roomData = {
                         roomId,
                         mode: 'fiesta',
+                        hostId: this.playerId,
                         topic: this.selectedTopic,
                         answerMode: this.selectedAnswerMode,
                         maxPlayers: this.selectedPlayerCount,
@@ -1077,6 +1078,7 @@ Retorna ÚNICAMENTE este JSON sin texto adicional: {"rounds":[{"question":"texto
                     const roomData = {
                         roomId,
                         mode: 'pareja',
+                        hostId: this.playerId,
                         temperature: this.selectedTemperature,
                         answerMode: isRetos ? 'multiple' : 'text',
                         maxPlayers: 2,
@@ -1218,7 +1220,11 @@ Retorna ÚNICAMENTE este JSON sin texto adicional: {"rounds":[{"question":"texto
                 const allFinished = playerList.length >= data.maxPlayers && playerList.every(p => p.status === 'finished');
 
                 if (allFinished && data.status !== 'evaluating' && data.status !== 'evaluated') {
-                    this.triggerRoundEvaluation(data);
+                    if (this.playerId === data.hostId) {
+                        this.triggerRoundEvaluation(data);
+                    } else {
+                        this.renderWaitingOthers(data);
+                    }
                     return;
                 }
 
