@@ -904,7 +904,12 @@
                 if (response.status === 429) {
                     throw new Error('⏳ Límite de la API alcanzado. Espera 1 minuto e intenta de nuevo.');
                 }
-                if (!response.ok) throw new Error(`Error de la API: ${response.status}`);
+                if (!response.ok) {
+                    let detail = '';
+                    try { const e = await response.json(); detail = e.error?.message || JSON.stringify(e); } catch(_) {}
+                    console.error('API error detail:', detail);
+                    throw new Error(`Error de la API: ${response.status} — ${detail}`);
+                }
 
                 const data = await response.json();
                 let rawText = isGroq
