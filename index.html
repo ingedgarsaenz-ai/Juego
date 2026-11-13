@@ -1539,7 +1539,47 @@ Responde ÚNICAMENTE en JSON:
                     await this.saveRoomDoc(data.roomId, data);
                 } catch(e) {
                     console.error('Evaluation error:', e);
-                    data.status = 'evaluated';
+                    this.showToast('Error en evaluación de IA. Mostrando respuestas sin análisis.', 'error');
+
+                    // Save player answers even if AI call failed
+                    if (data.mode === 'pareja') {
+                        const pListErr = Object.values(data.players);
+                        const p1e = pListErr[0] || {};
+                        const p2e = pListErr[1] || pListErr[0] || {};
+                        if (!data.roundData) data.roundData = {};
+                        if (!data.roundData[roundIdx]) {
+                            data.roundData[roundIdx] = {
+                                question: roundQuestion.question,
+                                p1Name: p1e.nickname || data.p1Name || 'Jugador 1',
+                                p2Name: p2e.nickname || data.p2Name || 'Jugador 2',
+                                p1Answer: p1e.answer || '(sin respuesta)',
+                                p2Answer: p2e.answer || '(sin respuesta)',
+                                compatibility: 50,
+                                analysis: '(La IA no pudo analizar esta ronda)',
+                                reward: '🎁 Decidan juntos su premio',
+                                punishment: '😈 Decidan juntos su reto'
+                            };
+                        }
+                        if (!data.roundCompatibility) data.roundCompatibility = {};
+                        data.roundCompatibility[roundIdx] = 50;
+                        data.compatibilityScore = Math.round(Object.values(data.roundCompatibility).reduce((a,b)=>a+b,0) / Object.keys(data.roundCompatibility).length);
+                        data.analysis = data.roundData[roundIdx].analysis;
+                        data.reward = data.roundData[roundIdx].reward;
+                        data.punishment = data.roundData[roundIdx].punishment;
+                    }
+
+                    const nextRoundErr = roundIdx + 1;
+                    if (nextRoundErr < (data.totalRounds || 1)) {
+                        Object.keys(data.players).forEach(pid => {
+                            data.players[pid].status = 'waiting';
+                            data.players[pid].answer = '';
+                            data.players[pid].duration = 0;
+                        });
+                        data.currentRound = nextRoundErr;
+                        data.status = 'between_rounds';
+                    } else {
+                        data.status = 'evaluated';
+                    }
                     await this.saveRoomDoc(data.roomId, data);
                 }
             },
@@ -1679,34 +1719,52 @@ Responde ÚNICAMENTE en JSON:
             revealParejaAnswers() {
                 const data = this.currentRoomData;
                 const totalRounds = data.totalRounds || 1;
+                const pList = Object.values(data.players);
+                const p1 = pList[0] || {};
+                const p2 = pList[1] || pList[0] || {};
 
-                // Build per-round cards
+                // Build per-round cards — fallback gracefully if roundData is missing
                 let roundsHtml = '';
                 for (let r = 0; r < totalRounds; r++) {
-                    const rd = data.roundData?.[r];
-                    if (!rd) continue;
-                    const compat = rd.compatibility || 0;
+                    const rd = (data.roundData && (data.roundData[r] || data.roundData[String(r)])) || null;
+                    const rq = data.rounds?.[r];
+                    const isLast = r === totalRounds - 1;
+
+                    const question   = rd?.question   || rq?.question || '';
+                    const p1Name     = rd?.p1Name     || p1.nickname  || data.p1Name || 'Jugador 1';
+                    const p2Name     = rd?.p2Name     || p2.nickname  || data.p2Name || 'Jugador 2';
+                    // For last round answers are still in data.players; earlier rounds only in rd
+                    const p1Answer   = rd?.p1Answer   || (isLast ? p1.answer : null) || '—';
+                    const p2Answer   = rd?.p2Answer   || (isLast ? p2.answer : null) || '—';
+                    const compat     = rd?.compatibility != null ? rd.compatibility : (isLast && data.compatibilityScore != null ? data.compatibilityScore : 0);
+                    const analysis   = rd?.analysis   || (isLast ? data.analysis  : '') || '';
+                    const reward     = rd?.reward     || (isLast ? data.reward     : '') || '';
+                    const punishment = rd?.punishment || (isLast ? data.punishment : '') || '';
+
                     roundsHtml += '<div class="glass-card p-5 rounded-2xl border border-purple-500/20 space-y-3">';
                     roundsHtml += '<div class="flex items-center gap-2">';
                     roundsHtml += '<span class="w-6 h-6 rounded-full bg-pink-500/30 flex items-center justify-center text-[11px] font-black text-pink-300">' + (r + 1) + '</span>';
                     roundsHtml += '<span class="text-xs font-bold text-pink-400 uppercase tracking-wider">Ronda ' + (r + 1) + '</span>';
                     roundsHtml += '</div>';
-                    roundsHtml += '<div class="text-xs text-slate-300 font-semibold italic">' + rd.question + '</div>';
+                    if (question) roundsHtml += '<div class="text-xs text-slate-300 font-semibold italic">' + question + '</div>';
                     roundsHtml += '<div class="grid grid-cols-2 gap-3">';
-                    roundsHtml += '<div class="glass-card p-3 rounded-xl border border-pink-500/30"><div class="text-[10px] font-bold text-pink-400 mb-1">' + rd.p1Name + '</div><p class="text-xs text-white italic">&ldquo;' + rd.p1Answer + '&rdquo;</p></div>';
-                    roundsHtml += '<div class="glass-card p-3 rounded-xl border border-rose-500/30"><div class="text-[10px] font-bold text-rose-400 mb-1">' + rd.p2Name + '</div><p class="text-xs text-white italic">&ldquo;' + rd.p2Answer + '&rdquo;</p></div>';
+                    roundsHtml += '<div class="glass-card p-3 rounded-xl border border-pink-500/30"><div class="text-[10px] font-bold text-pink-400 mb-1">' + p1Name + '</div><p class="text-xs text-white italic">&ldquo;' + p1Answer + '&rdquo;</p></div>';
+                    roundsHtml += '<div class="glass-card p-3 rounded-xl border border-rose-500/30"><div class="text-[10px] font-bold text-rose-400 mb-1">' + p2Name + '</div><p class="text-xs text-white italic">&ldquo;' + p2Answer + '&rdquo;</p></div>';
                     roundsHtml += '</div>';
                     roundsHtml += '<div class="flex items-center gap-3"><div class="text-2xl font-black bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">' + compat + '%</div>';
                     roundsHtml += '<div class="flex-1 bg-slate-800 h-2 rounded-full overflow-hidden border border-slate-700"><div class="h-full bg-gradient-to-r from-pink-500 to-purple-500 rounded-full" style="width:' + compat + '%"></div></div></div>';
-                    roundsHtml += '<p class="text-[11px] text-slate-300 italic">&ldquo;' + rd.analysis + '&rdquo;</p>';
-                    roundsHtml += '<div class="grid grid-cols-2 gap-2">';
-                    roundsHtml += '<div class="text-[11px] text-emerald-300"><span class="font-bold text-emerald-400">🎁 Premio:</span> ' + rd.reward + '</div>';
-                    roundsHtml += '<div class="text-[11px] text-amber-300"><span class="font-bold text-amber-400">😈 Reto:</span> ' + rd.punishment + '</div>';
-                    roundsHtml += '</div></div>';
+                    if (analysis)   roundsHtml += '<p class="text-[11px] text-slate-300 italic">&ldquo;' + analysis + '&rdquo;</p>';
+                    if (reward || punishment) {
+                        roundsHtml += '<div class="grid grid-cols-2 gap-2">';
+                        if (reward)     roundsHtml += '<div class="text-[11px] text-emerald-300"><span class="font-bold text-emerald-400">🎁 Premio:</span> ' + reward + '</div>';
+                        if (punishment) roundsHtml += '<div class="text-[11px] text-amber-300"><span class="font-bold text-amber-400">😈 Reto:</span> ' + punishment + '</div>';
+                        roundsHtml += '</div>';
+                    }
+                    roundsHtml += '</div>';
                 }
 
                 // Overall compatibility
-                const avgCompat = data.compatibilityScore || 80;
+                const avgCompat = data.compatibilityScore != null ? data.compatibilityScore : 80;
                 const revealedContent = document.getElementById('pareja-revealed-content');
                 revealedContent.innerHTML = roundsHtml +
                     '<div class="glass-card p-6 rounded-3xl border border-purple-500/30 text-center space-y-3">' +
