@@ -862,7 +862,7 @@
                     this.openSettings();
                     throw new Error('⚙️ Configura tu API Key de Gemini en Ajustes antes de crear una sala. Es gratis en aistudio.google.com');
                 }
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
 
                 const payload = {
                     contents: [{ parts: [{ text: promptText }] }],
