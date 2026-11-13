@@ -610,9 +610,12 @@
 
             <div class="space-y-4 text-xs">
                 <div>
-                    <label class="block font-bold text-slate-300 uppercase mb-1">Clave de API de Gemini (Opcional)</label>
-                    <input type="password" id="input-gemini-key" placeholder="Dejar en blanco para usar la clave de entorno runtime" class="glass-input w-full p-3 rounded-xl font-mono">
-                    <p class="text-[10px] text-slate-400 mt-1">Si la dejas vacía, el sistema utilizará la clave de API configurada en el entorno.</p>
+                    <label class="block font-bold text-slate-300 uppercase mb-1">Clave de API de Gemini <span class="text-pink-400">*Requerida para crear salas</span></label>
+                    <input type="password" id="input-gemini-key" placeholder="AIzaSy..." class="glass-input w-full p-3 rounded-xl font-mono">
+                    <p class="text-[10px] text-slate-400 mt-1">
+                        Solo el <strong class="text-slate-300">creador de la sala</strong> necesita esta clave. Los jugadores no la necesitan.
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-pink-400 hover:text-pink-300 ml-1">→ Obtén una clave GRATIS en Google AI Studio</a>
+                    </p>
                 </div>
 
                 <div>
@@ -854,16 +857,18 @@
 
             // Gemini API Helper
             async callGemini(promptText, systemInstructionText = "") {
-                const apiKey = localStorage.getItem('custom_gemini_key') || "AQ.Ab8RN6IYfB3kze8SfpbRYW6-21fEkHFTyhLu98_kzMziR5nb5w";
-                if (!apiKey) { this.openSettings(); throw new Error('Configura tu API Key en ⚙️ Ajustes.'); }
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
+                const apiKey = localStorage.getItem('custom_gemini_key');
+                if (!apiKey) {
+                    this.openSettings();
+                    throw new Error('⚙️ Configura tu API Key de Gemini en Ajustes antes de crear una sala. Es gratis en aistudio.google.com');
+                }
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
                 const payload = {
                     contents: [{ parts: [{ text: promptText }] }],
                     systemInstruction: systemInstructionText ? { parts: [{ text: systemInstructionText }] } : undefined,
                     generationConfig: {
-                        responseMimeType: "application/json",
-                        thinkingConfig: { thinkingBudget: 0 }
+                        responseMimeType: "application/json"
                     }
                 };
 
@@ -874,8 +879,12 @@
                         body: JSON.stringify(payload)
                     });
 
+                    if (response.status === 401) {
+                        this.openSettings();
+                        throw new Error('❌ API Key inválida o expirada. Ingresa una nueva clave en ⚙️ Ajustes.\nObtén una gratis en aistudio.google.com');
+                    }
                     if (response.status === 429) {
-                        throw new Error('Límite de la API alcanzado. Espera 1 minuto e intenta de nuevo.');
+                        throw new Error('⏳ Límite de la API alcanzado. Espera 1 minuto e intenta de nuevo.');
                     }
                     if (response.status === 503) {
                         if (attempt < 5) { await new Promise(r => setTimeout(r, Math.min(attempt * 3000, 12000))); continue; }
