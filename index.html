@@ -868,13 +868,26 @@
 
                 let response;
                 if (isGroq) {
-                    const groqModels = [
-                        'llama-3.1-8b-instant',
-                        'llama3-70b-8192',
-                        'gemma2-9b-it',
-                        'llama-3.2-3b-preview',
-                        'llama-3.2-1b-preview'
-                    ];
+                    // Obtener lista de modelos disponibles dinámicamente
+                    let groqModels = ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile', 'gemma2-9b-it'];
+                    try {
+                        const modelsResp = await fetch('https://api.groq.com/openai/v1/models', {
+                            headers: { 'Authorization': `Bearer ${apiKey}` }
+                        });
+                        if (modelsResp.ok) {
+                            const modelsData = await modelsResp.json();
+                            const available = (modelsData.data || [])
+                                .filter(m => !m.id.includes('whisper') && !m.id.includes('tts') && !m.id.includes('vision'))
+                                .map(m => m.id);
+                            if (available.length > 0) {
+                                groqModels = available;
+                                console.log('[Groq] Modelos disponibles:', groqModels);
+                            }
+                        }
+                    } catch(e) {
+                        console.warn('[Groq] No se pudo obtener la lista de modelos, usando fallback:', e);
+                    }
+
                     for (const model of groqModels) {
                         console.log(`[Groq] Intentando modelo: ${model}`);
                         response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -890,8 +903,8 @@
                             })
                         });
                         console.log(`[Groq] ${model} → ${response.status}`);
-                        if (response.ok) break; // éxito
-                        if (response.status === 401 || response.status === 429) break; // error de auth/rate — no reintentar
+                        if (response.ok) break;
+                        if (response.status === 401 || response.status === 429) break;
                         // 404 o 400 = modelo no disponible, probar el siguiente
                     }
                 } else {
