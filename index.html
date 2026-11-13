@@ -324,6 +324,12 @@
                                 <div class="text-[11px] opacity-80 font-normal">Preguntas Sí/No que revelan deseos ocultos: ¿Lo harías?</div>
                             </div>
                         </button>
+                        <button type="button" onclick="app.selectTemperature(this, 'Experiencias Diferentes')" class="temp-btn w-full border border-slate-700 bg-slate-800/60 text-slate-300 p-3.5 rounded-xl text-left flex items-center justify-between">
+                            <div>
+                                <div class="font-bold text-sm">🌍 Experiencias & Aventuras</div>
+                                <div class="text-[11px] opacity-80 font-normal">Viajes, retos de vida, cosas locas y momentos únicos que hacer juntos.</div>
+                            </div>
+                        </button>
                     </div>
                 </div>
 
@@ -353,6 +359,15 @@
                 <div id="lobby-round-scores" class="hidden glass-card p-4 rounded-2xl border border-amber-500/30 bg-amber-950/10 space-y-2 text-left">
                     <div class="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-star"></i> Puntajes acumulados</div>
                     <div id="lobby-round-scores-list" class="space-y-1"></div>
+                </div>
+
+                <!-- Round punishment -->
+                <div id="lobby-round-punishment" class="hidden glass-card p-4 rounded-2xl border border-orange-500/40 bg-orange-950/20 text-center space-y-2">
+                    <div class="text-xs font-bold text-orange-300 uppercase tracking-wider flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-fire-flame-curved text-orange-400"></i> ¡Penitencia de la ronda!
+                    </div>
+                    <div class="text-sm font-black text-orange-200"><span id="lobby-round-punishment-player"></span></div>
+                    <div id="lobby-round-punishment-text" class="text-sm text-white font-semibold leading-relaxed"></div>
                 </div>
 
                 <!-- Code display box -->
@@ -752,8 +767,8 @@
 
             async init() {
                 localStorage.setItem('adivina_player_id', this.playerId);
-                const hasFirebase = this.initFirebase();
-                if (!hasFirebase) this.checkUrlRoomCode(); // fallback localStorage
+                this.initFirebase();
+                this.checkUrlRoomCode();
             },
 
             initFirebase() {
@@ -780,14 +795,6 @@
                         const appInstance = getApps().length === 0 ? initializeApp(config) : getApps()[0];
                         this.db = getFirestore(appInstance);
                         this.auth = getAuth(appInstance);
-
-                        // Wait for auth before attempting any Firestore reads from URL
-                        onAuthStateChanged(this.auth, (user) => {
-                            if (user && !this._authInitDone) {
-                                this._authInitDone = true;
-                                this.checkUrlRoomCode();
-                            }
-                        });
 
                         // Authenticate
                         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -1073,8 +1080,11 @@
                     btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Generando 3 preguntas con IA...`;
                     const sysPrompt = "Eres un facilitador de juegos de pareja empático, elegante y atrevido. Responde SIEMPRE en español, todas las preguntas, opciones y textos deben estar en español.";
                     const isRetos = this.selectedTemperature === 'Retos';
+                    const isExperiencias = this.selectedTemperature === 'Experiencias Diferentes';
                     const prompt = isRetos
                         ? `Genera exactamente 3 retos o preguntas de verdad atrevidas en ESPAÑOL para una pareja, estilo "¿Lo harías?". Deben ser preguntas directas de Sí/No que revelen deseos ocultos o fantasías. Todas las preguntas deben estar en español. Incluye opciones fijas Sí, No, Tal vez. Retorna ÚNICAMENTE este JSON: {"rounds":[{"question":"¿Harías X con tu pareja?","category":"Retos","options":["✅ Sí, sin dudarlo","❌ No, jamás","🤔 Tal vez...","🔥 Ya lo hice"]},{"question":"...","category":"Retos","options":["✅ Sí, sin dudarlo","❌ No, jamás","🤔 Tal vez...","🔥 Ya lo hice"]},{"question":"...","category":"Retos","options":["✅ Sí, sin dudarlo","❌ No, jamás","🤔 Tal vez...","🔥 Ya lo hice"]}]}`
+                        : isExperiencias
+                        ? `Genera exactamente 3 preguntas de aventuras y experiencias de vida en ESPAÑOL para una pareja, estilo "¿Lo harían juntos?". Enfócate SOLO en experiencias NO sexuales: viajes extremos o inusuales, probar sustancias recreativas (marihuana, hongos, etc.), mudarse a otro país, deportes extremos (paracaidismo, surf, etc.), experiencias espirituales o místicas, retos de vida, cosas locas o divertidas como hacer dedo, vivir fuera de la red, voluntariados en el extranjero. Las preguntas deben revelar la compatibilidad de aventuras y sueños de la pareja. Retorna ÚNICAMENTE este JSON: {"rounds":[{"question":"¿Viajarían juntos a [lugar extremo/inusual] y harían [experiencia]?","category":"Experiencias Diferentes","options":["✅ Sí, ¡lo haría ya!","❌ No es para mí","🤔 Tal vez si me convences","🔥 Ya lo hice / lo haría hoy"]},{"question":"...","category":"Experiencias Diferentes","options":["✅ Sí, ¡lo haría ya!","❌ No es para mí","🤔 Tal vez si me convences","🔥 Ya lo hice / lo haría hoy"]},{"question":"...","category":"Experiencias Diferentes","options":["✅ Sí, ¡lo haría ya!","❌ No es para mí","🤔 Tal vez si me convences","🔥 Ya lo hice / lo haría hoy"]}]}`
                         : `Genera EXACTAMENTE 3 preguntas íntimas en ESPAÑOL, distintas entre sí, para una pareja. Temperatura elegida: "${this.selectedTemperature}".
 Guía por temperatura:
 - Romántico: recuerdos tiernos, gustos personales, detalles de la relación.
@@ -1098,7 +1108,7 @@ Responde ÚNICAMENTE con este JSON válido (sin texto extra, sin markdown):
                         mode: 'pareja',
                         hostId: this.playerId,
                         temperature: this.selectedTemperature,
-                        answerMode: isRetos ? 'multiple' : 'text',
+                        answerMode: (isRetos || isExperiencias) ? 'multiple' : 'text',
                         maxPlayers: 2,
                         totalRounds: rounds.length,
                         currentRound: 0,
@@ -1530,7 +1540,7 @@ Responde ÚNICAMENTE con este JSON válido (sin texto extra, sin markdown):
                             .map(p => `- ID: ${p.id}, Nombre: ${p.nickname}, Respuesta: "${p.answer}", Tiempo: ${p.duration}s`)
                             .join('\n');
 
-                        const prompt = `Eres el juez cómico y justo de un juego de adivinanzas.
+                        const prompt = `Eres el juez cómico y justo de un juego de adivinanzas entre amigos.
 La pregunta fue: "${roundQuestion.question}".
 La respuesta correcta era: "${roundQuestion.correctAnswer}".
 Evalúa las siguientes respuestas y asigna un puntaje del 0 al 100. Otorga bonificación si respondieron rápido.
@@ -1538,10 +1548,13 @@ Evalúa las siguientes respuestas y asigna un puntaje del 0 al 100. Otorga bonif
 Jugadores:
 ${playersFormatted}
 
+Además, genera UNA penitencia divertida y creativa para el jugador con MENOR puntaje en esta ronda. Las penitencias pueden ser: tomar un shot o bebida, bailar 30 segundos sin parar, cantar el coro de una canción famosa, hacer mímica de un animal hasta que adivinen, imitar a un famoso por 1 minuto, decir un trabalenguas 3 veces rápido, hacer 10 sentadillas, llamar a alguien y decirle "te quiero mucho", hablar con acento diferente por 2 minutos, contar un chiste malo, etc. Sé muy específico y gracioso, menciona el nombre del jugador en la penitencia.
+
 Responde ÚNICAMENTE en este JSON:
 {
   "evaluations": [{"playerId": "...", "score": 85, "comment": "Comentario divertido"}],
-  "funnySummary": "Resumen chistoso del desempeño general"
+  "funnySummary": "Resumen chistoso del desempeño general",
+  "loserPunishment": "Penitencia divertida y específica mencionando el nombre del perdedor"
 }`;
 
                         const res = await this.callGemini(prompt, "Juez de trivia sarcástico pero justo");
@@ -1561,6 +1574,10 @@ Responde ÚNICAMENTE en este JSON:
                         });
                         if (!data.roundSummaries) data.roundSummaries = {};
                         data.roundSummaries[roundIdx] = { question: roundQuestion.question, correctAnswer: roundQuestion.correctAnswer, funnySummary: res.funnySummary };
+                        const evalsSortedByScore = [...(res.evaluations || [])].sort((a, b) => a.score - b.score);
+                        const loserId = evalsSortedByScore[0]?.playerId;
+                        data.roundSummaries[roundIdx].punishment = res.loserPunishment || '';
+                        data.roundSummaries[roundIdx].loserName = loserId && data.players[loserId] ? data.players[loserId].nickname : '';
                         data.lastRoundSummary = res.funnySummary;
                         data.funnySummary = res.funnySummary;
 
@@ -1686,6 +1703,19 @@ Responde ÚNICAMENTE en JSON:
                     scoresSection.classList.add('hidden');
                 }
 
+                // Show punishment for loser of the completed round
+                const punishmentEl = document.getElementById('lobby-round-punishment');
+                const punishmentTextEl = document.getElementById('lobby-round-punishment-text');
+                const punishmentPlayerEl = document.getElementById('lobby-round-punishment-player');
+                const completedRoundData = data.roundSummaries?.[completedRound];
+                if (data.mode === 'fiesta' && completedRoundData?.punishment) {
+                    punishmentEl.classList.remove('hidden');
+                    punishmentTextEl.innerText = completedRoundData.punishment;
+                    punishmentPlayerEl.innerText = completedRoundData.loserName ? `🔥 ${completedRoundData.loserName} tiene penitencia:` : '🔥 Penitencia:';
+                } else {
+                    punishmentEl.classList.add('hidden');
+                }
+
                 const playerContainer = document.getElementById('lobby-players-list');
                 playerContainer.innerHTML = '';
                 Object.values(data.players).forEach(p => {
@@ -1759,6 +1789,12 @@ Responde ÚNICAMENTE en JSON:
                     });
 
                     if (summary) roundHtml += '<div class="text-[10px] text-purple-300 italic px-1 mt-1">&ldquo;' + summary + '&rdquo;</div>';
+                    if (rs?.punishment) {
+                        roundHtml += '<div class="mt-2 p-2.5 rounded-xl bg-orange-950/30 border border-orange-500/30 flex items-start gap-2">';
+                        roundHtml += '<i class="fa-solid fa-fire-flame-curved text-orange-400 mt-0.5 flex-shrink-0"></i>';
+                        roundHtml += '<div><span class="text-[11px] font-bold text-orange-400">Penitencia' + (rs.loserName ? ` para ${rs.loserName}` : '') + ':</span> <span class="text-[11px] text-orange-200">' + rs.punishment + '</span></div>';
+                        roundHtml += '</div>';
+                    }
                     roundHtml += '</div>';
                     leaderboard.innerHTML += roundHtml;
                 }
@@ -1902,8 +1938,6 @@ Responde ÚNICAMENTE en JSON:
                 if (hash && hash.includes('room=')) {
                     const code = hash.split('room=')[1].substring(0, 6);
                     if (code) {
-                        const input = document.getElementById('join-room-id');
-                        if (input) input.value = code;
                         this.showJoinNamePrompt(code);
                     }
                 }
@@ -1921,6 +1955,7 @@ Responde ÚNICAMENTE en JSON:
                         <div class="space-y-1 text-left">
                             <label class="block text-xs font-bold text-slate-300 uppercase">Tu nombre</label>
                             <input type="text" id="join-name-modal-input" placeholder="Ej: Sofía"
+                                value="${this.playerNickname || ''}"
                                 class="glass-input w-full px-4 py-3 rounded-xl text-white font-semibold text-center text-lg"
                                 maxlength="20" autocomplete="off">
                         </div>
@@ -1945,7 +1980,16 @@ Responde ÚNICAMENTE en JSON:
                 this.playerNickname = nameInput;
                 localStorage.setItem('adivina_nickname', nameInput);
                 document.getElementById('join-name-modal')?.remove();
-                this.joinRoom(code);
+
+                // If Firebase auth isn't ready yet, wait before joining
+                if (this.auth && !this.auth.currentUser) {
+                    this.showToast('Conectando a la sala...', 'info');
+                    const unsub = onAuthStateChanged(this.auth, (user) => {
+                        if (user) { unsub(); this.joinRoom(code); }
+                    });
+                } else {
+                    this.joinRoom(code);
+                }
             },
 
             updateRoomBadge(roomId) {
