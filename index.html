@@ -1225,7 +1225,9 @@ Retorna ÚNICAMENTE este JSON sin texto adicional: {"rounds":[{"question":"texto
                 const allFinished = playerList.length >= data.maxPlayers && playerList.every(p => p.status === 'finished');
 
                 if (allFinished && data.status !== 'evaluating' && data.status !== 'evaluated') {
-                    if (this.playerId === data.hostId) {
+                    // Fallback: si no hay hostId (sala antigua), el primer jugador actúa como host
+                    const effectiveHostId = data.hostId || Object.keys(data.players)[0];
+                    if (this.playerId === effectiveHostId) {
                         this.triggerRoundEvaluation(data);
                     } else {
                         this.renderWaitingOthers(data);
