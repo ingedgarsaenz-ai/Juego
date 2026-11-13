@@ -868,8 +868,15 @@
 
                 let response;
                 if (isGroq) {
-                    const groqModels = ['llama-3.1-8b-instant', 'llama-3.2-3b-preview', 'gemma2-9b-it', 'mixtral-8x7b-32768', 'llama-3.2-1b-preview'];
+                    const groqModels = [
+                        'llama-3.1-8b-instant',
+                        'llama3-70b-8192',
+                        'gemma2-9b-it',
+                        'llama-3.2-3b-preview',
+                        'llama-3.2-1b-preview'
+                    ];
                     for (const model of groqModels) {
+                        console.log(`[Groq] Intentando modelo: ${model}`);
                         response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
@@ -878,9 +885,11 @@
                                 messages: [
                                     { role: 'system', content: (systemInstructionText || '') + ' Responde SIEMPRE con JSON válido y nada más, sin bloques de código markdown.' },
                                     { role: 'user', content: promptText }
-                                ]
+                                ],
+                                max_tokens: 1024
                             })
                         });
+                        console.log(`[Groq] ${model} → ${response.status}`);
                         if (response.ok) break; // éxito
                         if (response.status === 401 || response.status === 429) break; // error de auth/rate — no reintentar
                         // 404 o 400 = modelo no disponible, probar el siguiente
