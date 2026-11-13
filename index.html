@@ -1003,11 +1003,11 @@
 
                 try {
                     btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Generando 3 preguntas con IA...`;
-                    const sysPrompt = "Eres un diseñador de trivias cómico y creativo.";
+                    const sysPrompt = "Eres un diseñador de trivias cómico y creativo. Responde SIEMPRE en español, incluyendo preguntas, respuestas, pistas y opciones.";
                     const isMultiple = this.selectedAnswerMode === 'multiple';
                     const prompt = isMultiple
-                        ? `Genera exactamente 3 adivinanzas ingeniosas sobre el tema "${this.selectedTopic}" con 4 opciones de respuesta cada una (solo una correcta, pon la correcta en posición aleatoria). Retorna ÚNICAMENTE este JSON: {"rounds":[{"question":"texto","correctAnswer":"B","hint":"pista","options":["A. opción1","B. opción correcta","C. opción3","D. opción4"]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]}]}`
-                        : `Genera exactamente 3 adivinanzas ingeniosas y diferentes sobre el tema "${this.selectedTopic}". Retorna ÚNICAMENTE este JSON sin texto adicional: {"rounds":[{"question":"texto de la adivinanza","correctAnswer":"respuesta breve","hint":"una pista"},{"question":"...","correctAnswer":"...","hint":"..."},{"question":"...","correctAnswer":"...","hint":"..."}]}`;
+                        ? `Genera exactamente 3 adivinanzas ingeniosas en ESPAÑOL sobre el tema "${this.selectedTopic}" con 4 opciones de respuesta cada una (solo una correcta, pon la correcta en posición aleatoria). Todas las preguntas, opciones y pistas deben estar en español. Retorna ÚNICAMENTE este JSON: {"rounds":[{"question":"texto","correctAnswer":"B","hint":"pista","options":["A. opción1","B. opción correcta","C. opción3","D. opción4"]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]}]}`
+                        : `Genera exactamente 3 adivinanzas ingeniosas y diferentes en ESPAÑOL sobre el tema "${this.selectedTopic}". Todas las preguntas, respuestas y pistas deben estar en español. Retorna ÚNICAMENTE este JSON sin texto adicional: {"rounds":[{"question":"texto de la adivinanza","correctAnswer":"respuesta breve","hint":"una pista"},{"question":"...","correctAnswer":"...","hint":"..."},{"question":"...","correctAnswer":"...","hint":"..."}]}`;
                     const r = await this.callGemini(prompt, sysPrompt);
                     const rounds = (r.rounds || []).map(q => ({
                         question: q.question || q.pregunta || q.texto || q.text || '(sin pregunta)',
@@ -1071,16 +1071,16 @@
 
                 try {
                     btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Generando 3 preguntas con IA...`;
-                    const sysPrompt = "Eres un facilitador de juegos de pareja empático, elegante y atrevido.";
+                    const sysPrompt = "Eres un facilitador de juegos de pareja empático, elegante y atrevido. Responde SIEMPRE en español, todas las preguntas, opciones y textos deben estar en español.";
                     const isRetos = this.selectedTemperature === 'Retos';
                     const prompt = isRetos
-                        ? `Genera exactamente 3 retos o preguntas de verdad atrevidas para una pareja, estilo "¿Lo harías?". Deben ser preguntas directas de Sí/No que revelen deseos ocultos o fantasías. Incluye opciones fijas Sí, No, Tal vez. Retorna ÚNICAMENTE este JSON: {"rounds":[{"question":"¿Harías X con tu pareja?","category":"Retos","options":["✅ Sí, sin dudarlo","❌ No, jamás","🤔 Tal vez...","🔥 Ya lo hice"]},{"question":"...","category":"Retos","options":["✅ Sí, sin dudarlo","❌ No, jamás","🤔 Tal vez...","🔥 Ya lo hice"]},{"question":"...","category":"Retos","options":["✅ Sí, sin dudarlo","❌ No, jamás","🤔 Tal vez...","🔥 Ya lo hice"]}]}`
-                        : `Genera EXACTAMENTE 3 preguntas íntimas, distintas entre sí, para una pareja. Temperatura elegida: "${this.selectedTemperature}".
+                        ? `Genera exactamente 3 retos o preguntas de verdad atrevidas en ESPAÑOL para una pareja, estilo "¿Lo harías?". Deben ser preguntas directas de Sí/No que revelen deseos ocultos o fantasías. Todas las preguntas deben estar en español. Incluye opciones fijas Sí, No, Tal vez. Retorna ÚNICAMENTE este JSON: {"rounds":[{"question":"¿Harías X con tu pareja?","category":"Retos","options":["✅ Sí, sin dudarlo","❌ No, jamás","🤔 Tal vez...","🔥 Ya lo hice"]},{"question":"...","category":"Retos","options":["✅ Sí, sin dudarlo","❌ No, jamás","🤔 Tal vez...","🔥 Ya lo hice"]},{"question":"...","category":"Retos","options":["✅ Sí, sin dudarlo","❌ No, jamás","🤔 Tal vez...","🔥 Ya lo hice"]}]}`
+                        : `Genera EXACTAMENTE 3 preguntas íntimas en ESPAÑOL, distintas entre sí, para una pareja. Temperatura elegida: "${this.selectedTemperature}".
 Guía por temperatura:
 - Romántico: recuerdos tiernos, gustos personales, detalles de la relación.
 - Picante: coqueteo, escenarios atrevidos, besos y lencería.
 - Sin Filtros: deseos eróticos consensuados, fantasías, fetiches.
-Reglas: DEBES generar exactamente 3 objetos en el array. Cada pregunta debe ser diferente e interesante.
+Reglas: DEBES generar exactamente 3 objetos en el array. Cada pregunta debe ser diferente e interesante. Todas las preguntas deben estar en español.
 Responde ÚNICAMENTE con este JSON válido (sin texto extra, sin markdown):
 {"rounds":[{"question":"Primera pregunta aquí","category":"${this.selectedTemperature}"},{"question":"Segunda pregunta diferente aquí","category":"${this.selectedTemperature}"},{"question":"Tercera pregunta diferente aquí","category":"${this.selectedTemperature}"}]}`;
                     const r = await this.callGemini(prompt, sysPrompt);
@@ -1152,6 +1152,16 @@ Responde ÚNICAMENTE con este JSON válido (sin texto extra, sin markdown):
 
                 if (this.unsubscribeRoom) this.unsubscribeRoom();
 
+                // Reconnect on visibility change (mobile browsers drop WS in background)
+                if (this._onVisibilityChange) document.removeEventListener('visibilitychange', this._onVisibilityChange);
+                this._onVisibilityChange = () => {
+                    if (!document.hidden && this.currentRoomId && this.db) {
+                        const ref = doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.currentRoomId);
+                        getDoc(ref).then(snap => { if (snap.exists()) this.handleRoomUpdate(snap.data()); }).catch(() => {});
+                    }
+                };
+                document.addEventListener('visibilitychange', this._onVisibilityChange);
+
                 if (this.db) {
                     const docRef = doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', roomId);
                     this.unsubscribeRoom = onSnapshot(docRef, (snapshot) => {
@@ -1162,6 +1172,11 @@ Responde ÚNICAMENTE con este JSON válido (sin texto extra, sin markdown):
                         }
                     }, (err) => {
                         console.error('Snapshot error:', err);
+                        // On error, try polling as fallback
+                        if (this.currentRoomId && this.db) {
+                            const ref = doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.currentRoomId);
+                            getDoc(ref).then(snap => { if (snap.exists()) this.handleRoomUpdate(snap.data()); }).catch(() => {});
+                        }
                     });
                 } else {
                     // Poll local storage fallback
@@ -1380,8 +1395,11 @@ Responde ÚNICAMENTE con este JSON válido (sin texto extra, sin markdown):
                     document.getElementById('gameplay-answer-input').value = '';
                 }
 
+                const alreadyPlaying = !document.getElementById('view-gameplay').classList.contains('hidden');
                 this.navTo('gameplay');
-                this.startCountdown();
+                if (!alreadyPlaying) {
+                    this.startCountdown();
+                }
             },
 
             selectMultipleChoice(option, btn) {
@@ -1456,6 +1474,24 @@ Responde ÚNICAMENTE con este JSON válido (sin texto extra, sin markdown):
                 });
 
                 this.navTo('waiting-others');
+
+                // Backup polling: re-fetch Firestore every 3s in case onSnapshot missed an update
+                if (this._waitingPollInterval) clearInterval(this._waitingPollInterval);
+                if (this.db && this.currentRoomId) {
+                    this._waitingPollInterval = setInterval(async () => {
+                        const view = document.getElementById('view-waiting-others');
+                        if (!view || view.classList.contains('hidden')) {
+                            clearInterval(this._waitingPollInterval);
+                            this._waitingPollInterval = null;
+                            return;
+                        }
+                        try {
+                            const ref = doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.currentRoomId);
+                            const snap = await getDoc(ref);
+                            if (snap.exists()) this.handleRoomUpdate(snap.data());
+                        } catch(e) {}
+                    }, 3000);
+                }
             },
 
             // Trigger AI evaluation when all players respond
