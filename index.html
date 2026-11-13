@@ -994,7 +994,12 @@
                         ? `Genera exactamente 3 adivinanzas ingeniosas sobre el tema "${this.selectedTopic}" con 4 opciones de respuesta cada una (solo una correcta, pon la correcta en posición aleatoria). Retorna ÚNICAMENTE este JSON: {"rounds":[{"question":"texto","correctAnswer":"B","hint":"pista","options":["A. opción1","B. opción correcta","C. opción3","D. opción4"]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]}]}`
                         : `Genera exactamente 3 adivinanzas ingeniosas y diferentes sobre el tema "${this.selectedTopic}". Retorna ÚNICAMENTE este JSON sin texto adicional: {"rounds":[{"question":"texto de la adivinanza","correctAnswer":"respuesta breve","hint":"una pista"},{"question":"...","correctAnswer":"...","hint":"..."},{"question":"...","correctAnswer":"...","hint":"..."}]}`;
                     const r = await this.callGemini(prompt, sysPrompt);
-                    const rounds = (r.rounds || []).map(q => ({ question: q.question, correctAnswer: q.correctAnswer, hint: q.hint || '', options: q.options || [] }));
+                    const rounds = (r.rounds || []).map(q => ({
+                        question: q.question || q.pregunta || q.texto || q.text || '(sin pregunta)',
+                        correctAnswer: q.correctAnswer || q.respuesta || q.answer || '',
+                        hint: q.hint || q.pista || '',
+                        options: q.options || q.opciones || []
+                    }));
                     console.log('[Fiesta] Rondas recibidas:', rounds.length, rounds);
                     if (rounds.length === 0) throw new Error('La IA no generó preguntas. Intenta de nuevo.');
 
@@ -1060,7 +1065,11 @@
 - "Sin Filtros": fantasías eróticas consensuadas o deseos.
 Retorna ÚNICAMENTE este JSON sin texto adicional: {"rounds":[{"question":"texto","category":"${this.selectedTemperature}"},{"question":"...","category":"..."},{"question":"...","category":"..."}]}`;
                     const r = await this.callGemini(prompt, sysPrompt);
-                    const rounds = (r.rounds || []).map(q => ({ question: q.question, category: q.category || this.selectedTemperature, options: q.options || [] }));
+                    const rounds = (r.rounds || []).map(q => ({
+                        question: q.question || q.pregunta || q.texto || q.text || '(sin pregunta)',
+                        category: q.category || q.categoria || this.selectedTemperature,
+                        options: q.options || q.opciones || []
+                    }));
                     console.log('[Pareja] Rondas recibidas:', rounds.length, rounds);
                     if (rounds.length === 0) throw new Error('La IA no generó preguntas. Intenta de nuevo.');
 
