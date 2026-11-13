@@ -1377,6 +1377,8 @@ Responde ÚNICAMENTE con este JSON válido (sin texto extra, sin markdown):
 
                 document.getElementById('gameplay-player-label').innerText = `Jugador: ${this.playerNickname}`;
 
+                const alreadyPlaying = !document.getElementById('view-gameplay').classList.contains('hidden');
+
                 // Modo selección múltiple
                 const optionsGrid = document.getElementById('gameplay-options-grid');
                 const answerForm = document.getElementById('gameplay-answer-form');
@@ -1401,10 +1403,9 @@ Responde ÚNICAMENTE con este JSON válido (sin texto extra, sin markdown):
                 } else {
                     optionsGrid.classList.add('hidden');
                     answerForm.classList.remove('hidden');
-                    document.getElementById('gameplay-answer-input').value = '';
+                    if (!alreadyPlaying) document.getElementById('gameplay-answer-input').value = '';
                 }
 
-                const alreadyPlaying = !document.getElementById('view-gameplay').classList.contains('hidden');
                 this.navTo('gameplay');
                 if (!alreadyPlaying) {
                     this.startCountdown();
@@ -1452,7 +1453,8 @@ Responde ÚNICAMENTE con este JSON válido (sin texto extra, sin markdown):
                 if (this.timerInterval) clearInterval(this.timerInterval);
                 soundEngine.playFinish();
 
-                const answerText = isTimeout ? '(Sin respuesta - Tiempo agotado)' : (document.getElementById('gameplay-answer-input').value.trim() || '(Vacío)');
+                const typed = document.getElementById('gameplay-answer-input').value.trim();
+                const answerText = typed || (isTimeout ? '(Sin respuesta - Tiempo agotado)' : '(Vacío)');
                 const durationSeconds = 45 - this.timerSeconds;
 
                 const me = this.currentRoomData.players[this.playerId];
