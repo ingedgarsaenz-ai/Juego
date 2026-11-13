@@ -1065,11 +1065,14 @@
                     const isRetos = this.selectedTemperature === 'Retos';
                     const prompt = isRetos
                         ? `Genera exactamente 3 retos o preguntas de verdad atrevidas para una pareja, estilo "¿Lo harías?". Deben ser preguntas directas de Sí/No que revelen deseos ocultos o fantasías. Incluye opciones fijas Sí, No, Tal vez. Retorna ÚNICAMENTE este JSON: {"rounds":[{"question":"¿Harías X con tu pareja?","category":"Retos","options":["✅ Sí, sin dudarlo","❌ No, jamás","🤔 Tal vez...","🔥 Ya lo hice"]},{"question":"...","category":"Retos","options":["✅ Sí, sin dudarlo","❌ No, jamás","🤔 Tal vez...","🔥 Ya lo hice"]},{"question":"...","category":"Retos","options":["✅ Sí, sin dudarlo","❌ No, jamás","🤔 Tal vez...","🔥 Ya lo hice"]}]}`
-                        : `Genera exactamente 3 preguntas íntimas y diferentes para una pareja. Temperatura: "${this.selectedTemperature}".
-- "Romántico": gustos, manías o recuerdos bonitos.
-- "Picante": coqueteo, besos o escenarios eróticos suaves.
-- "Sin Filtros": fantasías eróticas consensuadas o deseos.
-Retorna ÚNICAMENTE este JSON sin texto adicional: {"rounds":[{"question":"texto","category":"${this.selectedTemperature}"},{"question":"...","category":"..."},{"question":"...","category":"..."}]}`;
+                        : `Genera EXACTAMENTE 3 preguntas íntimas, distintas entre sí, para una pareja. Temperatura elegida: "${this.selectedTemperature}".
+Guía por temperatura:
+- Romántico: recuerdos tiernos, gustos personales, detalles de la relación.
+- Picante: coqueteo, escenarios atrevidos, besos y lencería.
+- Sin Filtros: deseos eróticos consensuados, fantasías, fetiches.
+Reglas: DEBES generar exactamente 3 objetos en el array. Cada pregunta debe ser diferente e interesante.
+Responde ÚNICAMENTE con este JSON válido (sin texto extra, sin markdown):
+{"rounds":[{"question":"Primera pregunta aquí","category":"${this.selectedTemperature}"},{"question":"Segunda pregunta diferente aquí","category":"${this.selectedTemperature}"},{"question":"Tercera pregunta diferente aquí","category":"${this.selectedTemperature}"}]}`;
                     const r = await this.callGemini(prompt, sysPrompt);
                     const rounds = (r.rounds || []).map(q => ({
                         question: q.question || q.pregunta || q.texto || q.text || '(sin pregunta)',
