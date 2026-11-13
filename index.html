@@ -1585,14 +1585,44 @@ Responde ÚNICAMENTE en este JSON:
                         const p1 = pList[0];
                         const p2 = pList[1];
 
+                        const tempGuides = {
+                            'Romántico': {
+                                reward: 'gesto romántico y tierno: carta de amor escrita a mano, masaje de 10 minutos, bailar abrazados sin música, beso de 1 minuto sin parar, o preparar el desayuno en cama.',
+                                punishment: 'reto cariñoso: decirse 5 cosas que adoran del otro frente a frente, mirarse a los ojos 60 segundos sin reír, o inventar juntos un apodo secreto que solo usarán entre ellos.'
+                            },
+                            'Picante': {
+                                reward: 'experiencia sensual específica: masaje con aceite en la espalda baja, striptease improvisado de 1 minuto, o elegir UN lugar atrevido para el próximo encuentro (balcón con luces apagadas, el carro de noche, la ducha juntos).',
+                                punishment: 'reto subido de tono: susurrar una fantasía nunca confesada al oído, hacer una pose sugerente que el otro tenga que adivinar, o elegir una posición del Kamasutra para intentar — menciona el nombre real de la posición (ej: "El Loto", "La Cuchara Íntima", "La Mariposa", "El Jinete") y describe brevemente cómo se hace.'
+                            },
+                            'Sin Filtros': {
+                                reward: 'premio completamente explícito: nombra una posición del Kamasutra (ej: "El Candelabro", "La Rana", "El Tántalo", "La Amazona Inversa", "El Pino") con su nombre y descripción breve de cómo realizarla, además de una locación inusual (terraza, hotel, carro, baño público discreto).',
+                                punishment: 'reto sin censura: proponer un fetiche o fantasía específica para explorar juntos esta noche, actuar un rol (ej: masajista y cliente, jefa y empleado) durante 10 minutos, o intentar una posición avanzada del Kamasutra — da el nombre exacto y descripción explícita de cómo ejecutarla.'
+                            },
+                            'Retos': {
+                                reward: 'revelación atrevida: contar una fantasía que nunca han dicho en voz alta, o mostrar algo íntimo que normalmente esconden.',
+                                punishment: 'reto de verdad o acción: responder sin filtros "¿Qué es lo más salvaje que harías conmigo?", o cumplir un mini-reto físico íntimo (masaje de 5 minutos donde el otro indique, actuar juntos un escenario de fantasía por 3 minutos).'
+                            },
+                            'Experiencias Diferentes': {
+                                reward: 'aventura en pareja: planear ahora mismo una actividad extrema juntos (paracaidismo, viaje sin destino fijo, acampada bajo las estrellas, probar una sustancia nueva juntos de forma segura).',
+                                punishment: 'reto de vida: comprometerse a hacer algo que nunca harían (irse el próximo fin de semana sin planear nada, hablar con un extraño juntos, o hacer algo ridículo en público los dos).'
+                            }
+                        };
+                        const tg = tempGuides[data.temperature] || tempGuides['Picante'];
+
                         const prompt = `Evalúa la sintonía amorosa entre estas dos respuestas a la pregunta: "${roundQuestion.question}" (Temperatura: ${data.temperature}).
 Respuesta de ${p1.nickname}: "${p1.answer}"
 Respuesta de ${p2.nickname}: "${p2.answer}"
 
-Responde ÚNICAMENTE en JSON:
-{"compatibilityScore": 88, "analysis": "Breve análisis cariñoso", "reward": "Premio divertido", "punishment": "Reto travieso"}`;
+IMPORTANTE — El premio y el reto DEBEN estar 100% alineados al modo "${data.temperature}":
+- Premio debe ser: ${tg.reward}
+- Reto/Castigo debe ser: ${tg.punishment}
 
-                        const res = await this.callGemini(prompt, "Gurú de parejas coqueto y reflexivo");
+Sé muy específico, creativo y usa el contexto de las respuestas para personalizar. Si el modo lo permite, menciona nombres reales de posiciones del Kamasutra.
+
+Responde ÚNICAMENTE en JSON:
+{"compatibilityScore": 88, "analysis": "Análisis cariñoso y relevante al modo", "reward": "Premio específico al modo ${data.temperature}", "punishment": "Reto específico al modo ${data.temperature}"}`;
+
+                        const res = await this.callGemini(prompt, `Eres un gurú de parejas sin censura, creativo y atrevido que adapta cada sugerencia exactamente al nivel de temperatura "${data.temperature}". Para modo Picante y Sin Filtros, incluyes nombres reales de posiciones del Kamasutra y locaciones específicas. Respondes siempre en español.`);
                         if (!data.roundCompatibility) data.roundCompatibility = {};
                         data.roundCompatibility[roundIdx] = res.compatibilityScore;
                         data.compatibilityScore = Math.round(Object.values(data.roundCompatibility).reduce((a,b)=>a+b,0) / Object.keys(data.roundCompatibility).length);
@@ -1643,8 +1673,8 @@ Responde ÚNICAMENTE en JSON:
                                 p2Answer: p2e.answer || '(sin respuesta)',
                                 compatibility: 50,
                                 analysis: '(La IA no pudo analizar esta ronda)',
-                                reward: '🎁 Decidan juntos su premio',
-                                punishment: '😈 Decidan juntos su reto'
+                                reward: data.temperature === 'Sin Filtros' ? '🎁 Elijan una posición del Kamasutra para esta noche — "El Loto" o "La Amazona"' : data.temperature === 'Picante' ? '🎁 Planeen un encuentro en un lugar atrevido (balcón, carro, ducha)' : data.temperature === 'Romántico' ? '🎁 Masaje de 10 minutos + carta de amor improvisada' : '🎁 Decidan juntos su premio',
+                                punishment: data.temperature === 'Sin Filtros' ? '😈 Intenten "El Candelabro" del Kamasutra: ella recostada al borde, él de pie sosteniendo sus piernas en ángulo' : data.temperature === 'Picante' ? '😈 Elijan la posición "La Mariposa" (ella al borde de la cama, él de pie) y háganlo con la luz encendida' : data.temperature === 'Romántico' ? '😈 Mirarse a los ojos 60 segundos sin reír y decirse una cosa que nunca han dicho' : '😈 Decidan juntos su reto'
                             };
                         }
                         if (!data.roundCompatibility) data.roundCompatibility = {};
@@ -1909,8 +1939,8 @@ Responde ÚNICAMENTE en JSON:
                         p2Answer: p2.answer || '—',
                         compatibility: 75,
                         analysis: 'Continuaron sin evaluación de IA.',
-                        reward: '🎁 ¡Decidan juntos su premio!',
-                        punishment: '😈 ¡Decidan juntos su reto!'
+                        reward: data.temperature === 'Sin Filtros' ? '🎁 Posición Kamasutra: "El Loto" — siéntense frente a frente, piernas cruzadas entrelazadas, muy cercanos' : data.temperature === 'Picante' ? '🎁 Encuentro en lugar atrevido: balcón de noche, carro, o ducha juntos' : data.temperature === 'Romántico' ? '🎁 Masaje de 10 minutos con la música que más les guste' : '🎁 ¡Decidan juntos su premio!',
+                        punishment: data.temperature === 'Sin Filtros' ? '😈 Posición Kamasutra: "La Amazona Inversa" — ella arriba dando la espalda, él recostado — intenten esta noche' : data.temperature === 'Picante' ? '😈 Posición "La Mariposa": ella al borde de la cama, él de pie sosteniendo sus piernas — con la luz prendida' : data.temperature === 'Romántico' ? '😈 Mirarse fijo 60 segundos y decir en voz alta algo que nunca se han dicho' : '😈 ¡Decidan juntos su reto!'
                     };
                     if (!data.roundCompatibility) data.roundCompatibility = {};
                     data.roundCompatibility[roundIdx] = 75;
