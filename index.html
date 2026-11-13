@@ -1228,9 +1228,9 @@ Responde ÚNICAMENTE con este JSON válido (sin texto extra, sin markdown):
                 const allFinished = playerList.length >= data.maxPlayers && playerList.every(p => p.status === 'finished');
 
                 if (allFinished && data.status !== 'evaluating' && data.status !== 'evaluated') {
-                    // Fallback: si no hay hostId (sala antigua), el primer jugador actúa como host
-                    const effectiveHostId = data.hostId || Object.keys(data.players)[0];
-                    if (this.playerId === effectiveHostId) {
+                    // Cualquier jugador con API key puede evaluar; el guard 'evaluating' previene duplicados
+                    const apiKey = localStorage.getItem('custom_gemini_key');
+                    if (apiKey) {
                         this.triggerRoundEvaluation(data);
                     } else {
                         this.renderWaitingOthers(data);
