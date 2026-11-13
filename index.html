@@ -245,6 +245,18 @@
                     </div>
                 </div>
 
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Tipo de Respuesta</label>
+                    <div class="flex gap-3">
+                        <button type="button" onclick="app.selectAnswerMode(this, 'text')" class="answer-mode-btn flex-1 py-2.5 rounded-xl border border-purple-500/40 bg-purple-500/20 font-bold text-sm text-purple-200 flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-pencil"></i> Texto Libre
+                        </button>
+                        <button type="button" onclick="app.selectAnswerMode(this, 'multiple')" class="answer-mode-btn flex-1 py-2.5 rounded-xl border border-slate-700 bg-slate-800/60 font-bold text-sm text-slate-300 flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-list-check"></i> Múltiple Opción
+                        </button>
+                    </div>
+                </div>
+
                 <button onclick="app.createFiestaRoom()" id="btn-create-fiesta" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg shadow-purple-600/30 transition flex items-center justify-center gap-2">
                     <i class="fa-solid fa-sparkles"></i> Generar Pregunta con IA & Crear Sala
                 </button>
@@ -294,6 +306,12 @@
                             <div>
                                 <div class="font-bold text-sm">🧨 Sin Filtros & Fantasías Sexuadas</div>
                                 <div class="text-[11px] opacity-80 font-normal">Deseos consensuados, fetiches y exploración en la cama.</div>
+                            </div>
+                        </button>
+                        <button type="button" onclick="app.selectTemperature(this, 'Retos')" class="temp-btn w-full border border-slate-700 bg-slate-800/60 text-slate-300 p-3.5 rounded-xl text-left flex items-center justify-between">
+                            <div>
+                                <div class="font-bold text-sm">🎲 Retos & Verdad Atrevida</div>
+                                <div class="text-[11px] opacity-80 font-normal">Preguntas Sí/No que revelan deseos ocultos: ¿Lo harías?</div>
                             </div>
                         </button>
                     </div>
@@ -423,8 +441,11 @@
                 </div>
             </div>
 
+            <!-- Multiple Choice Options -->
+            <div id="gameplay-options-grid" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+
             <!-- Answer Input Form -->
-            <div class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-700 space-y-4 shadow-xl">
+            <div id="gameplay-answer-form" class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-700 space-y-4 shadow-xl">
                 <label id="input-label-text" class="block text-xs font-bold text-slate-300 uppercase">Escribe tu respuesta exacta o confesión:</label>
                 <textarea id="gameplay-answer-input" rows="3" placeholder="Escribe aquí sin rodeos..." class="glass-input w-full p-4 rounded-xl text-white font-medium resize-none"></textarea>
                 
@@ -717,6 +738,7 @@
             selectedTopic: 'Canciones Famosas',
             selectedPlayerCount: 2,
             selectedTemperature: 'Romántico',
+            selectedAnswerMode: 'text',
 
             async init() {
                 localStorage.setItem('adivina_player_id', this.playerId);
@@ -845,6 +867,14 @@
                 this.selectedPlayerCount = cnt;
             },
 
+            selectAnswerMode(btn, mode) {
+                document.querySelectorAll('.answer-mode-btn').forEach(b => {
+                    b.className = b.className.replace('border-purple-500/40 bg-purple-500/20 text-purple-200', 'border-slate-700 bg-slate-800/60 text-slate-300');
+                });
+                btn.className = btn.className.replace('border-slate-700 bg-slate-800/60 text-slate-300', 'border-purple-500/40 bg-purple-500/20 text-purple-200');
+                this.selectedAnswerMode = mode;
+            },
+
             selectTemperature(btn, temp) {
                 document.querySelectorAll('.temp-btn').forEach(b => {
                     b.className = 'temp-btn w-full border border-slate-700 bg-slate-800/60 text-slate-300 p-3.5 rounded-xl text-left flex items-center justify-between';
@@ -959,9 +989,12 @@
                 try {
                     btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Generando 3 preguntas con IA...`;
                     const sysPrompt = "Eres un diseñador de trivias cómico y creativo.";
-                    const prompt = `Genera exactamente 3 adivinanzas ingeniosas y diferentes sobre el tema "${this.selectedTopic}". Retorna ÚNICAMENTE este JSON sin texto adicional: {"rounds":[{"question":"texto de la adivinanza","correctAnswer":"respuesta breve","hint":"una pista"},{"question":"...","correctAnswer":"...","hint":"..."},{"question":"...","correctAnswer":"...","hint":"..."}]}`;
+                    const isMultiple = this.selectedAnswerMode === 'multiple';
+                    const prompt = isMultiple
+                        ? `Genera exactamente 3 adivinanzas ingeniosas sobre el tema "${this.selectedTopic}" con 4 opciones de respuesta cada una (solo una correcta, pon la correcta en posición aleatoria). Retorna ÚNICAMENTE este JSON: {"rounds":[{"question":"texto","correctAnswer":"B","hint":"pista","options":["A. opción1","B. opción correcta","C. opción3","D. opción4"]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]}]}`
+                        : `Genera exactamente 3 adivinanzas ingeniosas y diferentes sobre el tema "${this.selectedTopic}". Retorna ÚNICAMENTE este JSON sin texto adicional: {"rounds":[{"question":"texto de la adivinanza","correctAnswer":"respuesta breve","hint":"una pista"},{"question":"...","correctAnswer":"...","hint":"..."},{"question":"...","correctAnswer":"...","hint":"..."}]}`;
                     const r = await this.callGemini(prompt, sysPrompt);
-                    const rounds = (r.rounds || []).map(q => ({ question: q.question, correctAnswer: q.correctAnswer, hint: q.hint || '' }));
+                    const rounds = (r.rounds || []).map(q => ({ question: q.question, correctAnswer: q.correctAnswer, hint: q.hint || '', options: q.options || [] }));
                     console.log('[Fiesta] Rondas recibidas:', rounds.length, rounds);
                     if (rounds.length === 0) throw new Error('La IA no generó preguntas. Intenta de nuevo.');
 
@@ -970,6 +1003,7 @@
                         roomId,
                         mode: 'fiesta',
                         topic: this.selectedTopic,
+                        answerMode: this.selectedAnswerMode,
                         maxPlayers: this.selectedPlayerCount,
                         totalRounds: rounds.length,
                         currentRound: 0,
@@ -1017,13 +1051,16 @@
                 try {
                     btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Generando 3 preguntas con IA...`;
                     const sysPrompt = "Eres un facilitador de juegos de pareja empático, elegante y atrevido.";
-                    const prompt = `Genera exactamente 3 preguntas íntimas y diferentes para una pareja. Temperatura: "${this.selectedTemperature}".
+                    const isRetos = this.selectedTemperature === 'Retos';
+                    const prompt = isRetos
+                        ? `Genera exactamente 3 retos o preguntas de verdad atrevidas para una pareja, estilo "¿Lo harías?". Deben ser preguntas directas de Sí/No que revelen deseos ocultos o fantasías. Incluye opciones fijas Sí, No, Tal vez. Retorna ÚNICAMENTE este JSON: {"rounds":[{"question":"¿Harías X con tu pareja?","category":"Retos","options":["✅ Sí, sin dudarlo","❌ No, jamás","🤔 Tal vez...","🔥 Ya lo hice"]},{"question":"...","category":"Retos","options":["✅ Sí, sin dudarlo","❌ No, jamás","🤔 Tal vez...","🔥 Ya lo hice"]},{"question":"...","category":"Retos","options":["✅ Sí, sin dudarlo","❌ No, jamás","🤔 Tal vez...","🔥 Ya lo hice"]}]}`
+                        : `Genera exactamente 3 preguntas íntimas y diferentes para una pareja. Temperatura: "${this.selectedTemperature}".
 - "Romántico": gustos, manías o recuerdos bonitos.
 - "Picante": coqueteo, besos o escenarios eróticos suaves.
 - "Sin Filtros": fantasías eróticas consensuadas o deseos.
 Retorna ÚNICAMENTE este JSON sin texto adicional: {"rounds":[{"question":"texto","category":"${this.selectedTemperature}"},{"question":"...","category":"..."},{"question":"...","category":"..."}]}`;
                     const r = await this.callGemini(prompt, sysPrompt);
-                    const rounds = (r.rounds || []).map(q => ({ question: q.question, category: q.category || this.selectedTemperature }));
+                    const rounds = (r.rounds || []).map(q => ({ question: q.question, category: q.category || this.selectedTemperature, options: q.options || [] }));
                     console.log('[Pareja] Rondas recibidas:', rounds.length, rounds);
                     if (rounds.length === 0) throw new Error('La IA no generó preguntas. Intenta de nuevo.');
 
@@ -1032,6 +1069,7 @@ Retorna ÚNICAMENTE este JSON sin texto adicional: {"rounds":[{"question":"texto
                         roomId,
                         mode: 'pareja',
                         temperature: this.selectedTemperature,
+                        answerMode: isRetos ? 'multiple' : 'text',
                         maxPlayers: 2,
                         totalRounds: rounds.length,
                         currentRound: 0,
@@ -1274,10 +1312,47 @@ Retorna ÚNICAMENTE este JSON sin texto adicional: {"rounds":[{"question":"texto
                 }
 
                 document.getElementById('gameplay-player-label').innerText = `Jugador: ${this.playerNickname}`;
-                this.navTo('gameplay');
 
-                // Start Visual Countdown
+                // Modo selección múltiple
+                const optionsGrid = document.getElementById('gameplay-options-grid');
+                const answerForm = document.getElementById('gameplay-answer-form');
+                const isMultiple = data.answerMode === 'multiple' && roundData.options && roundData.options.length > 0;
+
+                if (isMultiple) {
+                    answerForm.classList.add('hidden');
+                    optionsGrid.classList.remove('hidden');
+                    const colors = ['from-indigo-600 to-blue-600', 'from-purple-600 to-violet-600', 'from-pink-600 to-rose-600', 'from-amber-500 to-orange-500'];
+                    optionsGrid.innerHTML = roundData.options.map((opt, i) => {
+                        // Fiesta: "A. texto" → badge=A, texto=resto; Retos: emoji+texto completo
+                        const isLettered = /^[A-D]\. /.test(opt);
+                        const badge = isLettered ? opt.charAt(0) : ['1','2','3','4'][i];
+                        const label = isLettered ? opt.substring(3) : opt;
+                        return `
+                        <button onclick="app.selectMultipleChoice('${opt.replace(/'/g, "\\'")}', this)"
+                            class="choice-btn glass-card p-4 rounded-2xl border border-slate-700 hover:border-purple-400 text-white font-semibold text-sm text-left transition-all flex items-center gap-3 hover:bg-purple-500/10 active:scale-95">
+                            <span class="w-9 h-9 rounded-xl bg-gradient-to-br ${colors[i] || colors[0]} flex items-center justify-center font-black text-sm flex-shrink-0 shadow-md">${badge}</span>
+                            <span>${label}</span>
+                        </button>`;
+                    }).join('');
+                } else {
+                    optionsGrid.classList.add('hidden');
+                    answerForm.classList.remove('hidden');
+                    document.getElementById('gameplay-answer-input').value = '';
+                }
+
+                this.navTo('gameplay');
                 this.startCountdown();
+            },
+
+            selectMultipleChoice(option, btn) {
+                // Highlight selected
+                document.querySelectorAll('.choice-btn').forEach(b => {
+                    b.classList.remove('border-purple-400', 'bg-purple-500/20', 'scale-95');
+                });
+                btn.classList.add('border-purple-400', 'bg-purple-500/20');
+                // Store and auto-submit after brief visual feedback
+                document.getElementById('gameplay-answer-input').value = option;
+                setTimeout(() => this.submitAnswer(), 400);
             },
 
             startCountdown() {
