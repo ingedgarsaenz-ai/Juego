@@ -225,7 +225,7 @@
                 <div>
                     <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Tema de la Adivinanza (Generado por IA)</label>
                     <div class="grid grid-cols-2 gap-2" id="fiesta-topic-selector">
-                        <button type="button" onclick="app.selectTopic(this, 'Canciones Famosas')" class="topic-btn border border-purple-500/40 bg-purple-500/20 text-purple-200 p-3 rounded-xl text-xs font-bold text-left flex items-center justify-between">
+                        <button type="button" onclick="app.selectTopic(this, 'Canciones Famosas de Música Latina, Colombiana, Argentina y Pop Latino')" class="topic-btn border border-purple-500/40 bg-purple-500/20 text-purple-200 p-3 rounded-xl text-xs font-bold text-left flex items-center justify-between">
                             <span>🎵 Canciones</span> <i class="fa-solid fa-check text-purple-400"></i>
                         </button>
                         <button type="button" onclick="app.selectTopic(this, 'Películas y Series Iconicas')" class="topic-btn border border-slate-700 bg-slate-800/60 text-slate-300 p-3 rounded-xl text-xs font-bold text-left flex items-center justify-between">
@@ -745,7 +745,7 @@
             timerSeconds: 30,
 
             // Selected options in forms
-            selectedTopic: 'Canciones Famosas',
+            selectedTopic: 'Canciones Famosas de Música Latina, Colombiana, Argentina y Pop Latino',
             selectedPlayerCount: 2,
             selectedTemperature: 'Romántico',
             selectedAnswerMode: 'text',
@@ -1003,7 +1003,7 @@
 
                 try {
                     btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Generando 3 preguntas con IA...`;
-                    const sysPrompt = "Eres un diseñador de trivias cómico y creativo. Responde SIEMPRE en español, incluyendo preguntas, respuestas, pistas y opciones.";
+                    const sysPrompt = "Eres un diseñador de trivias cómico y creativo. Responde SIEMPRE en español, incluyendo preguntas, respuestas, pistas y opciones. Cuando el tema sea de música o canciones, prioriza artistas y canciones latinoamericanas: colombianos (Carlos Vives, Shakira, J Balvin, Maluma, Karol G, Fonseca, Juanes), argentinos (Soda Stereo, Los Fabulosos Cadillacs, Mercedes Sosa, Tini, Bizarrap, Abel Pintos, Charly García), reggaetón, salsa, cumbia, vallenato y pop latino en general.";
                     const isMultiple = this.selectedAnswerMode === 'multiple';
                     const prompt = isMultiple
                         ? `Genera exactamente 3 adivinanzas ingeniosas en ESPAÑOL sobre el tema "${this.selectedTopic}" con 4 opciones de respuesta cada una (solo una correcta, pon la correcta en posición aleatoria). Todas las preguntas, opciones y pistas deben estar en español. Retorna ÚNICAMENTE este JSON: {"rounds":[{"question":"texto","correctAnswer":"B","hint":"pista","options":["A. opción1","B. opción correcta","C. opción3","D. opción4"]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]}]}`
@@ -1258,12 +1258,12 @@ Responde ÚNICAMENTE con este JSON válido (sin texto extra, sin markdown):
                 const allFinished = playerList.length >= data.maxPlayers && playerList.every(p => p.status === 'finished');
 
                 if (allFinished && data.status !== 'evaluating' && data.status !== 'evaluated') {
-                    // Cualquier jugador con API key puede evaluar; el guard 'evaluating' previene duplicados
                     const apiKey = localStorage.getItem('custom_gemini_key');
-                    if (apiKey) {
-                        this.triggerRoundEvaluation(data);
+                    if (apiKey && !this._evaluatingRoom) {
+                        this._evaluatingRoom = true;
+                        this.triggerRoundEvaluation(data).finally(() => { this._evaluatingRoom = false; });
                     } else {
-                        this.renderWaitingOthers(data);
+                        this.renderWaitingOthers(data, true);
                     }
                     return;
                 }
@@ -1457,7 +1457,7 @@ Responde ÚNICAMENTE con este JSON válido (sin texto extra, sin markdown):
                 this.renderWaitingOthers(this.currentRoomData);
             },
 
-            renderWaitingOthers(data) {
+            renderWaitingOthers(data, allDone = false) {
                 const container = document.getElementById('waiting-players-status');
                 container.innerHTML = '';
 
@@ -1472,6 +1472,26 @@ Responde ÚNICAMENTE con este JSON válido (sin texto extra, sin markdown):
                         </div>
                     `;
                 });
+
+                // Update description and add force-advance button when all done
+                const descEl = document.querySelector('#view-waiting-others .space-y-2 p');
+                if (descEl) descEl.innerText = allDone
+                    ? '¡Todos respondieron! Calculando resultados con IA...'
+                    : 'Tu respuesta se registró con éxito. Ahora estamos esperando a que los demás completen su turno.';
+
+                const existingForceBtn = document.getElementById('force-advance-btn');
+                if (existingForceBtn) existingForceBtn.remove();
+                if (allDone) {
+                    const actionArea = document.querySelector('#view-waiting-others .pt-2');
+                    if (actionArea) {
+                        const btn = document.createElement('button');
+                        btn.id = 'force-advance-btn';
+                        btn.className = 'w-full mt-2 border border-slate-600 bg-slate-800/40 hover:bg-slate-700 text-slate-400 hover:text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition';
+                        btn.innerHTML = '<i class="fa-solid fa-forward-step"></i> Continuar sin evaluación de IA';
+                        btn.onclick = () => app.forceAdvanceGame();
+                        actionArea.appendChild(btn);
+                    }
+                }
 
                 this.navTo('waiting-others');
 
@@ -1831,6 +1851,52 @@ Responde ÚNICAMENTE en JSON:
                 confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
             },
 
+            async forceAdvanceGame() {
+                const data = this.currentRoomData;
+                if (!data || data.status === 'evaluated') return;
+                const roundIdx = data.currentRound || 0;
+                const roundQuestion = (data.rounds && data.rounds[roundIdx]) ? data.rounds[roundIdx] : data;
+                const pList = Object.values(data.players);
+
+                if (data.mode === 'pareja') {
+                    const p1 = pList[0] || {};
+                    const p2 = pList[1] || pList[0] || {};
+                    if (!data.roundData) data.roundData = {};
+                    data.roundData[roundIdx] = {
+                        question: roundQuestion.question || '',
+                        p1Name: p1.nickname || data.p1Name || 'Jugador 1',
+                        p2Name: p2.nickname || data.p2Name || 'Jugador 2',
+                        p1Answer: p1.answer || '—',
+                        p2Answer: p2.answer || '—',
+                        compatibility: 75,
+                        analysis: 'Continuaron sin evaluación de IA.',
+                        reward: '🎁 ¡Decidan juntos su premio!',
+                        punishment: '😈 ¡Decidan juntos su reto!'
+                    };
+                    if (!data.roundCompatibility) data.roundCompatibility = {};
+                    data.roundCompatibility[roundIdx] = 75;
+                    data.compatibilityScore = Math.round(Object.values(data.roundCompatibility).reduce((a, b) => a + b, 0) / Object.keys(data.roundCompatibility).length);
+                    data.analysis = data.roundData[roundIdx].analysis;
+                    data.reward = data.roundData[roundIdx].reward;
+                    data.punishment = data.roundData[roundIdx].punishment;
+                }
+
+                const nextRound = roundIdx + 1;
+                if (nextRound < (data.totalRounds || 1)) {
+                    Object.keys(data.players).forEach(pid => {
+                        data.players[pid].status = 'waiting';
+                        data.players[pid].answer = '';
+                        data.players[pid].duration = 0;
+                    });
+                    data.currentRound = nextRound;
+                    data.status = 'between_rounds';
+                } else {
+                    data.status = 'evaluated';
+                }
+                await this.saveRoomDoc(data.roomId, data);
+                this.showToast('Continuando sin evaluación de IA...', 'info');
+            },
+
             checkUrlRoomCode() {
                 const hash = window.location.hash;
                 if (hash && hash.includes('room=')) {
@@ -1838,9 +1904,48 @@ Responde ÚNICAMENTE en JSON:
                     if (code) {
                         const input = document.getElementById('join-room-id');
                         if (input) input.value = code;
-                        this.joinRoom(code);
+                        this.showJoinNamePrompt(code);
                     }
                 }
+            },
+
+            showJoinNamePrompt(code) {
+                const modal = document.createElement('div');
+                modal.id = 'join-name-modal';
+                modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4';
+                modal.innerHTML = `
+                    <div class="glass-card p-8 rounded-3xl border border-purple-500/40 w-full max-w-sm space-y-5 shadow-2xl text-center">
+                        <div class="text-4xl">🎮</div>
+                        <h2 class="text-xl font-black text-white">¡Te invitaron a jugar!</h2>
+                        <p class="text-xs text-slate-400">Sala: <span class="font-mono font-bold text-pink-400">${code}</span></p>
+                        <div class="space-y-1 text-left">
+                            <label class="block text-xs font-bold text-slate-300 uppercase">Tu nombre</label>
+                            <input type="text" id="join-name-modal-input" placeholder="Ej: Sofía"
+                                class="glass-input w-full px-4 py-3 rounded-xl text-white font-semibold text-center text-lg"
+                                maxlength="20" autocomplete="off">
+                        </div>
+                        <button onclick="app.confirmJoinWithName('${code}')"
+                            class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-extrabold py-3.5 rounded-xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-right-to-bracket"></i> Unirme a la sala
+                        </button>
+                    </div>
+                `;
+                // Allow Enter key to submit
+                modal.addEventListener('keydown', (e) => { if (e.key === 'Enter') this.confirmJoinWithName(code); });
+                document.body.appendChild(modal);
+                setTimeout(() => document.getElementById('join-name-modal-input')?.focus(), 100);
+            },
+
+            confirmJoinWithName(code) {
+                const nameInput = document.getElementById('join-name-modal-input')?.value.trim();
+                if (!nameInput) {
+                    document.getElementById('join-name-modal-input')?.focus();
+                    return;
+                }
+                this.playerNickname = nameInput;
+                localStorage.setItem('adivina_nickname', nameInput);
+                document.getElementById('join-name-modal')?.remove();
+                this.joinRoom(code);
             },
 
             updateRoomBadge(roomId) {
