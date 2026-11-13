@@ -227,11 +227,17 @@
                         <button type="button" onclick="app.selectTopic(this, 'Películas y Series Iconicas')" class="topic-btn border border-slate-700 bg-slate-800/60 text-slate-300 p-3 rounded-xl text-xs font-bold text-left flex items-center justify-between">
                             <span>🎬 Cine / Series</span>
                         </button>
-                        <button type="button" onclick="app.selectTopic(this, 'Cultura General Divertida')" class="topic-btn border border-slate-700 bg-slate-800/60 text-slate-300 p-3 rounded-xl text-xs font-bold text-left flex items-center justify-between">
-                            <span>🧠 Cultura Pop</span>
+                        <button type="button" onclick="app.selectTopic(this, 'Cultura General')" class="topic-btn border border-slate-700 bg-slate-800/60 text-slate-300 p-3 rounded-xl text-xs font-bold text-left flex items-center justify-between">
+                            <span>🧠 Cultura General</span>
                         </button>
                         <button type="button" onclick="app.selectTopic(this, 'Memes y Tendencias de Internet')" class="topic-btn border border-slate-700 bg-slate-800/60 text-slate-300 p-3 rounded-xl text-xs font-bold text-left flex items-center justify-between">
                             <span>🔥 Memes & Viral</span>
+                        </button>
+                        <button type="button" onclick="app.selectTopic(this, 'Preguntas Picantes y Atrevidas')" class="topic-btn border border-slate-700 bg-slate-800/60 text-slate-300 p-3 rounded-xl text-xs font-bold text-left flex items-center justify-between">
+                            <span>🌶️ Picante</span>
+                        </button>
+                        <button type="button" onclick="app.selectTopic(this, 'Adivinanzas y Acertijos')" class="topic-btn border border-slate-700 bg-slate-800/60 text-slate-300 p-3 rounded-xl text-xs font-bold text-left flex items-center justify-between">
+                            <span>🧩 Adivinanzas</span>
                         </button>
                     </div>
                 </div>
@@ -874,9 +880,9 @@
 
             selectAnswerMode(btn, mode) {
                 document.querySelectorAll('.answer-mode-btn').forEach(b => {
-                    b.className = b.className.replace('border-purple-500/40 bg-purple-500/20 text-purple-200', 'border-slate-700 bg-slate-800/60 text-slate-300');
+                    b.className = 'answer-mode-btn flex-1 py-2.5 rounded-xl border border-slate-700 bg-slate-800/60 font-bold text-sm text-slate-300 flex items-center justify-center gap-1.5';
                 });
-                btn.className = btn.className.replace('border-slate-700 bg-slate-800/60 text-slate-300', 'border-purple-500/40 bg-purple-500/20 text-purple-200');
+                btn.className = 'answer-mode-btn flex-1 py-2.5 rounded-xl border border-purple-500/40 bg-purple-500/20 font-bold text-sm text-purple-200 flex items-center justify-center gap-1.5';
                 this.selectedAnswerMode = mode;
             },
 
