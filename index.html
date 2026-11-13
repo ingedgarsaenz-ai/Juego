@@ -868,17 +868,21 @@
 
                 let response;
                 if (isGroq) {
-                    response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-                        body: JSON.stringify({
-                            model: 'llama-3.3-70b-versatile',
-                            messages: [
-                                ...(systemInstructionText ? [{ role: 'system', content: systemInstructionText + ' Responde SIEMPRE con JSON válido y nada más.' }] : [{ role: 'system', content: 'Responde SIEMPRE con JSON válido y nada más.' }]),
-                                { role: 'user', content: promptText }
-                            ]
-                        })
-                    });
+                    const groqModels = ['llama-3.3-70b-versatile', 'llama3-8b-8192', 'gemma2-9b-it', 'mixtral-8x7b-32768'];
+                    for (const model of groqModels) {
+                        response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                            body: JSON.stringify({
+                                model,
+                                messages: [
+                                    { role: 'system', content: (systemInstructionText || '') + ' Responde SIEMPRE con JSON válido y nada más, sin bloques de código markdown.' },
+                                    { role: 'user', content: promptText }
+                                ]
+                            })
+                        });
+                        if (response.status !== 404) break;
+                    }
                 } else {
                     // Gemini
                     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
