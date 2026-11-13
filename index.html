@@ -874,10 +874,9 @@
                         body: JSON.stringify({
                             model: 'llama-3.3-70b-versatile',
                             messages: [
-                                ...(systemInstructionText ? [{ role: 'system', content: systemInstructionText }] : []),
+                                ...(systemInstructionText ? [{ role: 'system', content: systemInstructionText + ' Responde SIEMPRE con JSON válido y nada más.' }] : [{ role: 'system', content: 'Responde SIEMPRE con JSON válido y nada más.' }]),
                                 { role: 'user', content: promptText }
-                            ],
-                            response_format: { type: 'json_object' }
+                            ]
                         })
                     });
                 } else {
@@ -904,11 +903,14 @@
                 if (!response.ok) throw new Error(`Error de la API: ${response.status}`);
 
                 const data = await response.json();
-                const rawText = isGroq
+                let rawText = isGroq
                     ? data.choices?.[0]?.message?.content
                     : data.candidates?.[0]?.content?.parts?.[0]?.text;
                 if (!rawText) throw new Error('Respuesta vacía de la IA');
-                return JSON.parse(rawText);
+                // Extraer JSON si viene dentro de bloques markdown ```json ... ```
+                const jsonMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+                if (jsonMatch) rawText = jsonMatch[1];
+                return JSON.parse(rawText.trim());
             },
 
             // Mode 1: Create Fiesta Room
