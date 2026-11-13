@@ -1625,8 +1625,11 @@ Responde ÚNICAMENTE en JSON:
 {"compatibilityScore": 88, "analysis": "Análisis cariñoso y relevante al modo", "reward": "Premio específico al modo ${data.temperature}", "punishment": "Reto específico al modo ${data.temperature}"}`;
 
                         const res = await this.callGemini(prompt, `Eres un gurú de parejas sin censura, creativo y atrevido que adapta cada sugerencia exactamente al nivel de temperatura "${data.temperature}". Para modo Picante y Sin Filtros, incluyes nombres reales de posiciones del Kamasutra y locaciones específicas. Respondes siempre en español.`);
+                        const compatScore = (typeof res.compatibilityScore === 'number' && !isNaN(res.compatibilityScore))
+                            ? Math.round(res.compatibilityScore)
+                            : 75;
                         if (!data.roundCompatibility) data.roundCompatibility = {};
-                        data.roundCompatibility[roundIdx] = res.compatibilityScore;
+                        data.roundCompatibility[roundIdx] = compatScore;
                         data.compatibilityScore = Math.round(Object.values(data.roundCompatibility).reduce((a,b)=>a+b,0) / Object.keys(data.roundCompatibility).length);
                         data.analysis = res.analysis;
                         data.reward = res.reward;
@@ -1636,7 +1639,7 @@ Responde ÚNICAMENTE en JSON:
                             question: roundQuestion.question,
                             p1Name: p1.nickname, p2Name: p2.nickname,
                             p1Answer: p1.answer, p2Answer: p2.answer,
-                            compatibility: res.compatibilityScore,
+                            compatibility: compatScore,
                             analysis: res.analysis, reward: res.reward, punishment: res.punishment
                         };
                     }
@@ -1851,9 +1854,12 @@ Responde ÚNICAMENTE en JSON:
                 if (this._waitingPollInterval) { clearInterval(this._waitingPollInterval); this._waitingPollInterval = null; }
                 document.getElementById('pareja-results-temp-badge').innerText = '❤️ Modo Pareja - ' + data.temperature;
 
-                // Reset reveal state
-                document.getElementById('pareja-unmask-container').classList.remove('hidden');
-                document.getElementById('pareja-revealed-content').classList.add('hidden');
+                // Only reset reveal state if not already revealed
+                const alreadyRevealed = !document.getElementById('pareja-revealed-content').classList.contains('hidden');
+                if (!alreadyRevealed) {
+                    document.getElementById('pareja-unmask-container').classList.remove('hidden');
+                    document.getElementById('pareja-revealed-content').classList.add('hidden');
+                }
 
                 this.navTo('results-pareja');
             },
@@ -1878,7 +1884,7 @@ Responde ÚNICAMENTE en JSON:
                     // For last round answers are still in data.players; earlier rounds only in rd
                     const p1Answer   = rd?.p1Answer   || (isLast ? p1.answer : null) || '—';
                     const p2Answer   = rd?.p2Answer   || (isLast ? p2.answer : null) || '—';
-                    const compat     = rd?.compatibility != null ? rd.compatibility : (isLast && data.compatibilityScore != null ? data.compatibilityScore : 0);
+                    const compat     = rd?.compatibility ?? data.roundCompatibility?.[r] ?? data.roundCompatibility?.[String(r)] ?? (isLast ? data.compatibilityScore : null) ?? 0;
                     const analysis   = rd?.analysis   || (isLast ? data.analysis  : '') || '';
                     const reward     = rd?.reward     || (isLast ? data.reward     : '') || '';
                     const punishment = rd?.punishment || (isLast ? data.punishment : '') || '';
