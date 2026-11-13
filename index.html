@@ -803,6 +803,11 @@
                 });
                 const target = document.getElementById(`view-${viewId}`);
                 if (target) target.classList.remove('hidden');
+                if (viewId === 'menu') {
+                    history.replaceState(null, '', window.location.pathname);
+                    const joinInput = document.getElementById('join-room-id');
+                    if (joinInput) joinInput.value = '';
+                }
             },
 
             // Settings Modal
