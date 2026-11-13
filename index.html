@@ -189,12 +189,16 @@
                 <h4 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
                     <i class="fa-solid fa-door-open text-emerald-400"></i> Entrar a una Sala Existente
                 </h4>
-                <div class="flex flex-col sm:flex-row gap-3">
-                    <input type="text" id="join-room-id" placeholder="Código de 6 letras (ej: AB12CD)" 
-                        class="glass-input flex-1 px-4 py-3 rounded-xl font-mono text-center uppercase tracking-widest text-lg font-bold">
-                    <button onclick="app.joinRoomFromInput()" class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-extrabold px-6 py-3 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
-                        <i class="fa-solid fa-right-to-bracket"></i> Unirme
-                    </button>
+                <div class="flex flex-col gap-3">
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <input type="text" id="join-player-name" placeholder="Tu nombre"
+                            class="glass-input sm:w-40 px-4 py-3 rounded-xl text-white font-semibold">
+                        <input type="text" id="join-room-id" placeholder="Código de sala (ej: AB12CD)"
+                            class="glass-input flex-1 px-4 py-3 rounded-xl font-mono text-center uppercase tracking-widest text-lg font-bold">
+                        <button onclick="app.joinRoomFromInput()" class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-extrabold px-6 py-3 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
+                            <i class="fa-solid fa-right-to-bracket"></i> Unirme
+                        </button>
+                    </div>
                 </div>
             </div>
         </section>
@@ -1177,6 +1181,11 @@ Responde ÚNICAMENTE con este JSON válido (sin texto extra, sin markdown):
                     this.showToast('Ingresa un código de sala válido.', 'error');
                     return;
                 }
+                const nameInput = document.getElementById('join-player-name').value.trim();
+                if (nameInput) {
+                    this.playerNickname = nameInput;
+                    localStorage.setItem('adivina_nickname', nameInput);
+                }
                 this.joinRoom(code);
             },
 
@@ -1206,7 +1215,7 @@ Responde ÚNICAMENTE con este JSON válido (sin texto extra, sin markdown):
                             return;
                         }
 
-                        const nick = this.playerNickname || (data.mode === 'pareja' ? data.p2Name : `Jugador ${existingCount + 1}`);
+                        const nick = this.playerNickname || (data.mode === 'pareja' ? (data.p2Name || 'Jugador 2') : `Jugador ${existingCount + 1}`);
                         data.players[this.playerId] = {
                             id: this.playerId,
                             nickname: nick,
