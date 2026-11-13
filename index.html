@@ -610,11 +610,12 @@
 
             <div class="space-y-4 text-xs">
                 <div>
-                    <label class="block font-bold text-slate-300 uppercase mb-1">Clave de API de Gemini <span class="text-pink-400">*Requerida para crear salas</span></label>
-                    <input type="password" id="input-gemini-key" placeholder="AIzaSy..." class="glass-input w-full p-3 rounded-xl font-mono">
+                    <label class="block font-bold text-slate-300 uppercase mb-1">Clave de API de IA <span class="text-pink-400">*Requerida para crear salas</span></label>
+                    <input type="password" id="input-gemini-key" placeholder="gsk_... (Groq) o AQ.... (Gemini)" class="glass-input w-full p-3 rounded-xl font-mono">
                     <p class="text-[10px] text-slate-400 mt-1">
-                        Solo el <strong class="text-slate-300">creador de la sala</strong> necesita esta clave. Los jugadores no la necesitan.
-                        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-pink-400 hover:text-pink-300 ml-1">→ Obtén una clave GRATIS en Google AI Studio</a>
+                        Solo el <strong class="text-slate-300">creador de la sala</strong> necesita esta clave. Los jugadores no la necesitan.<br>
+                        <a href="https://console.groq.com/keys" target="_blank" class="text-emerald-400 hover:text-emerald-300">→ ⭐ Recomendado: Clave GRATIS de Groq (gsk_...) — 14,400 requests/día</a><br>
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-pink-400 hover:text-pink-300">→ O clave de Google AI Studio (AQ....)</a>
                     </p>
                 </div>
 
@@ -855,53 +856,59 @@
                 this.selectedTemperature = temp;
             },
 
-            // Gemini API Helper
+            // AI API Helper (soporta Groq con gsk_... y Gemini con AQ....)
             async callGemini(promptText, systemInstructionText = "") {
                 const apiKey = localStorage.getItem('custom_gemini_key');
                 if (!apiKey) {
                     this.openSettings();
-                    throw new Error('⚙️ Configura tu API Key de Gemini en Ajustes antes de crear una sala. Es gratis en aistudio.google.com');
+                    throw new Error('⚙️ Configura tu API Key en Ajustes. Recomendado: Groq gratis en console.groq.com');
                 }
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
 
-                const payload = {
-                    contents: [{ parts: [{ text: promptText }] }],
-                    systemInstruction: systemInstructionText ? { parts: [{ text: systemInstructionText }] } : undefined,
-                    generationConfig: {
-                        responseMimeType: "application/json"
-                    }
-                };
+                const isGroq = apiKey.startsWith('gsk_');
 
-                for (let attempt = 1; attempt <= 5; attempt++) {
-                    const response = await fetch(apiUrl, {
+                let response;
+                if (isGroq) {
+                    response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                        body: JSON.stringify({
+                            model: 'llama-3.1-8b-instant',
+                            messages: [
+                                ...(systemInstructionText ? [{ role: 'system', content: systemInstructionText }] : []),
+                                { role: 'user', content: promptText }
+                            ],
+                            response_format: { type: 'json_object' }
+                        })
+                    });
+                } else {
+                    // Gemini
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
+                    response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: promptText }] }],
+                            systemInstruction: systemInstructionText ? { parts: [{ text: systemInstructionText }] } : undefined,
+                            generationConfig: { responseMimeType: "application/json" }
+                        })
                     });
-
-                    if (response.status === 401) {
-                        this.openSettings();
-                        throw new Error('❌ API Key inválida o expirada. Ingresa una nueva clave en ⚙️ Ajustes.\nObtén una gratis en aistudio.google.com');
-                    }
-                    if (response.status === 429) {
-                        if (attempt < 3) {
-                            this.showToast(`⏳ Rate limit alcanzado. Reintentando en 65 segundos... (intento ${attempt}/2)`, 'info');
-                            await new Promise(r => setTimeout(r, 65000));
-                            continue;
-                        }
-                        throw new Error('⏳ Límite de la API agotado. Espera unos minutos o usa otra API Key.');
-                    }
-                    if (response.status === 503) {
-                        if (attempt < 5) { await new Promise(r => setTimeout(r, Math.min(attempt * 3000, 12000))); continue; }
-                        throw new Error('El servidor de IA está saturado. Intenta en unos minutos.');
-                    }
-                    if (!response.ok) throw new Error(`Error de la API: ${response.status}`);
-
-                    const data = await response.json();
-                    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                    if (!rawText) throw new Error('Respuesta vacía de la IA');
-                    return JSON.parse(rawText);
                 }
+
+                if (response.status === 401) {
+                    this.openSettings();
+                    throw new Error('❌ API Key inválida o expirada. Verifica tu clave en ⚙️ Ajustes.');
+                }
+                if (response.status === 429) {
+                    throw new Error('⏳ Límite de la API alcanzado. Espera 1 minuto e intenta de nuevo.');
+                }
+                if (!response.ok) throw new Error(`Error de la API: ${response.status}`);
+
+                const data = await response.json();
+                const rawText = isGroq
+                    ? data.choices?.[0]?.message?.content
+                    : data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!rawText) throw new Error('Respuesta vacía de la IA');
+                return JSON.parse(rawText);
             },
 
             // Mode 1: Create Fiesta Room
@@ -915,16 +922,11 @@
                 btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Generando adivinanza con IA...`;
 
                 try {
+                    btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Generando 3 preguntas con IA...`;
                     const sysPrompt = "Eres un diseñador de trivias cómico y creativo.";
-                    const rounds = [];
-                    for (let i = 0; i < 3; i++) {
-                        btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Generando pregunta ${i + 1} de 3...`;
-                        const used = rounds.map(r => r.question).join(' | ');
-                        const prompt = `Genera UNA adivinanza ingeniosa sobre el tema "${this.selectedTopic}"${used ? `. NO repitas estas preguntas ya usadas: ${used}` : ''}. Retorna JSON: {"question":"texto de la adivinanza","correctAnswer":"respuesta breve","hint":"una pista"}`;
-                        const r = await this.callGemini(prompt, sysPrompt);
-                        rounds.push({ question: r.question, correctAnswer: r.correctAnswer, hint: r.hint || '' });
-                        if (i < 2) await new Promise(res => setTimeout(res, 5000)); // evitar rate limit
-                    }
+                    const prompt = `Genera exactamente 3 adivinanzas ingeniosas y diferentes sobre el tema "${this.selectedTopic}". Retorna ÚNICAMENTE este JSON sin texto adicional: {"rounds":[{"question":"texto de la adivinanza","correctAnswer":"respuesta breve","hint":"una pista"},{"question":"...","correctAnswer":"...","hint":"..."},{"question":"...","correctAnswer":"...","hint":"..."}]}`;
+                    const r = await this.callGemini(prompt, sysPrompt);
+                    const rounds = (r.rounds || []).map(q => ({ question: q.question, correctAnswer: q.correctAnswer, hint: q.hint || '' }));
 
                     const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
                     const roomData = {
@@ -976,21 +978,15 @@
                 btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Creando desafío íntimo...`;
 
                 try {
+                    btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Generando 3 preguntas con IA...`;
                     const sysPrompt = "Eres un facilitador de juegos de pareja empático, elegante y atrevido.";
-                    const rounds = [];
-                    for (let i = 0; i < 3; i++) {
-                        btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Generando pregunta ${i + 1} de 3...`;
-                        const used = rounds.map(r => r.question).join(' | ');
-                        const prompt = `Genera UNA pregunta íntima para una pareja. Temperatura: "${this.selectedTemperature}".
+                    const prompt = `Genera exactamente 3 preguntas íntimas y diferentes para una pareja. Temperatura: "${this.selectedTemperature}".
 - "Romántico": gustos, manías o recuerdos bonitos.
 - "Picante": coqueteo, besos o escenarios eróticos suaves.
 - "Sin Filtros": fantasías eróticas consensuadas o deseos.
-${used ? `NO repitas estas preguntas: ${used}` : ''}
-Retorna JSON: {"question":"texto","category":"${this.selectedTemperature}"}`;
-                        const r = await this.callGemini(prompt, sysPrompt);
-                        rounds.push({ question: r.question, category: r.category || this.selectedTemperature });
-                        if (i < 2) await new Promise(res => setTimeout(res, 5000)); // evitar rate limit
-                    }
+Retorna ÚNICAMENTE este JSON sin texto adicional: {"rounds":[{"question":"texto","category":"${this.selectedTemperature}"},{"question":"...","category":"..."},{"question":"...","category":"..."}]}`;
+                    const r = await this.callGemini(prompt, sysPrompt);
+                    const rounds = (r.rounds || []).map(q => ({ question: q.question, category: q.category || this.selectedTemperature }));
 
                     const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
                     const roomData = {
