@@ -291,10 +291,6 @@
                     <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Tu Nombre (Jugador 1)</label>
                     <input type="text" id="pareja-p1-name" placeholder="Ej: Sofía" class="glass-input w-full px-4 py-3 rounded-xl text-white font-semibold">
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Nombre de tu Pareja (Jugador 2)</label>
-                    <input type="text" id="pareja-p2-name" placeholder="Ej: Mateo" class="glass-input w-full px-4 py-3 rounded-xl text-white font-semibold">
-                </div>
 
                 <div>
                     <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Nivel de Temperatura / Intensidad</label>
@@ -1068,7 +1064,7 @@
             // Mode 2: Create Pareja Room
             async createParejaRoom() {
                 const p1Name = document.getElementById('pareja-p1-name').value.trim() || 'Jugador 1';
-                const p2Name = document.getElementById('pareja-p2-name').value.trim() || 'Jugador 2';
+                const p2Name = 'Tu pareja';
                 this.playerNickname = p1Name;
                 localStorage.setItem('adivina_nickname', p1Name);
 
