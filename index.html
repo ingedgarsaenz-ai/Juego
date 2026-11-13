@@ -1142,11 +1142,14 @@ Responde ÚNICAMENTE con este JSON válido (sin texto extra, sin markdown):
                 this.currentRoomData = data;
                 this.updateRoomBadge(roomId);
 
+                // Firestore rejects undefined values — strip them via JSON round-trip
+                const sanitized = JSON.parse(JSON.stringify(data));
+
                 if (this.db) {
                     const docRef = doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', roomId);
-                    await setDoc(docRef, data, { merge: true });
+                    await setDoc(docRef, sanitized, { merge: true });
                 } else {
-                    localStorage.setItem(`room_${roomId}`, JSON.stringify(data));
+                    localStorage.setItem(`room_${roomId}`, JSON.stringify(sanitized));
                 }
             },
 
