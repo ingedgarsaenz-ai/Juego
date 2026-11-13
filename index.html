@@ -884,7 +884,12 @@
                         throw new Error('❌ API Key inválida o expirada. Ingresa una nueva clave en ⚙️ Ajustes.\nObtén una gratis en aistudio.google.com');
                     }
                     if (response.status === 429) {
-                        throw new Error('⏳ Límite de la API alcanzado. Espera 1 minuto e intenta de nuevo.');
+                        if (attempt < 3) {
+                            this.showToast(`⏳ Rate limit alcanzado. Reintentando en 65 segundos... (intento ${attempt}/2)`, 'info');
+                            await new Promise(r => setTimeout(r, 65000));
+                            continue;
+                        }
+                        throw new Error('⏳ Límite de la API agotado. Espera unos minutos o usa otra API Key.');
                     }
                     if (response.status === 503) {
                         if (attempt < 5) { await new Promise(r => setTimeout(r, Math.min(attempt * 3000, 12000))); continue; }
@@ -918,7 +923,7 @@
                         const prompt = `Genera UNA adivinanza ingeniosa sobre el tema "${this.selectedTopic}"${used ? `. NO repitas estas preguntas ya usadas: ${used}` : ''}. Retorna JSON: {"question":"texto de la adivinanza","correctAnswer":"respuesta breve","hint":"una pista"}`;
                         const r = await this.callGemini(prompt, sysPrompt);
                         rounds.push({ question: r.question, correctAnswer: r.correctAnswer, hint: r.hint || '' });
-                        if (i < 2) await new Promise(res => setTimeout(res, 2000)); // evitar rate limit
+                        if (i < 2) await new Promise(res => setTimeout(res, 5000)); // evitar rate limit
                     }
 
                     const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -984,7 +989,7 @@ ${used ? `NO repitas estas preguntas: ${used}` : ''}
 Retorna JSON: {"question":"texto","category":"${this.selectedTemperature}"}`;
                         const r = await this.callGemini(prompt, sysPrompt);
                         rounds.push({ question: r.question, category: r.category || this.selectedTemperature });
-                        if (i < 2) await new Promise(res => setTimeout(res, 2000)); // evitar rate limit
+                        if (i < 2) await new Promise(res => setTimeout(res, 5000)); // evitar rate limit
                     }
 
                     const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
