@@ -1476,9 +1476,15 @@ Responde ÚNICAMENTE en este JSON:
                                 p.comment = ev.comment;
                                 if (!p.roundScores) p.roundScores = {};
                                 p.roundScores[roundIdx] = ev.score;
+                                if (!p.roundAnswers) p.roundAnswers = {};
+                                p.roundAnswers[roundIdx] = p.answer;
+                                if (!p.roundComments) p.roundComments = {};
+                                p.roundComments[roundIdx] = ev.comment;
                                 p.totalScore = Object.values(p.roundScores).reduce((a, b) => a + b, 0);
                             }
                         });
+                        if (!data.roundSummaries) data.roundSummaries = {};
+                        data.roundSummaries[roundIdx] = { question: roundQuestion.question, correctAnswer: roundQuestion.correctAnswer, funnySummary: res.funnySummary };
                         data.lastRoundSummary = res.funnySummary;
                         data.funnySummary = res.funnySummary;
 
@@ -1501,6 +1507,14 @@ Responde ÚNICAMENTE en JSON:
                         data.analysis = res.analysis;
                         data.reward = res.reward;
                         data.punishment = res.punishment;
+                        if (!data.roundData) data.roundData = {};
+                        data.roundData[roundIdx] = {
+                            question: roundQuestion.question,
+                            p1Name: p1.nickname, p2Name: p2.nickname,
+                            p1Answer: p1.answer, p2Answer: p2.answer,
+                            compatibility: res.compatibilityScore,
+                            analysis: res.analysis, reward: res.reward, punishment: res.punishment
+                        };
                     }
 
                     const nextRound = roundIdx + 1;
@@ -1573,77 +1587,133 @@ Responde ÚNICAMENTE en JSON:
             },
 
             renderFiestaResults(data) {
-                const lastRoundIdx = (data.totalRounds || 1) - 1;
-                const lastRound = (data.rounds && data.rounds[lastRoundIdx]) ? data.rounds[lastRoundIdx] : data;
-                document.getElementById('fiesta-correct-answer-text').innerText = lastRound.correctAnswer || data.correctAnswer || '---';
-                document.getElementById('fiesta-ai-summary').innerText = `"${data.funnySummary || '¡Buena partida a todos!'}"`;
+                document.getElementById('fiesta-ai-summary').innerText = '"' + (data.funnySummary || '¡Buena partida a todos!') + '"';
 
                 const sortedPlayers = Object.values(data.players).sort((a, b) => (b.totalScore || b.score || 0) - (a.totalScore || a.score || 0));
 
-                // Winner banner
                 if (sortedPlayers.length > 0) {
                     const winner = sortedPlayers[0];
                     document.getElementById('fiesta-winner-name').innerText = winner.nickname;
-                    document.getElementById('fiesta-winner-score').innerText = `${winner.totalScore || winner.score || 0} puntos totales`;
+                    document.getElementById('fiesta-winner-score').innerText = (winner.totalScore || winner.score || 0) + ' puntos totales';
                 }
+
+                // Mostrar respuesta correcta de última ronda en la tarjeta existente
+                const lastRoundIdx = (data.totalRounds || 1) - 1;
+                const lastRoundSum = data.roundSummaries?.[lastRoundIdx];
+                const lastRoundQ = data.rounds?.[lastRoundIdx];
+                document.getElementById('fiesta-correct-answer-text').innerText = lastRoundSum?.correctAnswer || lastRoundQ?.correctAnswer || '---';
 
                 const leaderboard = document.getElementById('fiesta-leaderboard');
                 leaderboard.innerHTML = '';
+                const medals = ['🥇', '🥈', '🥉', '4️⃣'];
+                const colors = ['border-amber-400 bg-amber-500/10', 'border-slate-700', 'border-slate-700', 'border-slate-700'];
 
+                // Sección por ronda
+                const totalRounds = data.totalRounds || 1;
+                for (let r = 0; r < totalRounds; r++) {
+                    const rs = data.roundSummaries?.[r];
+                    const rq = data.rounds?.[r];
+                    const question = rs?.question || rq?.question || '';
+                    const correctAnswer = rs?.correctAnswer || rq?.correctAnswer || '';
+                    const summary = rs?.funnySummary || '';
+
+                    let roundHtml = '<div class="mb-5">';
+                    roundHtml += '<div class="flex items-center gap-2 mb-2">';
+                    roundHtml += '<span class="w-6 h-6 rounded-full bg-purple-500/30 flex items-center justify-center text-[11px] font-black text-purple-300">' + (r + 1) + '</span>';
+                    roundHtml += '<span class="text-xs font-bold text-purple-400 uppercase tracking-wider">Ronda ' + (r + 1) + '</span>';
+                    roundHtml += '</div>';
+                    roundHtml += '<div class="glass-card p-3 rounded-xl border border-slate-700/60 mb-2">';
+                    roundHtml += '<div class="text-[10px] text-slate-400 font-bold uppercase mb-1">Pregunta</div>';
+                    roundHtml += '<div class="text-xs text-white font-semibold leading-snug">' + question + '</div>';
+                    roundHtml += '<div class="text-[11px] text-emerald-400 font-bold mt-2">✓ ' + correctAnswer + '</div>';
+                    roundHtml += '</div>';
+
+                    sortedPlayers.forEach((p, idx) => {
+                        const ans = (p.roundAnswers && p.roundAnswers[r] !== undefined) ? p.roundAnswers[r] : (r === lastRoundIdx ? p.answer : '—');
+                        const score = (p.roundScores && p.roundScores[r] !== undefined) ? p.roundScores[r] : 0;
+                        const comment = (p.roundComments && p.roundComments[r]) ? p.roundComments[r] : '';
+                        roundHtml += '<div class="glass-input p-3 rounded-xl flex items-center justify-between border-l-4 ' + (idx === 0 ? 'border-amber-400' : 'border-slate-700') + ' mb-1">';
+                        roundHtml += '<div class="flex items-center gap-2"><span class="text-base">' + (medals[idx] || '👤') + '</span>';
+                        roundHtml += '<div><div class="font-bold text-white text-xs">' + p.nickname + '</div>';
+                        roundHtml += '<div class="text-[11px] text-slate-300 italic">&ldquo;' + ans + '&rdquo;</div>';
+                        if (comment) roundHtml += '<div class="text-[10px] text-purple-300 mt-0.5">' + comment + '</div>';
+                        roundHtml += '</div></div>';
+                        roundHtml += '<div class="text-right"><div class="text-base font-black text-amber-400">' + score + '</div><div class="text-[9px] text-slate-400">pts</div></div>';
+                        roundHtml += '</div>';
+                    });
+
+                    if (summary) roundHtml += '<div class="text-[10px] text-purple-300 italic px-1 mt-1">&ldquo;' + summary + '&rdquo;</div>';
+                    roundHtml += '</div>';
+                    leaderboard.innerHTML += roundHtml;
+                }
+
+                // Clasificación final
+                leaderboard.innerHTML += '<div class="border-t border-slate-700/60 pt-4 mt-2"><div class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-3">🏆 Clasificación Final</div>';
                 sortedPlayers.forEach((p, idx) => {
-                    const medals = ['🥇', '🥈', '🥉', '4️⃣'];
-                    const roundBreakdown = p.roundScores ? Object.entries(p.roundScores).map(([r, s]) => `R${parseInt(r)+1}:${s}`).join(' · ') : '';
-                    leaderboard.innerHTML += `
-                        <div class="glass-input p-4 rounded-2xl flex items-center justify-between border-l-4 ${idx === 0 ? 'border-amber-400 bg-amber-500/10' : 'border-slate-700'}">
-                            <div class="flex items-center gap-3">
-                                <span class="text-2xl">${medals[idx] || '👤'}</span>
-                                <div>
-                                    <div class="font-bold text-white text-sm flex items-center gap-2">
-                                        ${p.nickname} <span class="text-[10px] text-slate-400">(${p.duration}s)</span>
-                                    </div>
-                                    <div class="text-xs text-slate-300 italic">"${p.answer}"</div>
-                                    <div class="text-[11px] text-purple-300 mt-1">${p.comment || ''}</div>
-                                    ${roundBreakdown ? `<div class="text-[10px] text-amber-400/70 mt-0.5">${roundBreakdown}</div>` : ''}
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-xl font-black text-amber-400">${p.totalScore || p.score || 0}</div>
-                                <div class="text-[9px] uppercase font-bold text-slate-400">Puntos</div>
-                            </div>
-                        </div>
-                    `;
+                    leaderboard.innerHTML += '<div class="glass-input p-3 rounded-xl flex items-center justify-between border-l-4 ' + colors[idx] + ' mb-1">';
+                    leaderboard.innerHTML += '<div class="flex items-center gap-3"><span class="text-xl">' + (medals[idx] || '👤') + '</span><span class="font-bold text-white text-sm">' + p.nickname + '</span></div>';
+                    leaderboard.innerHTML += '<div class="text-right"><div class="text-xl font-black text-amber-400">' + (p.totalScore || p.score || 0) + '</div><div class="text-[9px] uppercase font-bold text-slate-400">Total</div></div>';
+                    leaderboard.innerHTML += '</div>';
                 });
+                leaderboard.innerHTML += '</div>';
 
                 confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
                 this.navTo('results-fiesta');
             },
 
             renderParejaResults(data) {
-                document.getElementById('pareja-results-temp-badge').innerText = `❤️ Modo Pareja - ${data.temperature}`;
-                
-                const pList = Object.values(data.players);
-                const p1 = pList[0] || { nickname: 'Jugador 1', answer: '' };
-                const p2 = pList[1] || { nickname: 'Jugador 2', answer: '' };
+                document.getElementById('pareja-results-temp-badge').innerText = '❤️ Modo Pareja - ' + data.temperature;
 
-                document.getElementById('pareja-p1-card-name').innerText = p1.nickname;
-                document.getElementById('pareja-p1-card-answer').innerText = `"${p1.answer}"`;
-
-                document.getElementById('pareja-p2-card-name').innerText = p2.nickname;
-                document.getElementById('pareja-p2-card-answer').innerText = `"${p2.answer}"`;
-
-                document.getElementById('pareja-compatibility-score').innerText = `${data.compatibilityScore || 80}%`;
-                document.getElementById('pareja-compatibility-bar').style.width = `${data.compatibilityScore || 80}%`;
-                document.getElementById('pareja-ai-analysis').innerText = `"${data.analysis || 'Tienen una sintonía genial.'}"`;
-
-                document.getElementById('pareja-reward-text').innerText = data.reward || 'Un abrazo de 1 minuto y un masaje.';
-                document.getElementById('pareja-punishment-text').innerText = data.punishment || 'Preparar el desayuno mañana.';
+                // Reset reveal state
+                document.getElementById('pareja-unmask-container').classList.remove('hidden');
+                document.getElementById('pareja-revealed-content').classList.add('hidden');
 
                 this.navTo('results-pareja');
             },
 
             revealParejaAnswers() {
+                const data = this.currentRoomData;
+                const totalRounds = data.totalRounds || 1;
+
+                // Build per-round cards
+                let roundsHtml = '';
+                for (let r = 0; r < totalRounds; r++) {
+                    const rd = data.roundData?.[r];
+                    if (!rd) continue;
+                    const compat = rd.compatibility || 0;
+                    roundsHtml += '<div class="glass-card p-5 rounded-2xl border border-purple-500/20 space-y-3">';
+                    roundsHtml += '<div class="flex items-center gap-2">';
+                    roundsHtml += '<span class="w-6 h-6 rounded-full bg-pink-500/30 flex items-center justify-center text-[11px] font-black text-pink-300">' + (r + 1) + '</span>';
+                    roundsHtml += '<span class="text-xs font-bold text-pink-400 uppercase tracking-wider">Ronda ' + (r + 1) + '</span>';
+                    roundsHtml += '</div>';
+                    roundsHtml += '<div class="text-xs text-slate-300 font-semibold italic">' + rd.question + '</div>';
+                    roundsHtml += '<div class="grid grid-cols-2 gap-3">';
+                    roundsHtml += '<div class="glass-card p-3 rounded-xl border border-pink-500/30"><div class="text-[10px] font-bold text-pink-400 mb-1">' + rd.p1Name + '</div><p class="text-xs text-white italic">&ldquo;' + rd.p1Answer + '&rdquo;</p></div>';
+                    roundsHtml += '<div class="glass-card p-3 rounded-xl border border-rose-500/30"><div class="text-[10px] font-bold text-rose-400 mb-1">' + rd.p2Name + '</div><p class="text-xs text-white italic">&ldquo;' + rd.p2Answer + '&rdquo;</p></div>';
+                    roundsHtml += '</div>';
+                    roundsHtml += '<div class="flex items-center gap-3"><div class="text-2xl font-black bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">' + compat + '%</div>';
+                    roundsHtml += '<div class="flex-1 bg-slate-800 h-2 rounded-full overflow-hidden border border-slate-700"><div class="h-full bg-gradient-to-r from-pink-500 to-purple-500 rounded-full" style="width:' + compat + '%"></div></div></div>';
+                    roundsHtml += '<p class="text-[11px] text-slate-300 italic">&ldquo;' + rd.analysis + '&rdquo;</p>';
+                    roundsHtml += '<div class="grid grid-cols-2 gap-2">';
+                    roundsHtml += '<div class="text-[11px] text-emerald-300"><span class="font-bold text-emerald-400">🎁 Premio:</span> ' + rd.reward + '</div>';
+                    roundsHtml += '<div class="text-[11px] text-amber-300"><span class="font-bold text-amber-400">😈 Reto:</span> ' + rd.punishment + '</div>';
+                    roundsHtml += '</div></div>';
+                }
+
+                // Overall compatibility
+                const avgCompat = data.compatibilityScore || 80;
+                const revealedContent = document.getElementById('pareja-revealed-content');
+                revealedContent.innerHTML = roundsHtml +
+                    '<div class="glass-card p-6 rounded-3xl border border-purple-500/30 text-center space-y-3">' +
+                    '<span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Compatibilidad Total</span>' +
+                    '<div class="text-5xl font-black bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">' + avgCompat + '%</div>' +
+                    '<div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden p-0.5 border border-slate-700">' +
+                    '<div class="h-full bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 rounded-full transition-all duration-1000" style="width:' + avgCompat + '%"></div>' +
+                    '</div></div>' +
+                    '<button onclick="app.navTo(\'menu\', true)" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 rounded-xl border border-slate-700">Volver al Menú Principal</button>';
+
                 document.getElementById('pareja-unmask-container').classList.add('hidden');
-                document.getElementById('pareja-revealed-content').classList.remove('hidden');
+                revealedContent.classList.remove('hidden');
                 confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
             },
 
