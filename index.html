@@ -1641,6 +1641,42 @@ Responde ÚNICAMENTE en JSON:
                             compatibility: compatScore,
                             analysis: res.analysis, reward: res.reward, punishment: res.punishment
                         };
+
+                        // On the last round, generate 3-judge final verdict
+                        if ((roundIdx + 1) >= (data.totalRounds || 1)) {
+                            const judgePool = [
+                                { emoji: '🧠', name: 'Dra. Valentina Cruz', role: 'Psicóloga Clínica de Parejas' },
+                                { emoji: '💋', name: 'Dr. Marcos Reyes', role: 'Sexólogo Clínico' },
+                                { emoji: '🌍', name: 'Luna Salvaje', role: 'Coach de Vida & Aventuras' },
+                                { emoji: '🎭', name: 'Camilo Fuentes', role: 'Coach de Inteligencia Emocional' },
+                                { emoji: '🔥', name: 'Sofía Nights', role: 'Terapeuta Sexual' },
+                                { emoji: '🌿', name: 'Amara Zen', role: 'Coach Holístico de Bienestar' },
+                                { emoji: '🚀', name: 'Cap. Adrenalina', role: 'Experto en Aventuras de Pareja' },
+                                { emoji: '🍷', name: 'Rodrigo Deseo', role: 'Sommelier de Experiencias Íntimas' },
+                            ];
+                            const chosenJudges = [...judgePool].sort(() => Math.random() - 0.5).slice(0, 3);
+                            const allRoundsSummary = Object.values(data.roundData || {}).map((rd, i) =>
+                                `Ronda ${i+1}: "${rd.question}" — ${rd.p1Name}: "${rd.p1Answer}", ${rd.p2Name}: "${rd.p2Answer}" (Compatibilidad: ${rd.compatibility}%)`
+                            ).join('\n');
+                            const judgesDesc = chosenJudges.map((j, i) => `${i+1}. ${j.emoji} ${j.name} — ${j.role}`).join('\n');
+                            const finalPrompt = `Panel de 3 jueces expertos evaluando a una pareja en modo "${data.temperature}" basándose en TODAS las rondas del juego:\n\n${allRoundsSummary}\n\nJUECES DEL PANEL:\n${judgesDesc}\n\nCada juez da su veredicto personal (1-2 oraciones únicas, en su voz profesional y con personalidad marcada, reflejando su especialidad). Luego los 3 proponen en consenso UN solo premio final y UN solo reto final creativos para el modo "${data.temperature}", basados en el patrón de respuestas de toda la sesión.\n\nGuía premios: ${tg.reward}\nGuía retos: ${tg.punishment}\n\nResponde ÚNICAMENTE en JSON válido:\n{"judges":[{"emoji":"...","name":"...","role":"...","verdict":"..."},{"emoji":"...","name":"...","role":"...","verdict":"..."},{"emoji":"...","name":"...","role":"...","verdict":"..."}],"finalReward":"Premio específico y creativo","finalPunishment":"Reto específico y creativo"}`;
+                            try {
+                                const finalRes = await this.callGemini(finalPrompt, `Eres un panel de 3 jueces expertos en relaciones de pareja: uno es psicólogo clínico, otro es sexólogo, y el tercero es coach de aventuras. Cada uno habla con su personalidad y jerga profesional, con tono entre profesional y atrevido. Responde en español con JSON válido.`);
+                                data.finalVerdict = {
+                                    judges: (finalRes.judges || []).map((j, i) => ({
+                                        emoji: j.emoji || chosenJudges[i]?.emoji || '🔮',
+                                        name: j.name || chosenJudges[i]?.name || `Juez ${i+1}`,
+                                        role: j.role || chosenJudges[i]?.role || '',
+                                        verdict: j.verdict || '—'
+                                    })),
+                                    finalReward: finalRes.finalReward || res.reward || '',
+                                    finalPunishment: finalRes.finalPunishment || res.punishment || ''
+                                };
+                            } catch(judgeErr) {
+                                console.warn('Final verdict generation failed:', judgeErr);
+                                data.finalVerdict = { judges: chosenJudges.map(j => ({...j, verdict: '—'})), finalReward: res.reward || '', finalPunishment: res.punishment || '' };
+                            }
+                        }
                     }
 
                     const nextRound = roundIdx + 1;
@@ -1687,6 +1723,9 @@ Responde ÚNICAMENTE en JSON:
                         data.analysis = data.roundData[roundIdx].analysis;
                         data.reward = data.roundData[roundIdx].reward;
                         data.punishment = data.roundData[roundIdx].punishment;
+                        if ((roundIdx + 1) >= (data.totalRounds || 1)) {
+                            data.finalVerdict = { judges: [], finalReward: data.roundData[roundIdx].reward || '', finalPunishment: data.roundData[roundIdx].punishment || '' };
+                        }
                     }
 
                     const nextRoundErr = roundIdx + 1;
@@ -1901,13 +1940,41 @@ Responde ÚNICAMENTE en JSON:
                     roundsHtml += '<div class="flex items-center gap-3"><div class="text-2xl font-black bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">' + compat + '%</div>';
                     roundsHtml += '<div class="flex-1 bg-slate-800 h-2 rounded-full overflow-hidden border border-slate-700"><div class="h-full bg-gradient-to-r from-pink-500 to-purple-500 rounded-full" style="width:' + compat + '%"></div></div></div>';
                     if (analysis)   roundsHtml += '<p class="text-[11px] text-slate-300 italic">&ldquo;' + analysis + '&rdquo;</p>';
-                    if (reward || punishment) {
-                        roundsHtml += '<div class="grid grid-cols-2 gap-2">';
-                        if (reward)     roundsHtml += '<div class="text-[11px] text-emerald-300"><span class="font-bold text-emerald-400">🎁 Premio:</span> ' + reward + '</div>';
-                        if (punishment) roundsHtml += '<div class="text-[11px] text-amber-300"><span class="font-bold text-amber-400">😈 Reto:</span> ' + punishment + '</div>';
-                        roundsHtml += '</div>';
-                    }
                     roundsHtml += '</div>';
+                }
+
+                // Judges panel (final verdict)
+                let judgesPanelHtml = '';
+                const fv = data.finalVerdict;
+                if (fv && fv.judges && fv.judges.length > 0) {
+                    judgesPanelHtml += '<div class="glass-card p-5 rounded-3xl border border-amber-500/40 bg-amber-950/10 space-y-4">';
+                    judgesPanelHtml += '<div class="flex items-center justify-center gap-2 text-amber-300 pb-1 border-b border-amber-500/20"><i class="fa-solid fa-gavel text-amber-400 text-lg"></i><span class="text-sm font-black uppercase tracking-widest">Veredicto del Panel de Jueces</span></div>';
+                    fv.judges.forEach(judge => {
+                        judgesPanelHtml += '<div class="glass-card p-4 rounded-2xl border border-slate-700/80 space-y-2">';
+                        judgesPanelHtml += '<div class="flex items-center gap-3"><span class="text-2xl leading-none">' + (judge.emoji||'🔮') + '</span><div><div class="text-xs font-black text-white">' + (judge.name||'') + '</div><div class="text-[10px] text-slate-400 italic">' + (judge.role||'') + '</div></div></div>';
+                        judgesPanelHtml += '<p class="text-xs text-slate-300 italic leading-relaxed border-l-2 border-slate-600 pl-3">&ldquo;' + (judge.verdict||'—') + '&rdquo;</p>';
+                        judgesPanelHtml += '</div>';
+                    });
+                    judgesPanelHtml += '<div class="border-t border-amber-500/40 pt-4 space-y-3">';
+                    judgesPanelHtml += '<div class="text-xs font-black text-amber-300 uppercase tracking-widest text-center flex items-center justify-center gap-2"><i class="fa-solid fa-star text-amber-400"></i> Veredicto Unánime <i class="fa-solid fa-star text-amber-400"></i></div>';
+                    judgesPanelHtml += '<div class="glass-card p-4 rounded-2xl border border-emerald-500/30 bg-emerald-950/15 space-y-1.5">';
+                    judgesPanelHtml += '<div class="text-xs font-bold text-emerald-400 flex items-center gap-2"><i class="fa-solid fa-gift"></i> 🎁 Premio Final:</div>';
+                    judgesPanelHtml += '<p class="text-xs text-emerald-200 leading-relaxed">' + (fv.finalReward||'') + '</p>';
+                    judgesPanelHtml += '</div>';
+                    judgesPanelHtml += '<div class="glass-card p-4 rounded-2xl border border-rose-500/30 bg-rose-950/15 space-y-1.5">';
+                    judgesPanelHtml += '<div class="text-xs font-bold text-rose-400 flex items-center gap-2"><i class="fa-solid fa-fire"></i> 😈 Reto Final:</div>';
+                    judgesPanelHtml += '<p class="text-xs text-rose-200 leading-relaxed">' + (fv.finalPunishment||'') + '</p>';
+                    judgesPanelHtml += '</div>';
+                    judgesPanelHtml += '</div></div>';
+                } else if (fv) {
+                    // Fallback: no judge avatars, just show final reward/punishment
+                    if (fv.finalReward || fv.finalPunishment) {
+                        judgesPanelHtml += '<div class="glass-card p-5 rounded-3xl border border-amber-500/30 bg-amber-950/10 space-y-3">';
+                        judgesPanelHtml += '<div class="text-xs font-black text-amber-300 uppercase tracking-widest text-center flex items-center justify-center gap-2"><i class="fa-solid fa-gavel"></i> Veredicto Final</div>';
+                        if (fv.finalReward) judgesPanelHtml += '<div class="glass-card p-4 rounded-2xl border border-emerald-500/30 bg-emerald-950/15"><div class="text-xs font-bold text-emerald-400 mb-1.5">🎁 Premio</div><p class="text-xs text-emerald-200 leading-relaxed">' + fv.finalReward + '</p></div>';
+                        if (fv.finalPunishment) judgesPanelHtml += '<div class="glass-card p-4 rounded-2xl border border-rose-500/30 bg-rose-950/15"><div class="text-xs font-bold text-rose-400 mb-1.5">😈 Reto</div><p class="text-xs text-rose-200 leading-relaxed">' + fv.finalPunishment + '</p></div>';
+                        judgesPanelHtml += '</div>';
+                    }
                 }
 
                 // Overall compatibility
@@ -1920,6 +1987,7 @@ Responde ÚNICAMENTE en JSON:
                     '<div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden p-0.5 border border-slate-700">' +
                     '<div class="h-full bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 rounded-full transition-all duration-1000" style="width:' + avgCompat + '%"></div>' +
                     '</div></div>' +
+                    judgesPanelHtml +
                     '<button onclick="app.navTo(\'menu\', true)" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 rounded-xl border border-slate-700">Volver al Menú Principal</button>';
 
                 document.getElementById('pareja-unmask-container').classList.add('hidden');
@@ -1955,6 +2023,9 @@ Responde ÚNICAMENTE en JSON:
                     data.analysis = data.roundData[roundIdx].analysis;
                     data.reward = data.roundData[roundIdx].reward;
                     data.punishment = data.roundData[roundIdx].punishment;
+                    if ((roundIdx + 1) >= (data.totalRounds || 1)) {
+                        data.finalVerdict = { judges: [], finalReward: data.roundData[roundIdx].reward || '', finalPunishment: data.roundData[roundIdx].punishment || '' };
+                    }
                 }
 
                 const nextRound = roundIdx + 1;
