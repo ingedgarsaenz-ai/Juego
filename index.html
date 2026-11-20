@@ -1267,7 +1267,7 @@
                 try {
                     btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Generando 5 preguntas con IA...`;
                     const temp = this.selectedTemperature;
-                    // Judge personas from the game — pick 3 randomly for natural variety each session
+                    // Judge personas from the game — pick 5 randomly for natural variety each session
                     const judgePool = [
                         { emoji: '🧠', name: 'Dra. Valentina Cruz', role: 'Psicóloga Clínica de Parejas', specialty: 'conexión emocional, apego, comunicación íntima, heridas del pasado en pareja' },
                         { emoji: '💋', name: 'Dr. Marcos Reyes', role: 'Sexólogo Clínico', specialty: 'deseo, fantasías, compatibilidad física, exploración sexual consensuada' },
@@ -1277,6 +1277,8 @@
                         { emoji: '🌿', name: 'Amara Zen', role: 'Coach Holístico', specialty: 'bienestar en pareja, rituales de autocuidado, conexión espiritual y emocional' },
                         { emoji: '🚀', name: 'Cap. Adrenalina', role: 'Experto en Aventuras', specialty: 'retos físicos, deportes extremos, actividades que aún no han vivido juntos' },
                         { emoji: '🍷', name: 'Rodrigo Deseo', role: 'Sommelier de Experiencias', specialty: 'cenas íntimas, seducción, rituales de pareja, experiencias sensoriales' },
+                        { emoji: '🎪', name: 'Isabella Fuego', role: 'Maestra de Juegos Sensuales', specialty: 'juegos de seducción, provocación, tensión sexual y burlas de alto voltaje entre la pareja' },
+                        { emoji: '🌙', name: 'El Tantrista', role: 'Maestro del Arte Tántrico', specialty: 'energía erótica, respiración íntima, conexión cuerpo a cuerpo y rituales tántricos' },
                     ];
                     const tempGuide = {
                         'Romántico & Aventuras': 'conexión emocional, recuerdos tiernos, detalles de la relación, planes de viaje y sueños juntos. Para opciones: ["❤️ Siempre", "🤔 A veces", "🙈 Casi nunca", "✨ Es nuestra tradición"] o similares.',
@@ -1290,16 +1292,16 @@
                     }[temp] || '';
                     const parejaHist = this.getQuestionHistory(this.selectedTemperature);
                     const noRepeatP = parejaHist.length > 0 ? `\nNO repitas ninguna de estas preguntas ya utilizadas:\n${parejaHist.map(q => `- ${q}`).join('\n')}\n` : '';
-                    const chosenJudges = [...judgePool].sort(() => Math.random() - 0.5).slice(0, 3);
+                    const chosenJudges = [...judgePool].sort(() => Math.random() - 0.5).slice(0, 5);
                     const judgesLines = chosenJudges.map((j, i) => `${i + 1}. ${j.emoji} ${j.name} (${j.role}): especialista en ${j.specialty}`).join('\n');
-                    const sysPrompt = `Eres un panel de 3 especialistas en relaciones e intimidad de pareja. Cada uno aporta preguntas únicas desde su área para crear una experiencia variada y profunda. Responde SIEMPRE en español.`;
-                    const prompt = `Panel de especialistas para esta sesión — temperatura "${temp}":
+                    const sysPrompt = `Eres un panel de 5 especialistas en relaciones e intimidad de pareja. Cada uno aporta exactamente 1 pregunta única desde su área. Responde SIEMPRE en español.`;
+                    const prompt = `Panel de 5 especialistas para esta sesión — temperatura "${temp}":
 ${judgesLines}
 
 CONTEXTO OBLIGATORIO: ${temperatureContext}
 Guía de opciones para preguntas choice: ${tempGuide}
 ${noRepeatP}
-Cada especialista aporta preguntas únicas desde su área respetando el tono del modo. Total: exactamente 5 preguntas muy variadas.
+Cada especialista aporta exactamente 1 pregunta única desde su especialidad. Total: exactamente 5 preguntas muy variadas (una por juez).
 DISTRIBUCIÓN OBLIGATORIA: exactamente 3 preguntas abiertas (type "open") + exactamente 2 preguntas de selección múltiple (type "choice").
 Las preguntas "open" NO llevan opciones. Las preguntas "choice" llevan exactamente 4 opciones.
 Coloca las 3 preguntas abiertas PRIMERO y las 2 de opción múltiple AL FINAL.
@@ -1870,19 +1872,38 @@ Responde ÚNICAMENTE en este JSON:
                         };
                         const tg = tempGuides[data.temperature] || tempGuides['Picante & Retos'];
 
-                        const prompt = `Evalúa la sintonía amorosa entre estas dos respuestas a la pregunta: "${roundQuestion.question}" (Temperatura: ${data.temperature}).
-Respuesta de ${p1.nickname}: "${p1.answer}"
-Respuesta de ${p2.nickname}: "${p2.answer}"
+                        // Judge specialty lookup — prize/punishment come from the expert who asked
+                        const judgeSpecialties = {
+                            'Valentina Cruz': 'conexión emocional, apego y comunicación íntima',
+                            'Marcos Reyes': 'deseo, fantasías y compatibilidad sexual',
+                            'Luna Salvaje': 'aventuras nuevas, bucket list y experiencias compartidas',
+                            'Camilo Fuentes': 'valores profundos, miedos íntimos y proyectos de vida en común',
+                            'Sofía Nights': 'juegos eróticos, roles y exploración de límites',
+                            'Amara Zen': 'rituales de bienestar, autocuidado y conexión espiritual',
+                            'Cap. Adrenalina': 'retos físicos, adrenalina y actividades extremas juntos',
+                            'Rodrigo Deseo': 'seducción, rituales sensoriales y experiencias íntimas',
+                            'Isabella Fuego': 'juegos de seducción, provocación y tensión sexual de alto voltaje',
+                            'El Tantrista': 'energía erótica, respiración íntima y rituales tántricos',
+                        };
+                        const expertStr = roundQuestion.expert || '';
+                        const judgeKey = Object.keys(judgeSpecialties).find(k => expertStr.includes(k));
+                        const judgeInstruction = judgeKey
+                            ? `\n\nEsta pregunta fue propuesta por ${expertStr}, especialista en ${judgeSpecialties[judgeKey]}. El PREMIO y el RETO deben surgir DESDE ESA ESPECIALIDAD — tipo de actividad diferente a la genérica. No menciones al juez en el texto.`
+                            : '';
+                        const prompt = `Evalúa la sintonía entre estas respuestas a la pregunta: "${roundQuestion.question}" (Modo: ${data.temperature}).
+${p1.nickname}: "${p1.answer}"
+${p2.nickname}: "${p2.answer}"
+${judgeInstruction}
 
-IMPORTANTE — El premio y el reto DEBEN estar 100% alineados al modo "${data.temperature}". Elige UNA idea concreta de cada categoría y personalízala usando el contexto de sus respuestas. NO repitas siempre lo mismo — varía entre masajes, juegos, roles, aventuras, sorpresas, noches temáticas, experiencias sensoriales, etc. El Kamasutra es solo una opción válida para Sin Filtros, no la obligatoria.
+Premio y reto 100% alineados al modo "${data.temperature}", inspirados en la especialidad del juez. Varía el tipo — no siempre el mismo formato ni las mismas palabras.
 
 Guía de premios: ${tg.reward}
 Guía de retos: ${tg.punishment}
 
-Responde ÚNICAMENTE en JSON:
-{"compatibilityScore": 88, "analysis": "Análisis cariñoso y relevante al modo", "reward": "Premio específico y creativo al modo ${data.temperature}", "punishment": "Reto específico y creativo al modo ${data.temperature}"}`;
+JSON (sin texto extra):
+{"compatibilityScore": 88, "analysis": "frase breve máx 10 palabras sobre su sintonía", "reward": "Premio concreto", "punishment": "Reto concreto"}`;
 
-                        const res = await this.callGemini(prompt, `Eres un coach de parejas creativo, empático y atrevido que sabe que la intimidad va mucho más allá del sexo: conexión emocional, aventuras, seducción, sorpresas, juegos, masajes, roles, experiencias sensoriales y momentos únicos. Adaptas cada sugerencia exactamente al nivel "${data.temperature}" usando el contexto de las respuestas. Varías el tipo de actividad en cada ronda — nunca repites el mismo tipo de premio dos veces seguidas. Respondes siempre en español.`);
+                        const res = await this.callGemini(prompt, `Eres un coach de parejas que adapta cada sugerencia a la especialidad del juez que hizo la pregunta y al nivel "${data.temperature}". Varías siempre el tipo de actividad — masaje, aventura, rol, ritual, reto, sorpresa, etc. Nunca repites la misma fórmula. Español, directo, sin floreos.`);
                         const compatScore = (typeof res.compatibilityScore === 'number' && !isNaN(res.compatibilityScore))
                             ? Math.round(res.compatibilityScore)
                             : 75;
@@ -1912,15 +1933,21 @@ Responde ÚNICAMENTE en JSON:
                                 { emoji: '🌿', name: 'Amara Zen', role: 'Coach Holístico de Bienestar' },
                                 { emoji: '🚀', name: 'Cap. Adrenalina', role: 'Experto en Aventuras de Pareja' },
                                 { emoji: '🍷', name: 'Rodrigo Deseo', role: 'Sommelier de Experiencias Íntimas' },
+                                { emoji: '🎪', name: 'Isabella Fuego', role: 'Maestra de Juegos Sensuales' },
+                                { emoji: '🌙', name: 'El Tantrista', role: 'Maestro del Arte Tántrico' },
                             ];
                             const chosenJudges = [...judgePool].sort(() => Math.random() - 0.5).slice(0, 3);
                             const allRoundsSummary = Object.values(data.roundData || {}).map((rd, i) =>
                                 `Ronda ${i+1}: "${rd.question}" — ${rd.p1Name}: "${rd.p1Answer}", ${rd.p2Name}: "${rd.p2Answer}" (Compatibilidad: ${rd.compatibility}%)`
                             ).join('\n');
                             const judgesDesc = chosenJudges.map((j, i) => `${i+1}. ${j.emoji} ${j.name} — ${j.role}`).join('\n');
-                            const finalPrompt = `Panel de 3 jueces expertos evaluando a una pareja en modo "${data.temperature}" basándose en TODAS las rondas del juego:\n\n${allRoundsSummary}\n\nJUECES DEL PANEL:\n${judgesDesc}\n\nCada juez da su veredicto personal (1-2 oraciones únicas, en su voz profesional y con personalidad marcada, reflejando su especialidad). Luego los 3 proponen en consenso UN solo premio final y UN solo reto final creativos para el modo "${data.temperature}", basados en el patrón de respuestas de toda la sesión.\n\nGuía premios: ${tg.reward}\nGuía retos: ${tg.punishment}\n\nResponde ÚNICAMENTE en JSON válido:\n{"judges":[{"emoji":"...","name":"...","role":"...","verdict":"..."},{"emoji":"...","name":"...","role":"...","verdict":"..."},{"emoji":"...","name":"...","role":"...","verdict":"..."}],"finalReward":"Premio específico y creativo","finalPunishment":"Reto específico y creativo"}`;
+                            const priorRewards = Object.values(data.roundData || {}).map(rd => rd.reward).filter(Boolean).join(' | ');
+                            const priorPunishments = Object.values(data.roundData || {}).map(rd => rd.punishment).filter(Boolean).join(' | ');
+                            const noRepeatFinal = (priorRewards || priorPunishments)
+                                ? `\n\nYA SUGERIDO EN RONDAS ANTERIORES (NO REPETIR, proponer algo diferente en tipo y formato):\nPremios: ${priorRewards}\nRetos: ${priorPunishments}` : '';
+                            const finalPrompt = `Panel de 3 jueces evaluando a una pareja en modo "${data.temperature}" tras TODAS las rondas:\n\n${allRoundsSummary}\n\nJUECES:\n${judgesDesc}\n\nCada juez da su veredicto en 1-2 oraciones desde SU especialidad (voz única, personalidad marcada, no repitan lo mismo entre ellos). Luego los 3 fusionan sus perspectivas en UN premio final y UN reto final completamente diferentes a lo ya dado.${noRepeatFinal}\n\nGuía premios: ${tg.reward}\nGuía retos: ${tg.punishment}\n\nJSON válido con exactamente 3 jueces:\n{"judges":[{"emoji":"...","name":"...","role":"...","verdict":"..."},{"emoji":"...","name":"...","role":"...","verdict":"..."},{"emoji":"...","name":"...","role":"...","verdict":"..."}],"finalReward":"Premio final diferente a los anteriores","finalPunishment":"Reto final diferente a los anteriores"}`;
                             try {
-                                const finalRes = await this.callGemini(finalPrompt, `Eres un panel de 3 jueces expertos en relaciones de pareja: uno es psicólogo clínico, otro es sexólogo, y el tercero es coach de aventuras. Cada uno habla con su personalidad y jerga profesional, con tono entre profesional y atrevido. Responde en español con JSON válido.`);
+                                const finalRes = await this.callGemini(finalPrompt, `Eres un panel de 3 jueces expertos en relaciones de pareja elegidos aleatoriamente entre: psicóloga, sexólogo, coach de aventuras, coach emocional, terapeuta sexual, coach holístico, experto en adrenalina, sommelier de experiencias, maestra de juegos y maestro tántrico. Cada uno habla con su personalidad y voz propias. Responde en español con JSON válido.`);
                                 data.finalVerdict = {
                                     judges: (finalRes.judges || []).map((j, i) => ({
                                         emoji: j.emoji || chosenJudges[i]?.emoji || '🔮',
@@ -2174,6 +2201,19 @@ Responde ÚNICAMENTE en JSON:
                 const p1 = pList[0] || {};
                 const p2 = pList[1] || pList[0] || {};
 
+                // Drink suggestion card
+                const drinkMap = {
+                    'Romántico & Aventuras': '🥂 Brinden antes de leer — una copa de vino o champagne por ustedes dos.',
+                    'Picante & Retos': '🥃 Regla de inicio: cada uno toma un shot antes de revelar las respuestas.',
+                    'Sin Filtros': '🔥 2 shots de tequila cada uno — sin excusas — antes de continuar.',
+                };
+                const drinkText = drinkMap[data.temperature] || '🥃 Tomen un trago juntos antes de revelar.';
+                const drinkCard = `<div class="glass-card p-4 rounded-2xl border border-amber-500/40 bg-amber-950/15 flex items-center gap-3">
+                    <span class="text-2xl flex-shrink-0">🥃</span>
+                    <div><div class="text-xs font-black text-amber-400 uppercase tracking-wider mb-0.5">¡Regla de inicio!</div>
+                    <p class="text-xs text-amber-200">${drinkText}</p></div>
+                </div>`;
+
                 // Build per-round cards — fallback gracefully if roundData is missing
                 let roundsHtml = '';
                 for (let r = 0; r < totalRounds; r++) {
@@ -2245,7 +2285,7 @@ Responde ÚNICAMENTE en JSON:
                 // Overall compatibility
                 const avgCompat = data.compatibilityScore != null ? data.compatibilityScore : 80;
                 const revealedContent = document.getElementById('pareja-revealed-content');
-                revealedContent.innerHTML = roundsHtml +
+                revealedContent.innerHTML = drinkCard + roundsHtml +
                     '<div class="glass-card p-6 rounded-3xl border border-purple-500/30 text-center space-y-3">' +
                     '<span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Compatibilidad Total</span>' +
                     '<div class="text-5xl font-black bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">' + avgCompat + '%</div>' +
