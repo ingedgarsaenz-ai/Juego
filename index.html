@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FUNNIA-XXX - Juego Multijugador Asíncrono</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>😈</text></svg>">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -224,24 +225,15 @@
 
                 <div>
                     <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Tema de la Adivinanza (Generado por IA)</label>
-                    <div class="grid grid-cols-2 gap-2" id="fiesta-topic-selector">
-                        <button type="button" onclick="app.selectTopic(this, 'Canciones Famosas de Música Latina, Colombiana, Argentina y Pop Latino')" class="topic-btn border border-purple-500/40 bg-purple-500/20 text-purple-200 p-3 rounded-xl text-xs font-bold text-left flex items-center justify-between">
-                            <span>🎵 Canciones</span> <i class="fa-solid fa-check text-purple-400"></i>
+                    <div class="grid grid-cols-1 gap-2" id="fiesta-topic-selector">
+                        <button type="button" onclick="app.selectTopic(this, 'Música & Entretenimiento: canciones latinas, pop, reggaetón, películas y series icónicas')" class="topic-btn border border-purple-500/40 bg-purple-500/20 text-purple-200 p-3 rounded-xl text-xs font-bold text-left flex items-center justify-between">
+                            <span>🎵 Música & Entretenimiento</span> <i class="fa-solid fa-check text-purple-400"></i>
                         </button>
-                        <button type="button" onclick="app.selectTopic(this, 'Películas y Series Iconicas')" class="topic-btn border border-slate-700 bg-slate-800/60 text-slate-300 p-3 rounded-xl text-xs font-bold text-left flex items-center justify-between">
-                            <span>🎬 Cine / Series</span>
+                        <button type="button" onclick="app.selectTopic(this, 'Cultura General, Ciencia, Historia y Acertijos ingeniosos')" class="topic-btn border border-slate-700 bg-slate-800/60 text-slate-300 p-3 rounded-xl text-xs font-bold text-left flex items-center justify-between">
+                            <span>🧠 Cultura & Acertijos</span>
                         </button>
-                        <button type="button" onclick="app.selectTopic(this, 'Cultura General')" class="topic-btn border border-slate-700 bg-slate-800/60 text-slate-300 p-3 rounded-xl text-xs font-bold text-left flex items-center justify-between">
-                            <span>🧠 Cultura General</span>
-                        </button>
-                        <button type="button" onclick="app.selectTopic(this, 'Memes y Tendencias de Internet')" class="topic-btn border border-slate-700 bg-slate-800/60 text-slate-300 p-3 rounded-xl text-xs font-bold text-left flex items-center justify-between">
-                            <span>🔥 Memes & Viral</span>
-                        </button>
-                        <button type="button" onclick="app.selectTopic(this, 'Preguntas Picantes y Atrevidas')" class="topic-btn border border-slate-700 bg-slate-800/60 text-slate-300 p-3 rounded-xl text-xs font-bold text-left flex items-center justify-between">
-                            <span>🌶️ Picante</span>
-                        </button>
-                        <button type="button" onclick="app.selectTopic(this, 'Adivinanzas y Acertijos')" class="topic-btn border border-slate-700 bg-slate-800/60 text-slate-300 p-3 rounded-xl text-xs font-bold text-left flex items-center justify-between">
-                            <span>🧩 Adivinanzas</span>
+                        <button type="button" onclick="app.selectTopic(this, 'Memes, Tendencias de Internet y Preguntas Picantes y Atrevidas')" class="topic-btn border border-slate-700 bg-slate-800/60 text-slate-300 p-3 rounded-xl text-xs font-bold text-left flex items-center justify-between">
+                            <span>🔥 Viral & Picante</span>
                         </button>
                     </div>
                 </div>
@@ -744,7 +736,7 @@
             timerSeconds: 45,
 
             // Selected options in forms
-            selectedTopic: 'Canciones Famosas de Música Latina, Colombiana, Argentina y Pop Latino',
+            selectedTopic: 'Música & Entretenimiento: canciones latinas, pop, reggaetón, películas y series icónicas',
             selectedPlayerCount: 2,
             selectedTemperature: 'Romántico & Aventuras',
             selectedAnswerMode: 'text',
@@ -993,12 +985,12 @@
                 btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Generando adivinanza con IA...`;
 
                 try {
-                    btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Generando 3 preguntas con IA...`;
-                    const sysPrompt = "Eres un diseñador de trivias cómico y creativo. Responde SIEMPRE en español, incluyendo preguntas, respuestas, pistas y opciones. Cuando el tema sea de música o canciones, prioriza artistas y canciones latinoamericanas: colombianos (Carlos Vives, Shakira, J Balvin, Maluma, Karol G, Fonseca, Juanes), argentinos (Soda Stereo, Los Fabulosos Cadillacs, Mercedes Sosa, Tini, Bizarrap, Abel Pintos, Charly García), reggaetón, salsa, cumbia, vallenato y pop latino en general.";
+                    btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Generando 5 preguntas con IA...`;
+                    const sysPrompt = "Eres un diseñador de trivias cómico y creativo. Responde SIEMPRE en español, incluyendo preguntas, respuestas, pistas y opciones. Para temas de música prioriza artistas latinoamericanos (Shakira, J Balvin, Karol G, Maluma, Bad Bunny, Soda Stereo, Bizarrap, etc.). Para temas picantes sé atrevido pero divertido.";
                     const isMultiple = this.selectedAnswerMode === 'multiple';
                     const prompt = isMultiple
-                        ? `Genera exactamente 3 adivinanzas ingeniosas en ESPAÑOL sobre el tema "${this.selectedTopic}" con 4 opciones de respuesta cada una (solo una correcta, pon la correcta en posición aleatoria). Todas las preguntas, opciones y pistas deben estar en español. Retorna ÚNICAMENTE este JSON: {"rounds":[{"question":"texto","correctAnswer":"B","hint":"pista","options":["A. opción1","B. opción correcta","C. opción3","D. opción4"]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]}]}`
-                        : `Genera exactamente 3 adivinanzas ingeniosas y diferentes en ESPAÑOL sobre el tema "${this.selectedTopic}". Todas las preguntas, respuestas y pistas deben estar en español. Retorna ÚNICAMENTE este JSON sin texto adicional: {"rounds":[{"question":"texto de la adivinanza","correctAnswer":"respuesta breve","hint":"una pista"},{"question":"...","correctAnswer":"...","hint":"..."},{"question":"...","correctAnswer":"...","hint":"..."}]}`;
+                        ? `Genera exactamente 5 adivinanzas ingeniosas en ESPAÑOL sobre el tema "${this.selectedTopic}" con 4 opciones de respuesta cada una (solo una correcta, pon la correcta en posición aleatoria). Todas las preguntas, opciones y pistas deben estar en español. Retorna ÚNICAMENTE este JSON: {"rounds":[{"question":"texto","correctAnswer":"B","hint":"pista","options":["A. opción1","B. opción correcta","C. opción3","D. opción4"]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]}]}`
+                        : `Genera exactamente 5 adivinanzas ingeniosas y diferentes en ESPAÑOL sobre el tema "${this.selectedTopic}". Todas las preguntas, respuestas y pistas deben estar en español. Retorna ÚNICAMENTE este JSON sin texto adicional: {"rounds":[{"question":"texto de la adivinanza","correctAnswer":"respuesta breve","hint":"una pista"},{"question":"...","correctAnswer":"...","hint":"..."},{"question":"...","correctAnswer":"...","hint":"..."},{"question":"...","correctAnswer":"...","hint":"..."},{"question":"...","correctAnswer":"...","hint":"..."}]}`;
                     const r = await this.callGemini(prompt, sysPrompt);
                     const rounds = (r.rounds || []).map(q => ({
                         question: q.question || q.pregunta || q.texto || q.text || '(sin pregunta)',
@@ -1067,7 +1059,7 @@
                     const tempGuide = {
                         'Romántico & Aventuras': 'mix de recuerdos tiernos, detalles de la relación, planes de viaje, aventuras y sueños juntos. Para opciones: ["❤️ Siempre", "🤔 A veces", "🙈 Casi nunca", "✨ Es nuestra tradición"] o similares.',
                         'Picante & Retos': 'mix de coqueteo, escenarios atrevidos, verdades osadas y retos íntimos. Para opciones: ["✅ Sí, sin dudarlo", "❌ No, jamás", "🤔 Tal vez...", "🔥 Ya lo hice"] o similares.',
-                        'Sin Filtros': 'deseos eróticos consensuados, fantasías explícitas, fetiches y exploración sexual. Para opciones: 4 respuestas osadas y reveladoras.'
+                        'Sin Filtros': 'deseos eróticos consensuados, fantasías explícitas, fetiches y exploración sexual. Para opciones: ["🔥 Lo haría esta noche", "😈 Solo en fantasías", "🙈 Jamás lo haría", "💋 Ya lo experimenté"] o similares.'
                     }[temp] || '';
                     const prompt = `Genera exactamente 5 preguntas íntimas en ESPAÑOL para una pareja. Temperatura: "${temp}".
 Guía: ${tempGuide}
