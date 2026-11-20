@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; connect-src *; img-src * data: blob:; media-src * data: blob:;">
     <title>HOTFUNNIA - Juego Multijugador Asíncrono</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>😈</text></svg>">
     <!-- Tailwind CSS -->
@@ -86,6 +87,13 @@
         .timer-svg circle {
             transition: stroke-dashoffset 1s linear;
         }
+        @keyframes bounce-slow {
+            0%, 100% { transform: translateY(-8%); animation-timing-function: cubic-bezier(0.8,0,1,1); }
+            50% { transform: none; animation-timing-function: cubic-bezier(0,0,0.2,1); }
+        }
+        .animate-bounce-slow { animation: bounce-slow 2s infinite; }
+        /* Fallback: ensure hidden works even if Tailwind fails to load */
+        .hidden { display: none !important; }
     </style>
 </head>
 <body class="flex flex-col min-h-screen text-slate-100 antialiased selection:bg-pink-500 selection:text-white overflow-x-hidden">
@@ -1409,12 +1417,13 @@ Retorna ÚNICAMENTE este JSON válido (sin texto extra, sin markdown):
                 const playerList = Object.values(data.players);
                 const allFinished = playerList.length >= data.maxPlayers && playerList.every(p => p.status === 'finished');
 
-                if (allFinished && data.status !== 'evaluating' && data.status !== 'evaluated') {
+                if (allFinished && data.status !== 'evaluated') {
                     const apiKey = localStorage.getItem('custom_gemini_key');
-                    if (apiKey && !this._evaluatingRoom) {
+                    if (apiKey && !this._evaluatingRoom && data.status !== 'evaluating') {
                         this._evaluatingRoom = true;
                         this.triggerRoundEvaluation(data).finally(() => { this._evaluatingRoom = false; });
                     } else {
+                        // Shows force-advance button: no key, already evaluating on another client, or stuck
                         this.renderWaitingOthers(data, true);
                     }
                     return;
@@ -1840,49 +1849,55 @@ Responde ÚNICAMENTE en JSON:
                     console.error('Evaluation error:', e);
                     this.showToast('Error en evaluación de IA. Mostrando respuestas sin análisis.', 'error');
 
-                    // Save player answers even if AI call failed
-                    if (data.mode === 'pareja' || data.mode === 'confesiones') {
-                        const pListErr = Object.values(data.players);
-                        const p1e = pListErr[0] || {};
-                        const p2e = pListErr[1] || pListErr[0] || {};
-                        if (!data.roundData) data.roundData = {};
-                        if (!data.roundData[roundIdx]) {
-                            data.roundData[roundIdx] = {
-                                question: roundQuestion.question,
-                                p1Name: p1e.nickname || data.p1Name || 'Jugador 1',
-                                p2Name: p2e.nickname || data.p2Name || 'Jugador 2',
-                                p1Answer: p1e.answer || '(sin respuesta)',
-                                p2Answer: p2e.answer || '(sin respuesta)',
-                                compatibility: 50,
-                                analysis: '(La IA no pudo analizar esta ronda)',
-                                reward: data.temperature === 'Sin Filtros' ? '🎁 Noche de lista de deseos: cada uno escribe 3 fantasías que quiere vivir y las comparten sin juzgar — elijan UNA para esta semana' : data.temperature === 'Picante' ? '🎁 Sesión sensorial: vendan los ojos, música suave, y explórense con tacto y susurros durante 15 minutos' : data.temperature === 'Romántico' ? '🎁 Cena sorpresa en casa con el plato favorito del otro, velas y sin teléfono toda la noche' : data.temperature === 'Retos' ? '🎁 Planeen ahora una "noche sin reglas" donde el otro decide todo el plan' : '🎁 Planeen una actividad nueva que ninguno haya hecho antes (taller, caminata nocturna, nueva ciudad)',
-                                punishment: data.temperature === 'Sin Filtros' ? '😈 3 shots de tequila cada uno y actuar la fantasía que el ganador elija sin negociar — o si tienen disponible, compartir marihuana y decidir después' : data.temperature === 'Picante & Retos' ? '😈 2 shots cada uno, vendarse los ojos y dejarse sorprender por el otro durante 5 minutos — el ganador decide qué pasa; o quedar en hacerlo en el carro o terraza esta semana' : data.temperature === 'Romántico & Aventuras' ? '😈 Una copa de vino juntos con los ojos vendados, luego un beso de 60 segundos sin separarse y planear ahora una noche de camping solos los dos' : '😈 Tomar 2 shots de penalti y cumplir el reto que el ganador proponga en ese momento sin negociar'
-                            };
+                    try {
+                        // Save player answers even if AI call failed
+                        if (data.mode === 'pareja' || data.mode === 'confesiones') {
+                            const pListErr = Object.values(data.players);
+                            const p1e = pListErr[0] || {};
+                            const p2e = pListErr[1] || pListErr[0] || {};
+                            if (!data.roundData) data.roundData = {};
+                            if (!data.roundData[roundIdx]) {
+                                data.roundData[roundIdx] = {
+                                    question: roundQuestion.question,
+                                    p1Name: p1e.nickname || data.p1Name || 'Jugador 1',
+                                    p2Name: p2e.nickname || data.p2Name || 'Jugador 2',
+                                    p1Answer: p1e.answer || '(sin respuesta)',
+                                    p2Answer: p2e.answer || '(sin respuesta)',
+                                    compatibility: 50,
+                                    analysis: '(La IA no pudo analizar esta ronda)',
+                                    reward: data.temperature === 'Sin Filtros' ? '🎁 Noche de lista de deseos: cada uno escribe 3 fantasías que quiere vivir y las comparten sin juzgar — elijan UNA para esta semana' : data.temperature === 'Picante' ? '🎁 Sesión sensorial: vendan los ojos, música suave, y explórense con tacto y susurros durante 15 minutos' : data.temperature === 'Romántico' ? '🎁 Cena sorpresa en casa con el plato favorito del otro, velas y sin teléfono toda la noche' : data.temperature === 'Retos' ? '🎁 Planeen ahora una "noche sin reglas" donde el otro decide todo el plan' : '🎁 Planeen una actividad nueva que ninguno haya hecho antes (taller, caminata nocturna, nueva ciudad)',
+                                    punishment: data.temperature === 'Sin Filtros' ? '😈 3 shots de tequila cada uno y actuar la fantasía que el ganador elija sin negociar — o si tienen disponible, compartir marihuana y decidir después' : data.temperature === 'Picante & Retos' ? '😈 2 shots cada uno, vendarse los ojos y dejarse sorprender por el otro durante 5 minutos — el ganador decide qué pasa; o quedar en hacerlo en el carro o terraza esta semana' : data.temperature === 'Romántico & Aventuras' ? '😈 Una copa de vino juntos con los ojos vendados, luego un beso de 60 segundos sin separarse y planear ahora una noche de camping solos los dos' : '😈 Tomar 2 shots de penalti y cumplir el reto que el ganador proponga en ese momento sin negociar'
+                                };
+                            }
+                            if (!data.roundCompatibility) data.roundCompatibility = {};
+                            data.roundCompatibility[roundIdx] = 50;
+                            data.compatibilityScore = Math.round(Object.values(data.roundCompatibility).reduce((a,b)=>a+b,0) / Object.keys(data.roundCompatibility).length);
+                            data.analysis = data.roundData[roundIdx].analysis;
+                            data.reward = data.roundData[roundIdx].reward;
+                            data.punishment = data.roundData[roundIdx].punishment;
+                            if ((roundIdx + 1) >= (data.totalRounds || 1)) {
+                                data.finalVerdict = { judges: [], finalReward: data.roundData[roundIdx].reward || '', finalPunishment: data.roundData[roundIdx].punishment || '' };
+                            }
                         }
-                        if (!data.roundCompatibility) data.roundCompatibility = {};
-                        data.roundCompatibility[roundIdx] = 50;
-                        data.compatibilityScore = Math.round(Object.values(data.roundCompatibility).reduce((a,b)=>a+b,0) / Object.keys(data.roundCompatibility).length);
-                        data.analysis = data.roundData[roundIdx].analysis;
-                        data.reward = data.roundData[roundIdx].reward;
-                        data.punishment = data.roundData[roundIdx].punishment;
-                        if ((roundIdx + 1) >= (data.totalRounds || 1)) {
-                            data.finalVerdict = { judges: [], finalReward: data.roundData[roundIdx].reward || '', finalPunishment: data.roundData[roundIdx].punishment || '' };
-                        }
-                    }
 
-                    const nextRoundErr = roundIdx + 1;
-                    if (nextRoundErr < (data.totalRounds || 1)) {
-                        Object.keys(data.players).forEach(pid => {
-                            data.players[pid].status = 'waiting';
-                            data.players[pid].answer = '';
-                            data.players[pid].duration = 0;
-                        });
-                        data.currentRound = nextRoundErr;
-                        data.status = 'between_rounds';
-                    } else {
+                        const nextRoundErr = roundIdx + 1;
+                        if (nextRoundErr < (data.totalRounds || 1)) {
+                            Object.keys(data.players).forEach(pid => {
+                                data.players[pid].status = 'waiting';
+                                data.players[pid].answer = '';
+                                data.players[pid].duration = 0;
+                            });
+                            data.currentRound = nextRoundErr;
+                            data.status = 'between_rounds';
+                        } else {
+                            data.status = 'evaluated';
+                        }
+                        await this.saveRoomDoc(data.roomId, data);
+                    } catch(e2) {
+                        console.error('Error handler failed too, forcing evaluated:', e2);
                         data.status = 'evaluated';
+                        try { await this.saveRoomDoc(data.roomId, data); } catch(_) {}
                     }
-                    await this.saveRoomDoc(data.roomId, data);
                 }
             },
 
