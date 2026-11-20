@@ -508,8 +508,8 @@
 
             <!-- Question Card -->
             <div class="glass-card p-6 sm:p-8 rounded-3xl border border-pink-500/30 space-y-5 shadow-2xl relative">
-                <div class="text-xs font-bold text-pink-400 uppercase tracking-widest flex items-center gap-2">
-                    <i class="fa-solid fa-circle-question"></i> Adivinanza / Pregunta IA
+                <div id="gameplay-expert-label" class="text-xs font-bold text-pink-400 uppercase tracking-widest flex items-center gap-2">
+                    <i class="fa-solid fa-circle-question"></i> Pregunta IA
                 </div>
                 <h3 id="gameplay-question-text" class="text-xl sm:text-2xl font-black text-white leading-snug">
                     Cargando la adivinanza...
@@ -1188,16 +1188,22 @@
                     const topicLower = (this.selectedTopic || '').toLowerCase();
                     const categoryKey = topicLower.includes('música') || topicLower.includes('musica') || topicLower.includes('entretenimiento') ? 'musica'
                         : topicLower.includes('viral') || topicLower.includes('picante') ? 'viral' : 'cultura';
+                    const categoryContext = {
+                        musica: 'Las preguntas DEBEN ser sobre música: artistas latinoamericanos icónicos, canciones reconocibles, adivinanzas de ritmos/letras, datos curiosos de álbumes y momentos históricos del pop latino. Cada especialista aporta desde su ángulo musical.',
+                        viral: 'Las preguntas DEBEN ser atrevidas, polémicas y provocadoras — verdades incómodas, dilemas picantes, situaciones atrevidas, preguntas que nadie se atreve a hacer en voz alta, memes y tendencias de internet. Este panel no censura NADA. Cada especialista sube la temperatura desde su ángulo.',
+                        cultura: 'Las preguntas DEBEN ser inteligentes, ingeniosas y sorprendentes — ciencia cotidiana, historia latinoamericana, acertijos con giro inesperado, datos que nadie espera. Cada especialista aporta desde su área de conocimiento.',
+                    }[categoryKey];
                     const pool = fiestaSpecialists[categoryKey];
                     const chosenSpec = [...pool].sort(() => Math.random() - 0.5).slice(0, 3);
                     const specLines = chosenSpec.map((s, i) => `${i + 1}. ${s.emoji} ${s.name}: experto en ${s.style}`).join('\n');
                     const sysPrompt = `Eres un panel de 3 creadores de trivia. Cada uno aporta preguntas únicas desde su especialidad para hacer el juego más variado y sorprendente. Responde SIEMPRE en español.`;
-                    const panelIntro = `Eres este panel de especialistas creando trivia sobre "${this.selectedTopic}":\n${specLines}\nCada especialista aporta 1-2 preguntas únicas desde su área. Total: exactamente 5 preguntas muy variadas y distintas entre sí.\n${noRepeat}`;
+                    const panelIntro = `Eres este panel de especialistas creando trivia sobre "${this.selectedTopic}":\n${specLines}\n\nCONTEXTO OBLIGATORIO: ${categoryContext}\n\nCada especialista aporta 1-2 preguntas únicas desde su área. Total: exactamente 5 preguntas muy variadas y distintas entre sí.\n${noRepeat}`;
                     const prompt = isMultiple
-                        ? `${panelIntro}\nCada pregunta tiene 4 opciones (solo una correcta, en posición aleatoria). Todas las preguntas, opciones y pistas deben estar en español.\nRetorna ÚNICAMENTE este JSON: {"rounds":[{"question":"texto","correctAnswer":"B","hint":"pista","options":["A. opción1","B. opción correcta","C. opción3","D. opción4"]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]}]}`
-                        : `${panelIntro}\nTodas las preguntas, respuestas y pistas deben estar en español.\nRetorna ÚNICAMENTE este JSON sin texto adicional: {"rounds":[{"question":"texto de la adivinanza","correctAnswer":"respuesta breve","hint":"una pista"},{"question":"...","correctAnswer":"...","hint":"..."},{"question":"...","correctAnswer":"...","hint":"..."},{"question":"...","correctAnswer":"...","hint":"..."},{"question":"...","correctAnswer":"...","hint":"..."}]}`;
+                        ? `${panelIntro}\nCada pregunta tiene 4 opciones (solo una correcta, en posición aleatoria). Todas las preguntas, opciones y pistas deben estar en español.\nRetorna ÚNICAMENTE este JSON: {"rounds":[{"expert":"emoji Nombre del especialista","question":"texto","correctAnswer":"B","hint":"pista","options":["A. opción1","B. opción correcta","C. opción3","D. opción4"]},{"expert":"...","question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]},{"expert":"...","question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]},{"expert":"...","question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]},{"expert":"...","question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]}]}`
+                        : `${panelIntro}\nTodas las preguntas, respuestas y pistas deben estar en español.\nRetorna ÚNICAMENTE este JSON sin texto adicional: {"rounds":[{"expert":"emoji Nombre del especialista","question":"texto de la adivinanza","correctAnswer":"respuesta breve","hint":"una pista"},{"expert":"...","question":"...","correctAnswer":"...","hint":"..."},{"expert":"...","question":"...","correctAnswer":"...","hint":"..."},{"expert":"...","question":"...","correctAnswer":"...","hint":"..."},{"expert":"...","question":"...","correctAnswer":"...","hint":"..."}]}`;
                     const r = await this.callGemini(prompt, sysPrompt);
                     const rounds = (r.rounds || []).map(q => ({
+                        expert: q.expert || '',
                         question: q.question || q.pregunta || q.texto || q.text || '(sin pregunta)',
                         correctAnswer: q.correctAnswer || q.respuesta || q.answer || '',
                         hint: q.hint || q.pista || '',
@@ -1277,24 +1283,33 @@
                         'Picante & Retos': 'coqueteo, escenarios atrevidos, verdades osadas y retos íntimos. Para opciones: ["✅ Sí, sin dudarlo", "❌ No, jamás", "🤔 Tal vez...", "🔥 Ya lo hice"] o similares.',
                         'Sin Filtros': 'deseos eróticos consensuados, fantasías explícitas, fetiches y exploración sexual. Para opciones: ["🔥 Lo haría esta noche", "😈 Solo en fantasías", "🙈 Jamás lo haría", "💋 Ya lo experimenté"] o similares.'
                     }[temp] || '';
+                    const temperatureContext = {
+                        'Romántico & Aventuras': 'Las preguntas DEBEN explorar amor y complicidad: recuerdos tiernos de la pareja, detalles que solo ellos saben, aventuras que quieren vivir, sueños compartidos y conexión emocional profunda. Nada explícito — solo amor, ternura y aventura.',
+                        'Picante & Retos': 'Las preguntas DEBEN ser atrevidas, coquetas y provocadoras — coqueteo, escenarios sugestivos, verdades osadas sobre la relación, retos íntimos y situaciones que suben la tensión. Sugestivas pero no explícitas. Este panel no tiene vergüenza.',
+                        'Sin Filtros': 'Las preguntas DEBEN ser completamente explícitas y sin censura alguna — deseos eróticos, fantasías sexuales específicas, fetiches, exploración íntima y preguntas que pongan colorados a ambos. Este panel no censura NADA. Mientras más atrevido, mejor.'
+                    }[temp] || '';
                     const parejaHist = this.getQuestionHistory(this.selectedTemperature);
                     const noRepeatP = parejaHist.length > 0 ? `\nNO repitas ninguna de estas preguntas ya utilizadas:\n${parejaHist.map(q => `- ${q}`).join('\n')}\n` : '';
                     const chosenJudges = [...judgePool].sort(() => Math.random() - 0.5).slice(0, 3);
                     const judgesLines = chosenJudges.map((j, i) => `${i + 1}. ${j.emoji} ${j.name} (${j.role}): especialista en ${j.specialty}`).join('\n');
                     const sysPrompt = `Eres un panel de 3 especialistas en relaciones e intimidad de pareja. Cada uno aporta preguntas únicas desde su área para crear una experiencia variada y profunda. Responde SIEMPRE en español.`;
-                    const prompt = `Panel de especialistas para esta sesión — temperatura "${temp}" (${tempGuide}):
+                    const prompt = `Panel de especialistas para esta sesión — temperatura "${temp}":
 ${judgesLines}
+
+CONTEXTO OBLIGATORIO: ${temperatureContext}
+Guía de opciones para preguntas choice: ${tempGuide}
 ${noRepeatP}
-Cada especialista aporta preguntas únicas desde su área. Total: exactamente 5 preguntas muy variadas.
+Cada especialista aporta preguntas únicas desde su área respetando el tono del modo. Total: exactamente 5 preguntas muy variadas.
 DISTRIBUCIÓN OBLIGATORIA: exactamente 3 preguntas abiertas (type "open") + exactamente 2 preguntas de selección múltiple (type "choice").
 Las preguntas "open" NO llevan opciones. Las preguntas "choice" llevan exactamente 4 opciones.
 Coloca las 3 preguntas abiertas PRIMERO y las 2 de opción múltiple AL FINAL.
 Todo en español.
 
 Retorna ÚNICAMENTE este JSON válido (sin texto extra, sin markdown):
-{"rounds":[{"question":"pregunta 1","type":"open"},{"question":"pregunta 2","type":"open"},{"question":"pregunta 3","type":"open"},{"question":"pregunta 4","type":"choice","options":["opción A","opción B","opción C","opción D"]},{"question":"pregunta 5","type":"choice","options":["opción A","opción B","opción C","opción D"]}]}`;
+{"rounds":[{"expert":"emoji Nombre del juez","question":"pregunta 1","type":"open"},{"expert":"...","question":"pregunta 2","type":"open"},{"expert":"...","question":"pregunta 3","type":"open"},{"expert":"...","question":"pregunta 4","type":"choice","options":["opción A","opción B","opción C","opción D"]},{"expert":"...","question":"pregunta 5","type":"choice","options":["opción A","opción B","opción C","opción D"]}]}`;
                     const r = await this.callGemini(prompt, sysPrompt);
                     const rounds = (r.rounds || []).map(q => ({
+                        expert: q.expert || '',
                         question: q.question || q.pregunta || q.texto || q.text || '(sin pregunta)',
                         category: q.category || q.categoria || this.selectedTemperature,
                         type: q.type || (q.options && q.options.length ? 'choice' : 'open'),
@@ -1588,6 +1603,13 @@ Retorna ÚNICAMENTE este JSON válido (sin texto extra, sin markdown):
                 document.getElementById('gameplay-category-badge').innerText = data.mode === 'fiesta' ? data.topic : (data.mode === 'confesiones' ? '💌 Sus Preguntas' : data.temperature);
                 document.getElementById('gameplay-round-badge').innerText = `R${roundIdx + 1}/${data.totalRounds || 1}`;
                 document.getElementById('gameplay-question-text').innerText = roundData.question;
+
+                const expertLabel = document.getElementById('gameplay-expert-label');
+                if (expertLabel) {
+                    expertLabel.innerHTML = roundData.expert
+                        ? `<span class="text-base leading-none">${roundData.expert.split(' ')[0]}</span><span class="normal-case font-semibold tracking-normal">${roundData.expert.split(' ').slice(1).join(' ')}</span> <span class="text-slate-400 font-normal normal-case tracking-normal">pregunta:</span>`
+                        : `<i class="fa-solid fa-circle-question"></i> Pregunta IA`;
+                }
 
                 const hintBox = document.getElementById('gameplay-hint-box');
                 if (roundData.hint) {
