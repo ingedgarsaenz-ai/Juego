@@ -295,35 +295,23 @@
                 <div>
                     <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Nivel de Temperatura / Intensidad</label>
                     <div class="space-y-2" id="pareja-temp-selector">
-                        <button type="button" onclick="app.selectTemperature(this, 'Romántico')" class="temp-btn w-full border border-pink-500/40 bg-pink-500/20 text-pink-200 p-3.5 rounded-xl text-left flex items-center justify-between">
+                        <button type="button" onclick="app.selectTemperature(this, 'Romántico & Aventuras')" class="temp-btn w-full border border-pink-500/40 bg-pink-500/20 text-pink-200 p-3.5 rounded-xl text-left flex items-center justify-between">
                             <div>
-                                <div class="font-bold text-sm">🧊 Romántico & Conocimiento</div>
-                                <div class="text-[11px] opacity-80 font-normal">Gustos personales, detalles tiernos y recuerdos.</div>
+                                <div class="font-bold text-sm">💫 Romántico & Aventuras</div>
+                                <div class="text-[11px] opacity-80 font-normal">Recuerdos tiernos, detalles de la relación, planes y sueños juntos.</div>
                             </div>
                             <i class="fa-solid fa-check text-pink-400"></i>
                         </button>
-                        <button type="button" onclick="app.selectTemperature(this, 'Picante')" class="temp-btn w-full border border-slate-700 bg-slate-800/60 text-slate-300 p-3.5 rounded-xl text-left flex items-center justify-between">
+                        <button type="button" onclick="app.selectTemperature(this, 'Picante & Retos')" class="temp-btn w-full border border-slate-700 bg-slate-800/60 text-slate-300 p-3.5 rounded-xl text-left flex items-center justify-between">
                             <div>
-                                <div class="font-bold text-sm">🔥 Picante & Juego Erotizante</div>
-                                <div class="text-[11px] opacity-80 font-normal">Besos, lencería, coqueteo y escenarios atrevidos.</div>
+                                <div class="font-bold text-sm">🔥 Picante & Retos</div>
+                                <div class="text-[11px] opacity-80 font-normal">Coqueteo, escenarios atrevidos, verdades osadas y retos íntimos.</div>
                             </div>
                         </button>
                         <button type="button" onclick="app.selectTemperature(this, 'Sin Filtros')" class="temp-btn w-full border border-slate-700 bg-slate-800/60 text-slate-300 p-3.5 rounded-xl text-left flex items-center justify-between">
                             <div>
-                                <div class="font-bold text-sm">🧨 Sin Filtros & Fantasías Sexuadas</div>
-                                <div class="text-[11px] opacity-80 font-normal">Deseos consensuados, fetiches y exploración en la cama.</div>
-                            </div>
-                        </button>
-                        <button type="button" onclick="app.selectTemperature(this, 'Retos')" class="temp-btn w-full border border-slate-700 bg-slate-800/60 text-slate-300 p-3.5 rounded-xl text-left flex items-center justify-between">
-                            <div>
-                                <div class="font-bold text-sm">🎲 Retos & Verdad Atrevida</div>
-                                <div class="text-[11px] opacity-80 font-normal">Preguntas Sí/No que revelan deseos ocultos: ¿Lo harías?</div>
-                            </div>
-                        </button>
-                        <button type="button" onclick="app.selectTemperature(this, 'Experiencias Diferentes')" class="temp-btn w-full border border-slate-700 bg-slate-800/60 text-slate-300 p-3.5 rounded-xl text-left flex items-center justify-between">
-                            <div>
-                                <div class="font-bold text-sm">🌍 Experiencias & Aventuras</div>
-                                <div class="text-[11px] opacity-80 font-normal">Viajes, retos de vida, cosas locas y momentos únicos que hacer juntos.</div>
+                                <div class="font-bold text-sm">🧨 Sin Filtros</div>
+                                <div class="text-[11px] opacity-80 font-normal">Deseos eróticos, fantasías explícitas, fetiches y exploración sexual.</div>
                             </div>
                         </button>
                     </div>
@@ -758,7 +746,7 @@
             // Selected options in forms
             selectedTopic: 'Canciones Famosas de Música Latina, Colombiana, Argentina y Pop Latino',
             selectedPlayerCount: 2,
-            selectedTemperature: 'Romántico',
+            selectedTemperature: 'Romántico & Aventuras',
             selectedAnswerMode: 'text',
 
             async init() {
@@ -1073,26 +1061,29 @@
                 btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Creando desafío íntimo...`;
 
                 try {
-                    btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Generando 3 preguntas con IA...`;
+                    btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Generando 5 preguntas con IA...`;
                     const sysPrompt = "Eres un facilitador de juegos de pareja empático, elegante y atrevido. Responde SIEMPRE en español, todas las preguntas, opciones y textos deben estar en español.";
-                    const isRetos = this.selectedTemperature === 'Retos';
-                    const isExperiencias = this.selectedTemperature === 'Experiencias Diferentes';
-                    const prompt = isRetos
-                        ? `Genera exactamente 3 retos o preguntas de verdad atrevidas en ESPAÑOL para una pareja, estilo "¿Lo harías?". Deben ser preguntas directas de Sí/No que revelen deseos ocultos o fantasías. Todas las preguntas deben estar en español. Incluye opciones fijas Sí, No, Tal vez. Retorna ÚNICAMENTE este JSON: {"rounds":[{"question":"¿Harías X con tu pareja?","category":"Retos","options":["✅ Sí, sin dudarlo","❌ No, jamás","🤔 Tal vez...","🔥 Ya lo hice"]},{"question":"...","category":"Retos","options":["✅ Sí, sin dudarlo","❌ No, jamás","🤔 Tal vez...","🔥 Ya lo hice"]},{"question":"...","category":"Retos","options":["✅ Sí, sin dudarlo","❌ No, jamás","🤔 Tal vez...","🔥 Ya lo hice"]}]}`
-                        : isExperiencias
-                        ? `Genera exactamente 3 preguntas de aventuras y experiencias de vida en ESPAÑOL para una pareja, estilo "¿Lo harían juntos?". Enfócate SOLO en experiencias NO sexuales: viajes extremos o inusuales, probar sustancias recreativas (marihuana, hongos, etc.), mudarse a otro país, deportes extremos (paracaidismo, surf, etc.), experiencias espirituales o místicas, retos de vida, cosas locas o divertidas como hacer dedo, vivir fuera de la red, voluntariados en el extranjero. Las preguntas deben revelar la compatibilidad de aventuras y sueños de la pareja. Retorna ÚNICAMENTE este JSON: {"rounds":[{"question":"¿Viajarían juntos a [lugar extremo/inusual] y harían [experiencia]?","category":"Experiencias Diferentes","options":["✅ Sí, ¡lo haría ya!","❌ No es para mí","🤔 Tal vez si me convences","🔥 Ya lo hice / lo haría hoy"]},{"question":"...","category":"Experiencias Diferentes","options":["✅ Sí, ¡lo haría ya!","❌ No es para mí","🤔 Tal vez si me convences","🔥 Ya lo hice / lo haría hoy"]},{"question":"...","category":"Experiencias Diferentes","options":["✅ Sí, ¡lo haría ya!","❌ No es para mí","🤔 Tal vez si me convences","🔥 Ya lo hice / lo haría hoy"]}]}`
-                        : `Genera EXACTAMENTE 3 preguntas íntimas en ESPAÑOL, distintas entre sí, para una pareja. Temperatura elegida: "${this.selectedTemperature}".
-Guía por temperatura:
-- Romántico: recuerdos tiernos, gustos personales, detalles de la relación.
-- Picante: coqueteo, escenarios atrevidos, besos y lencería.
-- Sin Filtros: deseos eróticos consensuados, fantasías, fetiches.
-Reglas: DEBES generar exactamente 3 objetos en el array. Cada pregunta debe ser diferente e interesante. Todas las preguntas deben estar en español.
-Responde ÚNICAMENTE con este JSON válido (sin texto extra, sin markdown):
-{"rounds":[{"question":"Primera pregunta aquí","category":"${this.selectedTemperature}"},{"question":"Segunda pregunta diferente aquí","category":"${this.selectedTemperature}"},{"question":"Tercera pregunta diferente aquí","category":"${this.selectedTemperature}"}]}`;
+                    const temp = this.selectedTemperature;
+                    const tempGuide = {
+                        'Romántico & Aventuras': 'mix de recuerdos tiernos, detalles de la relación, planes de viaje, aventuras y sueños juntos. Para opciones: ["❤️ Siempre", "🤔 A veces", "🙈 Casi nunca", "✨ Es nuestra tradición"] o similares.',
+                        'Picante & Retos': 'mix de coqueteo, escenarios atrevidos, verdades osadas y retos íntimos. Para opciones: ["✅ Sí, sin dudarlo", "❌ No, jamás", "🤔 Tal vez...", "🔥 Ya lo hice"] o similares.',
+                        'Sin Filtros': 'deseos eróticos consensuados, fantasías explícitas, fetiches y exploración sexual. Para opciones: 4 respuestas osadas y reveladoras.'
+                    }[temp] || '';
+                    const prompt = `Genera exactamente 5 preguntas íntimas en ESPAÑOL para una pareja. Temperatura: "${temp}".
+Guía: ${tempGuide}
+
+DISTRIBUCIÓN OBLIGATORIA: exactamente 3 preguntas abiertas (type "open") + exactamente 2 preguntas de selección múltiple (type "choice").
+Las preguntas "open" NO llevan opciones. Las preguntas "choice" llevan exactamente 4 opciones.
+Coloca las 3 preguntas abiertas PRIMERO y las 2 de opción múltiple AL FINAL.
+Todas las preguntas deben ser diferentes e interesantes. Todo debe estar en español.
+
+Retorna ÚNICAMENTE este JSON válido (sin texto extra, sin markdown):
+{"rounds":[{"question":"pregunta 1","type":"open"},{"question":"pregunta 2","type":"open"},{"question":"pregunta 3","type":"open"},{"question":"pregunta 4","type":"choice","options":["opción A","opción B","opción C","opción D"]},{"question":"pregunta 5","type":"choice","options":["opción A","opción B","opción C","opción D"]}]}`;
                     const r = await this.callGemini(prompt, sysPrompt);
                     const rounds = (r.rounds || []).map(q => ({
                         question: q.question || q.pregunta || q.texto || q.text || '(sin pregunta)',
                         category: q.category || q.categoria || this.selectedTemperature,
+                        type: q.type || (q.options && q.options.length ? 'choice' : 'open'),
                         options: q.options || q.opciones || []
                     }));
                     console.log('[Pareja] Rondas recibidas:', rounds.length, rounds);
@@ -1104,7 +1095,7 @@ Responde ÚNICAMENTE con este JSON válido (sin texto extra, sin markdown):
                         mode: 'pareja',
                         hostId: this.playerId,
                         temperature: this.selectedTemperature,
-                        answerMode: (isRetos || isExperiencias) ? 'multiple' : 'text',
+                        answerMode: 'mixed',
                         maxPlayers: 2,
                         totalRounds: rounds.length,
                         currentRound: 0,
@@ -1382,7 +1373,7 @@ Responde ÚNICAMENTE con este JSON válido (sin texto extra, sin markdown):
                 // Modo selección múltiple
                 const optionsGrid = document.getElementById('gameplay-options-grid');
                 const answerForm = document.getElementById('gameplay-answer-form');
-                const isMultiple = data.answerMode === 'multiple' && roundData.options && roundData.options.length > 0;
+                const isMultiple = (data.answerMode === 'multiple' || data.answerMode === 'mixed') && roundData.options && roundData.options.length > 0;
 
                 if (isMultiple) {
                     answerForm.classList.add('hidden');
@@ -1549,13 +1540,19 @@ Evalúa las siguientes respuestas y asigna un puntaje del 0 al 100. Otorga bonif
 Jugadores:
 ${playersFormatted}
 
-Además, genera UNA penitencia divertida y creativa para el jugador con MENOR puntaje en esta ronda. Las penitencias pueden ser: tomar un shot o bebida, bailar 30 segundos sin parar, cantar el coro de una canción famosa, hacer mímica de un animal hasta que adivinen, imitar a un famoso por 1 minuto, decir un trabalenguas 3 veces rápido, hacer 10 sentadillas, llamar a alguien y decirle "te quiero mucho", hablar con acento diferente por 2 minutos, contar un chiste malo, etc. Sé muy específico y gracioso, menciona el nombre del jugador en la penitencia.
+Además, genera UNA penitencia divertida y creativa para el jugador con MENOR puntaje en esta ronda. Las penitencias pueden ser: tomar un shot o bebida, bailar 30 segundos sin parar, cantar el coro de una canción famosa, hacer mímica de un animal hasta que adivinen, imitar a un famoso por 1 minuto, decir un trabalenguas 3 veces rápido, hacer 10 sentadillas, llamar a alguien y decirle "te quiero mucho", hablar con acento diferente por 2 minutos, contar un chiste malo, etc. Sé muy específico y gracioso.
+
+REGLAS CRÍTICAS:
+- En caso de empate, penaliza al jugador que tardó MÁS tiempo en responder.
+- En "loserId" pon el playerId EXACTO del perdedor.
+- En "loserPunishment" describe SOLO la actividad (NO incluyas ningún nombre de jugador — el sistema añade el nombre automáticamente).
 
 Responde ÚNICAMENTE en este JSON:
 {
   "evaluations": [{"playerId": "...", "score": 85, "comment": "Comentario divertido"}],
   "funnySummary": "Resumen chistoso del desempeño general",
-  "loserPunishment": "Penitencia divertida y específica mencionando el nombre del perdedor"
+  "loserId": "playerId exacto del perdedor",
+  "loserPunishment": "descripción de la actividad sin mencionar ningún nombre de jugador"
 }`;
 
                         const res = await this.callGemini(prompt, "Juez de trivia sarcástico pero justo");
@@ -1576,7 +1573,7 @@ Responde ÚNICAMENTE en este JSON:
                         if (!data.roundSummaries) data.roundSummaries = {};
                         data.roundSummaries[roundIdx] = { question: roundQuestion.question, correctAnswer: roundQuestion.correctAnswer, funnySummary: res.funnySummary };
                         const evalsSortedByScore = [...(res.evaluations || [])].sort((a, b) => a.score - b.score);
-                        const loserId = evalsSortedByScore[0]?.playerId;
+                        const loserId = res.loserId || evalsSortedByScore[0]?.playerId;
                         data.roundSummaries[roundIdx].punishment = res.loserPunishment || '';
                         data.roundSummaries[roundIdx].loserName = loserId && data.players[loserId] ? data.players[loserId].nickname : '';
                         data.lastRoundSummary = res.funnySummary;
@@ -1588,28 +1585,20 @@ Responde ÚNICAMENTE en este JSON:
                         const p2 = pList[1];
 
                         const tempGuides = {
-                            'Romántico': {
-                                reward: 'gesto romántico especial — elige UNO y personalízalo: (a) noche de spa en casa: velas, música suave, masaje de cuerpo completo; (b) cena sorpresa cocinada en casa con su plato favorito y mesa decorada; (c) carta de amor escrita a mano contando 10 cosas que amas de esa persona; (d) crear juntos una playlist de "nuestra música" y bailar en casa; (e) planear una escapada de fin de semana a un lugar que el otro siempre quiso visitar.',
-                                punishment: 'reto cariñoso de conexión: (a) durante 2 minutos, decirse al oído todo lo que admiran del otro sin parar; (b) recrear juntos su primera cita o un recuerdo especial que tengan; (c) hacer un "diario de pareja" con 3 momentos favoritos del último mes; (d) planear una actividad nueva que ninguno haya hecho antes (taller de cocina, clase de baile, caminata nocturna).'
+                            'Romántico & Aventuras': {
+                                reward: 'gesto romántico o aventura compartida — elige UNO: (a) noche de spa en casa con masaje, velas y música; (b) cena sorpresa cocinada con su plato favorito; (c) planear ahora mismo un viaje o escapada a un lugar nuevo; (d) carta de amor escrita a mano con 10 cosas que amas de esa persona; (e) día de aventura: actividad que ninguno haya hecho antes (senderismo, kayak, clase de baile, cocina de otro país).',
+                                punishment: 'reto de conexión o reto de aventura: (a) decirse al oído todo lo que admiran del otro por 2 minutos sin parar; (b) comprometerse a hacer algo que siempre dijeron "algún día" — inscribirse ahora mismo; (c) hacer algo ridículo o divertido en público juntos (karaoke, baile espontáneo); (d) planear una escapada sin teléfonos a algún lugar de naturaleza.'
                             },
-                            'Picante': {
-                                reward: 'experiencia sensual creativa — elige UNA y adáptala: (a) sesión de masaje con aceite perfumado, música lenta y sin distracciones por 20 minutos; (b) noche de seducción: ropa interior nueva, velas, y cada uno prepara UNA sorpresa para el otro; (c) juego de roles suave: elijan un escenario (desconocidos que se conocen en un bar, jefe y asistente, artista y modelo) y actúenlo 15 minutos; (d) reto de los 5 sentidos: vendan los ojos al otro y exploren con tacto, sabores, aromas y susurros; (e) escribirse un mensaje íntimo describiendo exactamente qué les gustaría que el otro les hiciera.',
-                                punishment: 'reto de seducción: (a) hacer un striptease lento de al menos 2 prendas con música elegida por el otro; (b) susurrar al oído la fantasía más atrevida que hayan tenido con esa persona; (c) tomar una foto artística (sin mostrar el rostro) y enviársela en privado; (d) hacer una llamada de voz —aunque estén juntos— describiendo qué harían si estuvieran solos; (e) recrear una escena íntima de su película o serie favorita.'
+                            'Picante & Retos': {
+                                reward: 'experiencia sensual o reto atrevido — elige UNO: (a) sesión de masaje con aceite perfumado por 20 minutos; (b) noche de seducción: ropa interior nueva, velas, una sorpresa cada uno; (c) juego de roles suave (desconocidos en un bar, jefe y asistente, artista y modelo); (d) contar en voz alta la fantasía más secreta que nunca se han dicho; (e) planear una "noche sin reglas" donde el otro decide todo el plan.',
+                                punishment: 'reto de seducción o verdad sin filtros: (a) striptease lento de al menos 2 prendas con música elegida por el otro; (b) responder SIN rodeos: "¿Qué cambiarías de nuestra vida íntima?"; (c) susurrar al oído la fantasía más atrevida que hayan tenido; (d) cumplir UN capricho del otro sin negociar.'
                             },
                             'Sin Filtros': {
-                                reward: 'premio completamente explícito y personalizado — elige lo que más les llame: (a) planear una noche con juguetes para adultos: elegir UNO juntos en línea y usarlo esa semana; (b) lista de deseos íntimos: cada uno escribe 3 cosas que quiere experimentar y las comparten sin juzgar; (c) locación inusual para su próximo encuentro (terraza de noche, habitación de hotel, carro en lugar apartado, baño con música); (d) sesión de fotos o video íntimo solo para los dos; (e) juego de roles explícito de su fantasía favorita con disfraz o accesorios incluidos.',
-                                punishment: 'reto sin censura — el que pierde elige o el ganador propone: (a) actuar un rol durante 20 minutos (la fantasía la decide el ganador); (b) hacer UNA cosa que el otro siempre quiso pero nunca se animaron a proponer; (c) grabarse un audio o nota de voz íntima describiendo una fantasía en detalle; (d) juego de "prohibiciones": por 30 minutos solo pueden tocarse donde el otro indique; (e) intentar una posición nueva que ninguno haya probado — búsquenla juntos en ese momento.'
-                            },
-                            'Retos': {
-                                reward: 'revelación íntima o acción atrevida: (a) contar en voz alta la fantasía más secreta que nunca se han dicho; (b) hacer una "lista de los 10": 10 cosas que quieren probar juntos antes de fin de año; (c) hacer algo que el otro siempre pidió y nunca se animaron; (d) planear una "noche sin reglas" donde el otro decide todo el plan.',
-                                punishment: 'verdad sin filtros o reto físico: (a) responder SIN rodeos: "¿Qué cambiarías de nuestra vida íntima?"; (b) cumplir UN capricho del otro sin negociar (puede ser íntimo o no); (c) hacer un mini reto físico de 5 minutos según lo que el ganador pida; (d) comprometerse a una "cita sorpresa" planeada completamente por el ganador.'
-                            },
-                            'Experiencias Diferentes': {
-                                reward: 'aventura en pareja: (a) planear ahora mismo un viaje o escapada a un lugar que ninguno conoce — reservar algo esta semana; (b) hacer una actividad extrema juntos: paracaidismo, bungee, surf, escalada, kitesurf; (c) probar una experiencia nueva esta semana: comida de otro país, ritual de meditación, baño de sonido, ceremonia ancestral; (d) "día sin teléfono": un día completo desconectados explorando una ciudad o naturaleza.',
-                                punishment: 'reto de vida compartida: (a) comprometerse a hacer algo que siempre dijeron "algún día": inscribirse ahora mismo; (b) hacer algo ridículo o divertido en público juntos (karaoke, baile espontáneo, hablar con un extraño); (c) pasar una noche en un lugar inusual: carpa en el jardín, glamping, casa en el árbol, hostal económico en otra ciudad.'
+                                reward: 'premio completamente explícito — elige lo que más les llame: (a) planear una noche con juguetes para adultos: elegir UNO juntos en línea; (b) lista de deseos íntimos: cada uno escribe 3 cosas que quiere experimentar y las comparten sin juzgar; (c) locación inusual para su próximo encuentro (terraza de noche, carro, habitación de hotel); (d) juego de roles explícito de su fantasía favorita con disfraz o accesorios incluidos.',
+                                punishment: 'reto sin censura — el ganador propone: (a) actuar un rol durante 20 minutos (la fantasía la decide el ganador); (b) grabarse un audio describiendo una fantasía en detalle; (c) juego de "prohibiciones": por 30 minutos solo pueden tocarse donde el otro indique; (d) intentar una posición nueva — búsquenla juntos en ese momento.'
                             }
                         };
-                        const tg = tempGuides[data.temperature] || tempGuides['Picante'];
+                        const tg = tempGuides[data.temperature] || tempGuides['Picante & Retos'];
 
                         const prompt = `Evalúa la sintonía amorosa entre estas dos respuestas a la pregunta: "${roundQuestion.question}" (Temperatura: ${data.temperature}).
 Respuesta de ${p1.nickname}: "${p1.answer}"
