@@ -367,28 +367,6 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Intensidad del Juego</label>
-                    <p class="text-xs text-slate-500 mb-2">Afecta los premios y penitencias que la IA genera al revelar.</p>
-                    <div class="grid grid-cols-3 gap-2" id="cartablanca-temp-selector">
-                        <button type="button" data-cbtemp="Romántico & Aventuras" onclick="app.selectCartaBlancaTemp(this, 'Romántico & Aventuras')"
-                            class="cb-temp-btn border border-slate-700 bg-slate-800/60 text-slate-300 p-3 rounded-xl text-center transition">
-                            <div class="text-xl mb-1">💫</div>
-                            <div class="text-[11px] font-bold leading-tight">Romántico</div>
-                        </button>
-                        <button type="button" data-cbtemp="Picante & Retos" onclick="app.selectCartaBlancaTemp(this, 'Picante & Retos')"
-                            class="cb-temp-btn border border-violet-500/50 bg-violet-500/20 text-violet-200 p-3 rounded-xl text-center transition ring-1 ring-violet-500/40">
-                            <div class="text-xl mb-1">🔥</div>
-                            <div class="text-[11px] font-bold leading-tight">Picante</div>
-                        </button>
-                        <button type="button" data-cbtemp="Sin Filtros" onclick="app.selectCartaBlancaTemp(this, 'Sin Filtros')"
-                            class="cb-temp-btn border border-slate-700 bg-slate-800/60 text-slate-300 p-3 rounded-xl text-center transition">
-                            <div class="text-xl mb-1">🧨</div>
-                            <div class="text-[11px] font-bold leading-tight">Sin Filtros</div>
-                        </button>
-                    </div>
-                </div>
-
-                <div>
                     <div class="flex items-center justify-between mb-1">
                         <label class="text-xs font-bold text-slate-300 uppercase">Tus Preguntas / Retos</label>
                         <span class="text-xs text-slate-500" id="cartablanca-count">0 / 8</span>
@@ -967,7 +945,6 @@
                 }
                 if (viewId === 'create-confesiones') {
                     this.cartaBlancaQuestions = ['', '', ''];
-                    this.cartaBlancaSelectedTemp = 'Picante & Retos';
                     this.renderCartaBlancaQuestions();
                 }
             },
@@ -1411,6 +1388,12 @@ Retorna ÚNICAMENTE este JSON válido (sin texto extra, sin markdown):
 
             // Room state handler dispatcher
             handleRoomUpdate(data) {
+                // Prevent stale Firestore snapshots from overriding a locally-finished player state
+                const localMe = this.currentRoomData?.players?.[this.playerId];
+                if (localMe?.status === 'finished' && data.players?.[this.playerId]?.status !== 'finished') {
+                    data.players[this.playerId] = { ...localMe };
+                }
+
                 this.currentRoomData = data;
                 const me = data.players[this.playerId];
 
@@ -1565,12 +1548,13 @@ Retorna ÚNICAMENTE este JSON válido (sin texto extra, sin markdown):
             },
 
             selectMultipleChoice(option, btn) {
-                // Highlight selected
+                // Disable all buttons immediately to prevent double-tap and re-render interference
                 document.querySelectorAll('.choice-btn').forEach(b => {
+                    b.disabled = true;
+                    b.style.pointerEvents = 'none';
                     b.classList.remove('border-purple-400', 'bg-purple-500/20', 'scale-95');
                 });
                 btn.classList.add('border-purple-400', 'bg-purple-500/20');
-                // Store and auto-submit after brief visual feedback
                 document.getElementById('gameplay-answer-input').value = option;
                 setTimeout(() => this.submitAnswer(), 400);
             },
@@ -2342,21 +2326,13 @@ Responde ÚNICAMENTE en JSON:
                         });
                         app.closeRoulette();
                         app.showToast('¡Destino eligió: ' + categoryLabels[categories[winner]] + '!', 'success');
+                        app.createParejaRoom();
                     };
                 }, 3700);
             },
 
             // ── Carta Blanca mode ──────────────────────────────────────────
             cartaBlancaQuestions: ['', '', ''],
-            cartaBlancaSelectedTemp: 'Picante & Retos',
-
-            selectCartaBlancaTemp(btn, temp) {
-                this.cartaBlancaSelectedTemp = temp;
-                document.querySelectorAll('.cb-temp-btn').forEach(b => {
-                    b.className = 'cb-temp-btn border border-slate-700 bg-slate-800/60 text-slate-300 p-3 rounded-xl text-center transition';
-                });
-                btn.className = 'cb-temp-btn border border-violet-500/50 bg-violet-500/20 text-violet-200 p-3 rounded-xl text-center transition ring-1 ring-violet-500/40';
-            },
 
             renderCartaBlancaQuestions() {
                 const container = document.getElementById('carta-blanca-questions');
@@ -2421,7 +2397,7 @@ Responde ÚNICAMENTE en JSON:
                     roomId,
                     mode: 'confesiones',
                     hostId: this.playerId,
-                    temperature: this.cartaBlancaSelectedTemp || 'Picante & Retos',
+                    temperature: 'Picante & Retos',
                     answerMode: 'text',
                     maxPlayers: 2,
                     totalRounds: rounds.length,
