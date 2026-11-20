@@ -106,17 +106,17 @@
             </div>
 
             <!-- Active Room Badge & Controls -->
-            <div class="flex items-center gap-2">
-                <div id="room-badge" class="hidden flex items-center gap-2 bg-slate-800/90 border border-slate-700/80 px-3 py-1 rounded-full text-xs">
-                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                    <span class="text-slate-400 font-semibold">Sala:</span>
-                    <span id="room-badge-id" class="font-mono font-bold text-pink-400">------</span>
-                    <button onclick="app.copyRoomLink()" title="Copiar enlace de invitación" class="ml-1 text-slate-400 hover:text-white transition">
+            <div class="flex items-center gap-2 min-w-0">
+                <div id="room-badge" class="hidden items-center gap-1.5 bg-slate-800/90 border border-slate-700/80 px-2 sm:px-3 py-1 rounded-full text-xs min-w-0">
+                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping flex-shrink-0"></span>
+                    <span class="hidden sm:inline text-slate-400 font-semibold flex-shrink-0">Sala:</span>
+                    <span id="room-badge-id" class="font-mono font-bold text-pink-400 truncate max-w-[70px] sm:max-w-none">------</span>
+                    <button onclick="app.copyRoomLink()" title="Copiar enlace de invitación" class="ml-0.5 text-slate-400 hover:text-white transition flex-shrink-0">
                         <i class="fa-regular fa-copy"></i>
                     </button>
                 </div>
-                
-                <button onclick="app.openSettings()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition shadow-sm">
+
+                <button onclick="app.openSettings()" class="flex-shrink-0 w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition shadow-sm">
                     <i class="fa-solid fa-gear"></i>
                 </button>
             </div>
@@ -1043,18 +1043,23 @@
                 let response;
                 if (isGroq) {
                     // Obtener lista de modelos disponibles dinámicamente
-                    let groqModels = ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile', 'gemma2-9b-it'];
+                    const preferredGroqModels = ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile', 'gemma2-9b-it', 'mixtral-8x7b-32768'];
+                    let groqModels = [...preferredGroqModels];
                     try {
                         const modelsResp = await fetch('https://api.groq.com/openai/v1/models', {
                             headers: { 'Authorization': `Bearer ${apiKey}` }
                         });
                         if (modelsResp.ok) {
                             const modelsData = await modelsResp.json();
+                            const badPatterns = ['whisper', 'tts', 'vision', 'allam', 'guard', 'tool-use'];
                             const available = (modelsData.data || [])
-                                .filter(m => !m.id.includes('whisper') && !m.id.includes('tts') && !m.id.includes('vision'))
-                                .map(m => m.id);
+                                .map(m => m.id)
+                                .filter(id => !badPatterns.some(p => id.includes(p)));
                             if (available.length > 0) {
-                                groqModels = available;
+                                // Preferred models first (if available), then rest
+                                const preferred = preferredGroqModels.filter(m => available.includes(m));
+                                const rest = available.filter(m => !preferredGroqModels.includes(m));
+                                groqModels = [...preferred, ...rest];
                                 console.log('[Groq] Modelos disponibles:', groqModels);
                             }
                         }
@@ -2239,7 +2244,9 @@ Responde ÚNICAMENTE en JSON:
 
             updateRoomBadge(roomId) {
                 document.getElementById('room-badge-id').innerText = roomId;
-                document.getElementById('room-badge').classList.remove('hidden');
+                const badge = document.getElementById('room-badge');
+                badge.classList.remove('hidden');
+                badge.style.display = 'flex';
             },
 
             copyRoomLink() {
