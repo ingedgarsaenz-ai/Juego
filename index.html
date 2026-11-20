@@ -1161,13 +1161,41 @@
 
                 try {
                     btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Generando 5 preguntas con IA...`;
-                    const sysPrompt = "Eres un diseñador de trivias cómico y creativo. Responde SIEMPRE en español, incluyendo preguntas, respuestas, pistas y opciones. Para temas de música prioriza artistas latinoamericanos (Shakira, J Balvin, Karol G, Maluma, Bad Bunny, Soda Stereo, Bizarrap, etc.). Para temas picantes sé atrevido pero divertido.";
                     const isMultiple = this.selectedAnswerMode === 'multiple';
                     const fiestaHist = this.getQuestionHistory(this.selectedTopic);
                     const noRepeat = fiestaHist.length > 0 ? `\nNO repitas ninguna de estas preguntas ya utilizadas:\n${fiestaHist.map(q => `- ${q}`).join('\n')}\n` : '';
+                    // Panel of specialists per topic category — rotated randomly for variety
+                    const fiestaSpecialists = {
+                        musica: [
+                            { emoji: '🎵', name: 'DJ Ritmo', style: 'reggaetón, cumbia, salsa, pop latino — ritmos y artistas latinoamericanos (Bad Bunny, Shakira, Karol G, J Balvin, Maluma, Bizarrap, Soda Stereo)' },
+                            { emoji: '🎸', name: 'El Rockero', style: 'rock en español, bandas icónicas, guitarras y letras épicas' },
+                            { emoji: '🎙️', name: 'La Fanática', style: 'artistas del momento, álbumes, colaboraciones, discografías y datos curiosos de cantantes' },
+                            { emoji: '🎬', name: 'El Productor', style: 'bandas sonoras de películas y series, hits que marcaron décadas, canciones que todos tarareamos' },
+                        ],
+                        cultura: [
+                            { emoji: '🧪', name: 'Prof. Acertijo', style: 'ciencia cotidiana, datos asombrosos, acertijos ingeniosos y lógica con giro' },
+                            { emoji: '📚', name: 'La Sabia', style: 'historia latinoamericana, literatura, personajes históricos y frases célebres' },
+                            { emoji: '🌍', name: 'El Viajero', style: 'países, capitales, comidas del mundo, culturas y geografía curiosa' },
+                            { emoji: '🏆', name: 'El Campeón', style: 'fútbol latinoamericano, récords mundiales, atletas famosos y competencias épicas' },
+                        ],
+                        viral: [
+                            { emoji: '🤪', name: 'El Meme Lord', style: 'memes virales, tendencias de TikTok, frases de internet y cultura digital' },
+                            { emoji: '🌶️', name: 'La Atrevida', style: 'preguntas picantes, polémicas y atrevidas que nadie se atreve a hacer en voz alta' },
+                            { emoji: '🎬', name: 'El Crítico', style: 'series del momento, películas de culto, personajes icónicos y teorías de fans' },
+                            { emoji: '🔥', name: 'El Incendiario', style: 'situaciones límite divertidas, verdades incómodas y preguntas que generan debate' },
+                        ],
+                    };
+                    const topicLower = (this.selectedTopic || '').toLowerCase();
+                    const categoryKey = topicLower.includes('música') || topicLower.includes('musica') || topicLower.includes('entretenimiento') ? 'musica'
+                        : topicLower.includes('viral') || topicLower.includes('picante') ? 'viral' : 'cultura';
+                    const pool = fiestaSpecialists[categoryKey];
+                    const chosenSpec = [...pool].sort(() => Math.random() - 0.5).slice(0, 3);
+                    const specLines = chosenSpec.map((s, i) => `${i + 1}. ${s.emoji} ${s.name}: experto en ${s.style}`).join('\n');
+                    const sysPrompt = `Eres un panel de 3 creadores de trivia. Cada uno aporta preguntas únicas desde su especialidad para hacer el juego más variado y sorprendente. Responde SIEMPRE en español.`;
+                    const panelIntro = `Eres este panel de especialistas creando trivia sobre "${this.selectedTopic}":\n${specLines}\nCada especialista aporta 1-2 preguntas únicas desde su área. Total: exactamente 5 preguntas muy variadas y distintas entre sí.\n${noRepeat}`;
                     const prompt = isMultiple
-                        ? `Genera exactamente 5 adivinanzas ingeniosas en ESPAÑOL sobre el tema "${this.selectedTopic}" con 4 opciones de respuesta cada una (solo una correcta, pon la correcta en posición aleatoria). Todas las preguntas, opciones y pistas deben estar en español.${noRepeat} Retorna ÚNICAMENTE este JSON: {"rounds":[{"question":"texto","correctAnswer":"B","hint":"pista","options":["A. opción1","B. opción correcta","C. opción3","D. opción4"]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]}]}`
-                        : `Genera exactamente 5 adivinanzas ingeniosas y diferentes en ESPAÑOL sobre el tema "${this.selectedTopic}". Todas las preguntas, respuestas y pistas deben estar en español.${noRepeat} Retorna ÚNICAMENTE este JSON sin texto adicional: {"rounds":[{"question":"texto de la adivinanza","correctAnswer":"respuesta breve","hint":"una pista"},{"question":"...","correctAnswer":"...","hint":"..."},{"question":"...","correctAnswer":"...","hint":"..."},{"question":"...","correctAnswer":"...","hint":"..."},{"question":"...","correctAnswer":"...","hint":"..."}]}`;
+                        ? `${panelIntro}\nCada pregunta tiene 4 opciones (solo una correcta, en posición aleatoria). Todas las preguntas, opciones y pistas deben estar en español.\nRetorna ÚNICAMENTE este JSON: {"rounds":[{"question":"texto","correctAnswer":"B","hint":"pista","options":["A. opción1","B. opción correcta","C. opción3","D. opción4"]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]},{"question":"...","correctAnswer":"...","hint":"...","options":["A. ...","B. ...","C. ...","D. ..."]}]}`
+                        : `${panelIntro}\nTodas las preguntas, respuestas y pistas deben estar en español.\nRetorna ÚNICAMENTE este JSON sin texto adicional: {"rounds":[{"question":"texto de la adivinanza","correctAnswer":"respuesta breve","hint":"una pista"},{"question":"...","correctAnswer":"...","hint":"..."},{"question":"...","correctAnswer":"...","hint":"..."},{"question":"...","correctAnswer":"...","hint":"..."},{"question":"...","correctAnswer":"...","hint":"..."}]}`;
                     const r = await this.callGemini(prompt, sysPrompt);
                     const rounds = (r.rounds || []).map(q => ({
                         question: q.question || q.pregunta || q.texto || q.text || '(sin pregunta)',
@@ -1232,22 +1260,36 @@
 
                 try {
                     btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Generando 5 preguntas con IA...`;
-                    const sysPrompt = "Eres un facilitador de juegos de pareja empático, elegante y atrevido. Responde SIEMPRE en español, todas las preguntas, opciones y textos deben estar en español.";
                     const temp = this.selectedTemperature;
+                    // Judge personas from the game — pick 3 randomly for natural variety each session
+                    const judgePool = [
+                        { emoji: '🧠', name: 'Dra. Valentina Cruz', role: 'Psicóloga Clínica de Parejas', specialty: 'conexión emocional, apego, comunicación íntima, heridas del pasado en pareja' },
+                        { emoji: '💋', name: 'Dr. Marcos Reyes', role: 'Sexólogo Clínico', specialty: 'deseo, fantasías, compatibilidad física, exploración sexual consensuada' },
+                        { emoji: '🌍', name: 'Luna Salvaje', role: 'Coach de Vida & Aventuras', specialty: 'aventuras juntos, bucket list de pareja, experiencias nuevas, destinos soñados' },
+                        { emoji: '🎭', name: 'Camilo Fuentes', role: 'Coach de Inteligencia Emocional', specialty: 'valores profundos, miedos íntimos, sueños y proyectos de vida en común' },
+                        { emoji: '🔥', name: 'Sofía Nights', role: 'Terapeuta Sexual', specialty: 'juegos eróticos, roles, exploración de límites y placeres' },
+                        { emoji: '🌿', name: 'Amara Zen', role: 'Coach Holístico', specialty: 'bienestar en pareja, rituales de autocuidado, conexión espiritual y emocional' },
+                        { emoji: '🚀', name: 'Cap. Adrenalina', role: 'Experto en Aventuras', specialty: 'retos físicos, deportes extremos, actividades que aún no han vivido juntos' },
+                        { emoji: '🍷', name: 'Rodrigo Deseo', role: 'Sommelier de Experiencias', specialty: 'cenas íntimas, seducción, rituales de pareja, experiencias sensoriales' },
+                    ];
                     const tempGuide = {
-                        'Romántico & Aventuras': 'mix de recuerdos tiernos, detalles de la relación, planes de viaje, aventuras y sueños juntos. Para opciones: ["❤️ Siempre", "🤔 A veces", "🙈 Casi nunca", "✨ Es nuestra tradición"] o similares.',
-                        'Picante & Retos': 'mix de coqueteo, escenarios atrevidos, verdades osadas y retos íntimos. Para opciones: ["✅ Sí, sin dudarlo", "❌ No, jamás", "🤔 Tal vez...", "🔥 Ya lo hice"] o similares.',
+                        'Romántico & Aventuras': 'conexión emocional, recuerdos tiernos, detalles de la relación, planes de viaje y sueños juntos. Para opciones: ["❤️ Siempre", "🤔 A veces", "🙈 Casi nunca", "✨ Es nuestra tradición"] o similares.',
+                        'Picante & Retos': 'coqueteo, escenarios atrevidos, verdades osadas y retos íntimos. Para opciones: ["✅ Sí, sin dudarlo", "❌ No, jamás", "🤔 Tal vez...", "🔥 Ya lo hice"] o similares.',
                         'Sin Filtros': 'deseos eróticos consensuados, fantasías explícitas, fetiches y exploración sexual. Para opciones: ["🔥 Lo haría esta noche", "😈 Solo en fantasías", "🙈 Jamás lo haría", "💋 Ya lo experimenté"] o similares.'
                     }[temp] || '';
                     const parejaHist = this.getQuestionHistory(this.selectedTemperature);
                     const noRepeatP = parejaHist.length > 0 ? `\nNO repitas ninguna de estas preguntas ya utilizadas:\n${parejaHist.map(q => `- ${q}`).join('\n')}\n` : '';
-                    const prompt = `Genera exactamente 5 preguntas íntimas en ESPAÑOL para una pareja. Temperatura: "${temp}".
-Guía: ${tempGuide}
+                    const chosenJudges = [...judgePool].sort(() => Math.random() - 0.5).slice(0, 3);
+                    const judgesLines = chosenJudges.map((j, i) => `${i + 1}. ${j.emoji} ${j.name} (${j.role}): especialista en ${j.specialty}`).join('\n');
+                    const sysPrompt = `Eres un panel de 3 especialistas en relaciones e intimidad de pareja. Cada uno aporta preguntas únicas desde su área para crear una experiencia variada y profunda. Responde SIEMPRE en español.`;
+                    const prompt = `Panel de especialistas para esta sesión — temperatura "${temp}" (${tempGuide}):
+${judgesLines}
 ${noRepeatP}
+Cada especialista aporta preguntas únicas desde su área. Total: exactamente 5 preguntas muy variadas.
 DISTRIBUCIÓN OBLIGATORIA: exactamente 3 preguntas abiertas (type "open") + exactamente 2 preguntas de selección múltiple (type "choice").
 Las preguntas "open" NO llevan opciones. Las preguntas "choice" llevan exactamente 4 opciones.
 Coloca las 3 preguntas abiertas PRIMERO y las 2 de opción múltiple AL FINAL.
-Todas las preguntas deben ser diferentes e interesantes. Todo debe estar en español.
+Todo en español.
 
 Retorna ÚNICAMENTE este JSON válido (sin texto extra, sin markdown):
 {"rounds":[{"question":"pregunta 1","type":"open"},{"question":"pregunta 2","type":"open"},{"question":"pregunta 3","type":"open"},{"question":"pregunta 4","type":"choice","options":["opción A","opción B","opción C","opción D"]},{"question":"pregunta 5","type":"choice","options":["opción A","opción B","opción C","opción D"]}]}`;
