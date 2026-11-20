@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FUNNIA-XXX - Juego Multijugador Asíncrono</title>
+    <title>HOTFUNNIA - Juego Multijugador Asíncrono</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>😈</text></svg>">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -98,8 +98,8 @@
                     😈🍷
                 </div>
                 <div>
-                    <h1 class="text-xl font-black tracking-tight bg-gradient-to-r from-pink-400 via-purple-300 to-indigo-400 bg-clip-text text-transparent">
-                        FUNNIA-XXX
+                    <h1 class="text-xl font-black tracking-tight">
+                        <span class="bg-gradient-to-r from-red-500 to-rose-400 bg-clip-text text-transparent">HOT</span><span class="bg-gradient-to-r from-pink-400 via-purple-300 to-indigo-400 bg-clip-text text-transparent">FUNNIA</span>
                     </h1>
                     <p class="text-[10px] text-slate-400 font-medium">Multijugador Asíncrono con IA</p>
                 </div>
@@ -285,22 +285,27 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Nivel de Temperatura / Intensidad</label>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-xs font-bold text-slate-300 uppercase">Nivel de Temperatura / Intensidad</label>
+                        <button type="button" onclick="app.openRoulette()" class="text-xs text-purple-300 hover:text-purple-200 flex items-center gap-1.5 bg-purple-500/10 border border-purple-500/30 hover:border-purple-400 px-3 py-1.5 rounded-lg transition">
+                            🎰 Girar ruleta
+                        </button>
+                    </div>
                     <div class="space-y-2" id="pareja-temp-selector">
-                        <button type="button" onclick="app.selectTemperature(this, 'Romántico & Aventuras')" class="temp-btn w-full border border-pink-500/40 bg-pink-500/20 text-pink-200 p-3.5 rounded-xl text-left flex items-center justify-between">
+                        <button type="button" data-temp="Romántico & Aventuras" onclick="app.selectTemperature(this, 'Romántico & Aventuras')" class="temp-btn w-full border border-pink-500/40 bg-pink-500/20 text-pink-200 p-3.5 rounded-xl text-left flex items-center justify-between">
                             <div>
                                 <div class="font-bold text-sm">💫 Romántico & Aventuras</div>
                                 <div class="text-[11px] opacity-80 font-normal">Recuerdos tiernos, detalles de la relación, planes y sueños juntos.</div>
                             </div>
                             <i class="fa-solid fa-check text-pink-400"></i>
                         </button>
-                        <button type="button" onclick="app.selectTemperature(this, 'Picante & Retos')" class="temp-btn w-full border border-slate-700 bg-slate-800/60 text-slate-300 p-3.5 rounded-xl text-left flex items-center justify-between">
+                        <button type="button" data-temp="Picante & Retos" onclick="app.selectTemperature(this, 'Picante & Retos')" class="temp-btn w-full border border-slate-700 bg-slate-800/60 text-slate-300 p-3.5 rounded-xl text-left flex items-center justify-between">
                             <div>
                                 <div class="font-bold text-sm">🔥 Picante & Retos</div>
                                 <div class="text-[11px] opacity-80 font-normal">Coqueteo, escenarios atrevidos, verdades osadas y retos íntimos.</div>
                             </div>
                         </button>
-                        <button type="button" onclick="app.selectTemperature(this, 'Sin Filtros')" class="temp-btn w-full border border-slate-700 bg-slate-800/60 text-slate-300 p-3.5 rounded-xl text-left flex items-center justify-between">
+                        <button type="button" data-temp="Sin Filtros" onclick="app.selectTemperature(this, 'Sin Filtros')" class="temp-btn w-full border border-slate-700 bg-slate-800/60 text-slate-300 p-3.5 rounded-xl text-left flex items-center justify-between">
                             <div>
                                 <div class="font-bold text-sm">🧨 Sin Filtros</div>
                                 <div class="text-[11px] opacity-80 font-normal">Deseos eróticos, fantasías explícitas, fetiches y exploración sexual.</div>
@@ -656,6 +661,78 @@
                     Guardar Cambios
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- Roulette Modal -->
+    <div id="roulette-modal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="glass-card max-w-sm w-full p-6 rounded-3xl border border-purple-500/40 space-y-4 shadow-2xl text-center">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    🎰 Ruleta del Destino
+                </h3>
+                <button onclick="app.closeRoulette()" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-400">Deja que el destino elija el nivel de intensidad de tu sesión.</p>
+
+            <!-- Pointer + Wheel -->
+            <div class="flex flex-col items-center select-none">
+                <div class="mb-[-8px] z-10">
+                    <div class="w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[22px] border-t-pink-500 mx-auto filter drop-shadow-lg"></div>
+                </div>
+                <svg id="roulette-wheel-svg" viewBox="0 0 200 200" class="w-52 h-52 drop-shadow-2xl"
+                    style="transform-origin:50% 50%;will-change:transform;transform:rotate(0deg);">
+                    <!-- Outer ring -->
+                    <circle cx="100" cy="100" r="99" fill="#1e1b4b" stroke="#4c1d95" stroke-width="2"/>
+                    <!-- Segment 1: Romántico & Aventuras – Pink (0°–120°) -->
+                    <path d="M100,100 L100,1 A99,99 0 0,1 185.7,149.5 Z" fill="#f43f5e"/>
+                    <!-- Segment 2: Picante & Retos – Orange (120°–240°) -->
+                    <path d="M100,100 L185.7,149.5 A99,99 0 0,1 14.3,149.5 Z" fill="#f97316"/>
+                    <!-- Segment 3: Sin Filtros – Purple (240°–360°) -->
+                    <path d="M100,100 L14.3,149.5 A99,99 0 0,1 100,1 Z" fill="#8b5cf6"/>
+                    <!-- Divider lines -->
+                    <line x1="100" y1="100" x2="100" y2="1"       stroke="rgba(255,255,255,0.35)" stroke-width="2"/>
+                    <line x1="100" y1="100" x2="185.7" y2="149.5" stroke="rgba(255,255,255,0.35)" stroke-width="2"/>
+                    <line x1="100" y1="100" x2="14.3"  y2="149.5" stroke="rgba(255,255,255,0.35)" stroke-width="2"/>
+                    <!-- Text labels – each group rotated to its segment center -->
+                    <g transform="rotate(60,100,100)">
+                        <text x="100" y="44" text-anchor="middle" fill="white" font-size="14" dominant-baseline="middle">💫</text>
+                        <text x="100" y="58" text-anchor="middle" fill="white" font-size="8" font-weight="bold" dominant-baseline="middle">Romántico</text>
+                        <text x="100" y="69" text-anchor="middle" fill="white" font-size="7"                   dominant-baseline="middle">&amp; Aventuras</text>
+                    </g>
+                    <g transform="rotate(180,100,100)">
+                        <text x="100" y="44" text-anchor="middle" fill="white" font-size="14" dominant-baseline="middle">🔥</text>
+                        <text x="100" y="58" text-anchor="middle" fill="white" font-size="8" font-weight="bold" dominant-baseline="middle">Picante</text>
+                        <text x="100" y="69" text-anchor="middle" fill="white" font-size="7"                   dominant-baseline="middle">&amp; Retos</text>
+                    </g>
+                    <g transform="rotate(300,100,100)">
+                        <text x="100" y="44" text-anchor="middle" fill="white" font-size="14" dominant-baseline="middle">🧨</text>
+                        <text x="100" y="58" text-anchor="middle" fill="white" font-size="8" font-weight="bold" dominant-baseline="middle">Sin Filtros</text>
+                    </g>
+                    <!-- Center hub -->
+                    <circle cx="100" cy="100" r="14" fill="#0f172a" stroke="#6366f1" stroke-width="2.5"/>
+                    <circle cx="100" cy="100" r="5"  fill="#818cf8"/>
+                </svg>
+            </div>
+
+            <!-- Result display -->
+            <div id="roulette-result-label" class="min-h-[2rem] flex items-center justify-center">
+                <span class="text-sm font-black text-white transition-transform duration-200 inline-block"></span>
+            </div>
+
+            <!-- Spin button -->
+            <button id="roulette-spin-btn" onclick="app.spinRoulette()"
+                class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg shadow-purple-600/30 transition flex items-center justify-center gap-2 text-base">
+                🎰 ¡GIRAR!
+            </button>
+
+            <!-- Use result button (shown after spin) -->
+            <button id="roulette-use-btn"
+                class="hidden w-full bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-400 hover:to-rose-500 text-white font-extrabold py-3 rounded-xl shadow-lg shadow-pink-500/20 transition flex items-center justify-center gap-2 text-sm">
+                <i class="fa-solid fa-check"></i> Usar este resultado
+            </button>
         </div>
     </div>
 
@@ -2101,6 +2178,80 @@ Responde ÚNICAMENTE en JSON:
                 document.body.removeChild(dummy);
 
                 this.showToast('¡Enlace de sala copiado al portapapeles!', 'success');
+            },
+
+            // ── Roulette ──────────────────────────────────────────────────
+            _rouletteRotation: 0,
+            _rouletteWinner: null,
+
+            openRoulette() {
+                document.getElementById('roulette-modal').classList.remove('hidden');
+                document.getElementById('roulette-result-label').querySelector('span').innerText = '';
+                document.getElementById('roulette-use-btn').classList.add('hidden');
+                const btn = document.getElementById('roulette-spin-btn');
+                btn.disabled = false;
+                btn.innerHTML = '🎰 ¡GIRAR!';
+            },
+
+            closeRoulette() {
+                document.getElementById('roulette-modal').classList.add('hidden');
+            },
+
+            spinRoulette() {
+                const categories = ['Romántico & Aventuras', 'Picante & Retos', 'Sin Filtros'];
+                const categoryLabels = {
+                    'Romántico & Aventuras': '💫 Romántico & Aventuras',
+                    'Picante & Retos':       '🔥 Picante & Retos',
+                    'Sin Filtros':           '🧨 Sin Filtros'
+                };
+                // Segment centers from top (clockwise): 60°, 180°, 300°
+                const segmentCenters = [60, 180, 300];
+                const winner = Math.floor(Math.random() * 3);
+                this._rouletteWinner = categories[winner];
+
+                // Small random offset inside the segment (±40°) for a natural landing
+                const offset = (Math.random() - 0.5) * 60;
+                const targetAngle = segmentCenters[winner] + offset;
+
+                // 5–9 extra full spins for drama
+                const extraSpins = (5 + Math.floor(Math.random() * 5)) * 360;
+
+                // Continue accumulating – never reset to 0
+                const currentAngle = this._rouletteRotation % 360;
+                let delta = targetAngle - currentAngle;
+                if (delta < 0) delta += 360;
+                const nextRotation = this._rouletteRotation + extraSpins + delta;
+                this._rouletteRotation = nextRotation;
+
+                const wheel = document.getElementById('roulette-wheel-svg');
+                wheel.style.transition = 'transform 3.6s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
+                wheel.style.transform  = `rotate(${nextRotation}deg)`;
+
+                const btn = document.getElementById('roulette-spin-btn');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin mr-2"></i>Girando...';
+
+                setTimeout(() => {
+                    const resultSpan = document.getElementById('roulette-result-label').querySelector('span');
+                    resultSpan.innerText = '✨ ' + categoryLabels[categories[winner]];
+                    resultSpan.style.transform = 'scale(1.15)';
+                    setTimeout(() => resultSpan.style.transform = 'scale(1)', 200);
+
+                    btn.disabled = false;
+                    btn.innerHTML = '🔄 Girar de nuevo';
+
+                    const useBtn = document.getElementById('roulette-use-btn');
+                    useBtn.classList.remove('hidden');
+                    useBtn.onclick = () => {
+                        document.querySelectorAll('.temp-btn').forEach(b => {
+                            if (b.getAttribute('data-temp') === categories[winner]) {
+                                app.selectTemperature(b, categories[winner]);
+                            }
+                        });
+                        app.closeRoulette();
+                        app.showToast('¡Destino eligió: ' + categoryLabels[categories[winner]] + '!', 'success');
+                    };
+                }, 3700);
             }
         };
 
