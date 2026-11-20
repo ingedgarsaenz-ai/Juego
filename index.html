@@ -183,6 +183,33 @@
                         Crear Sala de Pareja <i class="fa-solid fa-heart ml-2"></i>
                     </div>
                 </div>
+
+                <!-- Modo Carta Blanca Card -->
+                <div onclick="app.navTo('create-confesiones')" class="sm:col-span-2 group relative glass-card p-6 rounded-3xl border border-indigo-500/20 hover:border-indigo-500/60 transition-all duration-300 cursor-pointer overflow-hidden shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1">
+                    <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-indigo-600/10 rounded-full blur-2xl group-hover:bg-indigo-600/20 transition"></div>
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-2xl text-white shadow-lg shadow-indigo-500/30 flex-shrink-0">
+                                💌
+                            </div>
+                            <div class="sm:hidden">
+                                <span class="text-xs font-bold px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Totalmente Personalizado</span>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-1">
+                                <h3 class="text-xl font-bold text-white group-hover:text-indigo-300 transition">Modo Carta Blanca</h3>
+                                <span class="hidden sm:inline text-xs font-bold px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Totalmente Personalizado</span>
+                            </div>
+                            <p class="text-slate-400 text-xs leading-relaxed mb-3">
+                                Ustedes ponen las reglas. Escriban sus propias preguntas y retos — sin IA para generarlas. 100% personalizado para su relación.
+                            </p>
+                            <div class="flex items-center text-xs font-bold text-indigo-400 group-hover:translate-x-1 transition">
+                                Crear con Nuestras Preguntas <i class="fa-solid fa-pen-to-square ml-2"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Join Existing Room Box -->
@@ -316,6 +343,66 @@
 
                 <button onclick="app.createParejaRoom()" id="btn-create-pareja" class="w-full bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg shadow-pink-600/30 transition flex items-center justify-center gap-2">
                     <i class="fa-solid fa-heart-pulse"></i> Crear Sala Íntima con IA
+                </button>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW: CREATE ROOM — CARTA BLANCA MODE      -->
+        <!-- ========================================== -->
+        <section id="view-create-confesiones" class="hidden space-y-6 max-w-xl mx-auto py-4">
+            <div class="flex items-center gap-3 mb-2">
+                <button onclick="app.navTo('menu')" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <span>💌</span> Modo Carta Blanca
+                </h2>
+            </div>
+
+            <div class="glass-card p-6 rounded-3xl space-y-5 border border-indigo-500/30 shadow-xl">
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 uppercase mb-2">Tu Nombre (Jugador 1)</label>
+                    <input type="text" id="cartablanca-p1-name" placeholder="Ej: Sofía" class="glass-input w-full px-4 py-3 rounded-xl text-white font-semibold">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Intensidad del Juego</label>
+                    <p class="text-xs text-slate-500 mb-2">Afecta los premios y penitencias que la IA genera al revelar.</p>
+                    <div class="grid grid-cols-3 gap-2" id="cartablanca-temp-selector">
+                        <button type="button" data-cbtemp="Romántico & Aventuras" onclick="app.selectCartaBlancaTemp(this, 'Romántico & Aventuras')"
+                            class="cb-temp-btn border border-slate-700 bg-slate-800/60 text-slate-300 p-3 rounded-xl text-center transition">
+                            <div class="text-xl mb-1">💫</div>
+                            <div class="text-[11px] font-bold leading-tight">Romántico</div>
+                        </button>
+                        <button type="button" data-cbtemp="Picante & Retos" onclick="app.selectCartaBlancaTemp(this, 'Picante & Retos')"
+                            class="cb-temp-btn border border-violet-500/50 bg-violet-500/20 text-violet-200 p-3 rounded-xl text-center transition ring-1 ring-violet-500/40">
+                            <div class="text-xl mb-1">🔥</div>
+                            <div class="text-[11px] font-bold leading-tight">Picante</div>
+                        </button>
+                        <button type="button" data-cbtemp="Sin Filtros" onclick="app.selectCartaBlancaTemp(this, 'Sin Filtros')"
+                            class="cb-temp-btn border border-slate-700 bg-slate-800/60 text-slate-300 p-3 rounded-xl text-center transition">
+                            <div class="text-xl mb-1">🧨</div>
+                            <div class="text-[11px] font-bold leading-tight">Sin Filtros</div>
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="text-xs font-bold text-slate-300 uppercase">Tus Preguntas / Retos</label>
+                        <span class="text-xs text-slate-500" id="cartablanca-count">0 / 8</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-3">Mínimo 2, máximo 8. Ambos las responderán durante el juego.</p>
+                    <div id="carta-blanca-questions" class="space-y-2 mb-3"></div>
+                    <button onclick="app.addCartaBlancaQuestion()" id="btn-add-cb-question"
+                        class="w-full py-2.5 border border-dashed border-indigo-500/40 rounded-xl text-xs text-indigo-400 hover:border-indigo-400 hover:text-indigo-300 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Agregar pregunta
+                    </button>
+                </div>
+
+                <button onclick="app.createCartaBlancaRoom()" id="btn-create-cartablanca" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-paper-plane"></i> Crear Sala con Mis Preguntas
                 </button>
             </div>
         </section>
@@ -866,7 +953,7 @@
 
             // Navigation controller
             navTo(viewId) {
-                const views = ['menu', 'create-fiesta', 'create-pareja', 'lobby', 'pre-question', 'gameplay', 'waiting-others', 'results-fiesta', 'results-pareja'];
+                const views = ['menu', 'create-fiesta', 'create-pareja', 'create-confesiones', 'lobby', 'pre-question', 'gameplay', 'waiting-others', 'results-fiesta', 'results-pareja'];
                 views.forEach(v => {
                     const el = document.getElementById(`view-${v}`);
                     if (el) el.classList.add('hidden');
@@ -877,6 +964,11 @@
                     history.replaceState(null, '', window.location.pathname);
                     const joinInput = document.getElementById('join-room-id');
                     if (joinInput) joinInput.value = '';
+                }
+                if (viewId === 'create-confesiones') {
+                    this.cartaBlancaQuestions = ['', '', ''];
+                    this.cartaBlancaSelectedTemp = 'Picante & Retos';
+                    this.renderCartaBlancaQuestions();
                 }
             },
 
@@ -1299,7 +1391,7 @@ Retorna ÚNICAMENTE este JSON válido (sin texto extra, sin markdown):
                             return;
                         }
 
-                        const nick = this.playerNickname || (data.mode === 'pareja' ? (data.p2Name || 'Jugador 2') : `Jugador ${existingCount + 1}`);
+                        const nick = this.playerNickname || ((data.mode === 'pareja' || data.mode === 'confesiones') ? (data.p2Name || 'Jugador 2') : `Jugador ${existingCount + 1}`);
                         data.players[this.playerId] = {
                             id: this.playerId,
                             nickname: nick,
@@ -1362,7 +1454,7 @@ Retorna ÚNICAMENTE este JSON válido (sin texto extra, sin markdown):
             },
 
             renderLobby(data) {
-                document.getElementById('lobby-mode-tag').innerText = data.mode === 'fiesta' ? `🎉 ${data.topic}` : `❤️ Temperatura: ${data.temperature}`;
+                document.getElementById('lobby-mode-tag').innerText = data.mode === 'fiesta' ? `🎉 ${data.topic}` : (data.mode === 'confesiones' ? '💌 Carta Blanca' : `❤️ Temperatura: ${data.temperature}`);
                 document.getElementById('lobby-code-display').innerText = data.roomId;
                 document.getElementById('lobby-title').innerText = 'Sala de Espera';
                 document.getElementById('lobby-subtitle').innerText = 'Comparte este código con tus amigos para que jueguen cuando puedan.';
@@ -1423,7 +1515,7 @@ Retorna ÚNICAMENTE este JSON válido (sin texto extra, sin markdown):
                 const roundIdx = data.currentRound || 0;
                 const roundData = (data.rounds && data.rounds[roundIdx]) ? data.rounds[roundIdx] : data;
 
-                document.getElementById('gameplay-category-badge').innerText = data.mode === 'fiesta' ? data.topic : data.temperature;
+                document.getElementById('gameplay-category-badge').innerText = data.mode === 'fiesta' ? data.topic : (data.mode === 'confesiones' ? '💌 Sus Preguntas' : data.temperature);
                 document.getElementById('gameplay-round-badge').innerText = `R${roundIdx + 1}/${data.totalRounds || 1}`;
                 document.getElementById('gameplay-question-text').innerText = roundData.question;
 
@@ -1609,7 +1701,7 @@ Evalúa las siguientes respuestas y asigna un puntaje del 0 al 100. Otorga bonif
 Jugadores:
 ${playersFormatted}
 
-Además, genera UNA penitencia divertida y creativa para el jugador con MENOR puntaje en esta ronda. Las penitencias pueden ser: tomar un shot o bebida, bailar 30 segundos sin parar, cantar el coro de una canción famosa, hacer mímica de un animal hasta que adivinen, imitar a un famoso por 1 minuto, decir un trabalenguas 3 veces rápido, hacer 10 sentadillas, llamar a alguien y decirle "te quiero mucho", hablar con acento diferente por 2 minutos, contar un chiste malo, etc. Sé muy específico y gracioso.
+Además, genera UNA penitencia divertida y creativa para el jugador con MENOR puntaje en esta ronda. Las penitencias pueden ser: tomar 2–3 shots consecutivos o beberse una cerveza entera de un tirón, hacer un trago de penalti (mezcla extraña lo que haya), bailar de forma sensual 30 segundos frente a todos, cantar el coro de una canción a todo volumen, hacer mímica de un animal o situación picante hasta que adivinen, imitar a un famoso por 1 minuto, decir un trabalenguas 3 veces rápido, hacer 20 sentadillas, llamar a alguien y decirle algo atrevido en voz alta, vendarse los ojos y adivinar quién lo toca con 1 dedo, escribirle un mensaje picante a alguien del grupo, contar en voz alta la fantasía más loca que haya tenido, hacer una apuesta loca con el ganador. Sé muy específico, gracioso y un poco atrevido según el contexto del grupo.
 
 REGLAS CRÍTICAS:
 - En caso de empate, penaliza al jugador que tardó MÁS tiempo en responder.
@@ -1648,7 +1740,7 @@ Responde ÚNICAMENTE en este JSON:
                         data.lastRoundSummary = res.funnySummary;
                         data.funnySummary = res.funnySummary;
 
-                    } else if (data.mode === 'pareja') {
+                    } else if (data.mode === 'pareja' || data.mode === 'confesiones') {
                         const pList = Object.values(data.players);
                         const p1 = pList[0];
                         const p2 = pList[1];
@@ -1656,15 +1748,15 @@ Responde ÚNICAMENTE en este JSON:
                         const tempGuides = {
                             'Romántico & Aventuras': {
                                 reward: 'gesto romántico o aventura compartida — elige UNO: (a) noche de spa en casa con masaje, velas y música; (b) cena sorpresa cocinada con su plato favorito; (c) planear ahora mismo un viaje o escapada a un lugar nuevo; (d) carta de amor escrita a mano con 10 cosas que amas de esa persona; (e) día de aventura: actividad que ninguno haya hecho antes (senderismo, kayak, clase de baile, cocina de otro país).',
-                                punishment: 'reto de conexión o reto de aventura: (a) decirse al oído todo lo que admiran del otro por 2 minutos sin parar; (b) comprometerse a hacer algo que siempre dijeron "algún día" — inscribirse ahora mismo; (c) hacer algo ridículo o divertido en público juntos (karaoke, baile espontáneo); (d) planear una escapada sin teléfonos a algún lugar de naturaleza.'
+                                punishment: 'reto de conexión o aventura: (a) tomar juntos una copa de vino o trago con los ojos vendados y describirse en voz baja sin hablar; (b) dos shots consecutivos cada uno y luego un beso largo de 60 segundos sin separarse; (c) planear ahora mismo una noche de camping solo los dos bajo las estrellas; (d) hacer algo ridículo o divertido en público juntos (karaoke, baile espontáneo en la calle); (e) comprometerse a hacer algo que siempre dijeron "algún día" — reservar o inscribirse ahora mismo.'
                             },
                             'Picante & Retos': {
                                 reward: 'experiencia sensual o reto atrevido — elige UNO: (a) sesión de masaje con aceite perfumado por 20 minutos; (b) noche de seducción: ropa interior nueva, velas, una sorpresa cada uno; (c) juego de roles suave (desconocidos en un bar, jefe y asistente, artista y modelo); (d) contar en voz alta la fantasía más secreta que nunca se han dicho; (e) planear una "noche sin reglas" donde el otro decide todo el plan.',
-                                punishment: 'reto de seducción o verdad sin filtros: (a) striptease lento de al menos 2 prendas con música elegida por el otro; (b) responder SIN rodeos: "¿Qué cambiarías de nuestra vida íntima?"; (c) susurrar al oído la fantasía más atrevida que hayan tenido; (d) cumplir UN capricho del otro sin negociar.'
+                                punishment: 'reto de seducción o verdad sin filtros: (a) 2 shots cada uno y hacer el reto que el ganador proponga en ese momento — sin negociar; (b) vendarse los ojos y dejarse guiar completamente por el otro durante 5 minutos; (c) striptease lento de al menos 2 prendas con música elegida por el otro; (d) susurrar al oído la fantasía más atrevida que nunca se han dicho; (e) reto de locación: quedar en hacerlo en el carro, una terraza o cualquier lugar fuera de la cama esta misma semana.'
                             },
                             'Sin Filtros': {
                                 reward: 'premio completamente explícito — elige lo que más les llame: (a) planear una noche con juguetes para adultos: elegir UNO juntos en línea; (b) lista de deseos íntimos: cada uno escribe 3 cosas que quiere experimentar y las comparten sin juzgar; (c) locación inusual para su próximo encuentro (terraza de noche, carro, habitación de hotel); (d) juego de roles explícito de su fantasía favorita con disfraz o accesorios incluidos.',
-                                punishment: 'reto sin censura — el ganador propone: (a) actuar un rol durante 20 minutos (la fantasía la decide el ganador); (b) grabarse un audio describiendo una fantasía en detalle; (c) juego de "prohibiciones": por 30 minutos solo pueden tocarse donde el otro indique; (d) intentar una posición nueva — búsquenla juntos en ese momento.'
+                                punishment: 'reto sin censura total — el ganador elige UNO: (a) 3 shots de tequila cada uno y actuar la fantasía que el ganador elija sin negociar; (b) si tienen marihuana disponible, compartirla juntos y luego actuar lo que el ganador proponga; (c) vendarse los ojos completamente y explorar solo con el tacto por 20 minutos — sin instrucciones; (d) reto de locación atrevida: en el carro, terraza, camping o lugar semipúblico — planearlo ahora; (e) juego de "sin manos": sin usar las manos durante 15 minutos — solo boca y cuerpo; (f) grabarse haciendo algo íntimo y verlo juntos esa misma noche.'
                             }
                         };
                         const tg = tempGuides[data.temperature] || tempGuides['Picante & Retos'];
@@ -1757,7 +1849,7 @@ Responde ÚNICAMENTE en JSON:
                     this.showToast('Error en evaluación de IA. Mostrando respuestas sin análisis.', 'error');
 
                     // Save player answers even if AI call failed
-                    if (data.mode === 'pareja') {
+                    if (data.mode === 'pareja' || data.mode === 'confesiones') {
                         const pListErr = Object.values(data.players);
                         const p1e = pListErr[0] || {};
                         const p2e = pListErr[1] || pListErr[0] || {};
@@ -1772,7 +1864,7 @@ Responde ÚNICAMENTE en JSON:
                                 compatibility: 50,
                                 analysis: '(La IA no pudo analizar esta ronda)',
                                 reward: data.temperature === 'Sin Filtros' ? '🎁 Noche de lista de deseos: cada uno escribe 3 fantasías que quiere vivir y las comparten sin juzgar — elijan UNA para esta semana' : data.temperature === 'Picante' ? '🎁 Sesión sensorial: vendan los ojos, música suave, y explórense con tacto y susurros durante 15 minutos' : data.temperature === 'Romántico' ? '🎁 Cena sorpresa en casa con el plato favorito del otro, velas y sin teléfono toda la noche' : data.temperature === 'Retos' ? '🎁 Planeen ahora una "noche sin reglas" donde el otro decide todo el plan' : '🎁 Planeen una actividad nueva que ninguno haya hecho antes (taller, caminata nocturna, nueva ciudad)',
-                                punishment: data.temperature === 'Sin Filtros' ? '😈 Juego de roles de 20 minutos: el ganador elige el escenario (masajista, desconocidos, jefe y asistente) — sin negociar' : data.temperature === 'Picante' ? '😈 Striptease lento de al menos 2 prendas con música elegida por el ganador, más susurrar UNA fantasía al oído' : data.temperature === 'Romántico' ? '😈 Recrear juntos un recuerdo especial de su relación o planear repetir su primera cita' : data.temperature === 'Retos' ? '😈 Responder en voz alta sin rodeos: "¿Qué cambiarías de nuestra vida juntos?" — sin filtros' : '😈 Comprometerse a hacer algo que siempre dijeron "algún día" — inscribirse o reservar ahora mismo'
+                                punishment: data.temperature === 'Sin Filtros' ? '😈 3 shots de tequila cada uno y actuar la fantasía que el ganador elija sin negociar — o si tienen disponible, compartir marihuana y decidir después' : data.temperature === 'Picante & Retos' ? '😈 2 shots cada uno, vendarse los ojos y dejarse sorprender por el otro durante 5 minutos — el ganador decide qué pasa; o quedar en hacerlo en el carro o terraza esta semana' : data.temperature === 'Romántico & Aventuras' ? '😈 Una copa de vino juntos con los ojos vendados, luego un beso de 60 segundos sin separarse y planear ahora una noche de camping solos los dos' : '😈 Tomar 2 shots de penalti y cumplir el reto que el ganador proponga en ese momento sin negociar'
                             };
                         }
                         if (!data.roundCompatibility) data.roundCompatibility = {};
@@ -1804,7 +1896,7 @@ Responde ÚNICAMENTE en JSON:
 
             renderBetweenRounds(data) {
                 // Re-use lobby view with between-rounds context
-                document.getElementById('lobby-mode-tag').innerText = data.mode === 'fiesta' ? `🎉 ${data.topic}` : `❤️ Temperatura: ${data.temperature}`;
+                document.getElementById('lobby-mode-tag').innerText = data.mode === 'fiesta' ? `🎉 ${data.topic}` : (data.mode === 'confesiones' ? '💌 Carta Blanca' : `❤️ Temperatura: ${data.temperature}`);
                 document.getElementById('lobby-code-display').innerText = data.roomId;
 
                 const completedRound = data.currentRound - 1;
@@ -2060,7 +2152,7 @@ Responde ÚNICAMENTE en JSON:
                 const roundQuestion = (data.rounds && data.rounds[roundIdx]) ? data.rounds[roundIdx] : data;
                 const pList = Object.values(data.players);
 
-                if (data.mode === 'pareja') {
+                if (data.mode === 'pareja' || data.mode === 'confesiones') {
                     const p1 = pList[0] || {};
                     const p2 = pList[1] || pList[0] || {};
                     if (!data.roundData) data.roundData = {};
@@ -2073,7 +2165,7 @@ Responde ÚNICAMENTE en JSON:
                         compatibility: 75,
                         analysis: 'Continuaron sin evaluación de IA.',
                         reward: data.temperature === 'Sin Filtros' ? '🎁 Juguetes para adultos: elijan UNO juntos en línea esta semana y planeen una noche solo para explorar' : data.temperature === 'Picante' ? '🎁 Noche de seducción: ropa interior nueva, velas y cada uno prepara UNA sorpresa para el otro' : data.temperature === 'Romántico' ? '🎁 Masaje de cuerpo completo con aceite, música suave y sin distracciones por 20 minutos' : data.temperature === 'Retos' ? '🎁 Lista de 10 cosas que quieren vivir juntos antes de fin de año — escribirla ahora mismo' : '🎁 Reservar ahora una actividad extrema juntos: paracaidismo, bungee, surf o escalada',
-                        punishment: data.temperature === 'Sin Filtros' ? '😈 Grabarse un audio o nota de voz íntima describiendo una fantasía en detalle — enviárselo ahora' : data.temperature === 'Picante' ? '😈 Hacer una llamada de voz —aunque estén juntos— describiendo qué harían si estuvieran completamente solos' : data.temperature === 'Romántico' ? '😈 Escribir ahora una carta de amor de al menos 10 cosas que aman del otro y leerla en voz alta' : data.temperature === 'Retos' ? '😈 Cumplir UN capricho del ganador sin negociar — puede ser íntimo o no, esta semana' : '😈 Hacer algo ridículo o divertido en público juntos hoy: karaoke, baile espontáneo o hablar con un extraño'
+                        punishment: data.temperature === 'Sin Filtros' ? '😈 3 shots de tequila cada uno y actuar la fantasía que el ganador elija sin negociar — o si tienen disponible, compartir marihuana y decidir después' : data.temperature === 'Picante & Retos' ? '😈 2 shots cada uno, vendarse los ojos y dejarse sorprender por el otro durante 5 minutos — el ganador decide qué pasa; o quedar en hacerlo en el carro o terraza esta semana' : data.temperature === 'Romántico & Aventuras' ? '😈 Una copa de vino juntos con los ojos vendados, luego un beso de 60 segundos sin separarse y planear ahora una noche de camping solos los dos' : '😈 Tomar 2 shots de penalti y cumplir el reto que el ganador proponga en ese momento sin negociar'
                     };
                     if (!data.roundCompatibility) data.roundCompatibility = {};
                     data.roundCompatibility[roundIdx] = 75;
@@ -2204,8 +2296,8 @@ Responde ÚNICAMENTE en JSON:
                     'Picante & Retos':       '🔥 Picante & Retos',
                     'Sin Filtros':           '🧨 Sin Filtros'
                 };
-                // Segment centers from top (clockwise): 60°, 180°, 300°
-                const segmentCenters = [60, 180, 300];
+                // Segment centers: rotation needed to bring each segment under the top pointer
+                const segmentCenters = [300, 180, 60];
                 const winner = Math.floor(Math.random() * 3);
                 this._rouletteWinner = categories[winner];
 
@@ -2252,6 +2344,113 @@ Responde ÚNICAMENTE en JSON:
                         app.showToast('¡Destino eligió: ' + categoryLabels[categories[winner]] + '!', 'success');
                     };
                 }, 3700);
+            },
+
+            // ── Carta Blanca mode ──────────────────────────────────────────
+            cartaBlancaQuestions: ['', '', ''],
+            cartaBlancaSelectedTemp: 'Picante & Retos',
+
+            selectCartaBlancaTemp(btn, temp) {
+                this.cartaBlancaSelectedTemp = temp;
+                document.querySelectorAll('.cb-temp-btn').forEach(b => {
+                    b.className = 'cb-temp-btn border border-slate-700 bg-slate-800/60 text-slate-300 p-3 rounded-xl text-center transition';
+                });
+                btn.className = 'cb-temp-btn border border-violet-500/50 bg-violet-500/20 text-violet-200 p-3 rounded-xl text-center transition ring-1 ring-violet-500/40';
+            },
+
+            renderCartaBlancaQuestions() {
+                const container = document.getElementById('carta-blanca-questions');
+                if (!container) return;
+                container.innerHTML = '';
+                this.cartaBlancaQuestions.forEach((q, i) => {
+                    const div = document.createElement('div');
+                    div.className = 'flex gap-2 items-start';
+                    div.innerHTML = `
+                        <span class="w-6 h-6 rounded-full bg-indigo-500/30 text-indigo-300 flex items-center justify-center text-xs font-black flex-shrink-0 mt-3">${i + 1}</span>
+                        <textarea class="glass-input flex-1 p-3 rounded-xl text-white text-sm resize-none" rows="2"
+                            placeholder="Ej: ¿Qué es lo que más te gusta de nuestra relación?"
+                            oninput="app.cartaBlancaQuestions[${i}] = this.value"></textarea>
+                        <button onclick="app.removeCartaBlancaQuestion(${i})"
+                            class="mt-3 text-slate-500 hover:text-rose-400 transition flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg hover:bg-rose-500/10">
+                            <i class="fa-solid fa-xmark text-xs"></i>
+                        </button>
+                    `;
+                    div.querySelector('textarea').value = q;
+                    container.appendChild(div);
+                });
+                const counter = document.getElementById('cartablanca-count');
+                if (counter) counter.innerText = `${this.cartaBlancaQuestions.length} / 8`;
+            },
+
+            addCartaBlancaQuestion() {
+                if (this.cartaBlancaQuestions.length >= 8) {
+                    this.showToast('Máximo 8 preguntas.', 'info');
+                    return;
+                }
+                this.cartaBlancaQuestions.push('');
+                this.renderCartaBlancaQuestions();
+            },
+
+            removeCartaBlancaQuestion(idx) {
+                if (this.cartaBlancaQuestions.length <= 2) {
+                    this.showToast('Mínimo 2 preguntas.', 'info');
+                    return;
+                }
+                this.cartaBlancaQuestions.splice(idx, 1);
+                this.renderCartaBlancaQuestions();
+            },
+
+            async createCartaBlancaRoom() {
+                const p1Name = (document.getElementById('cartablanca-p1-name').value.trim()) || 'Jugador 1';
+                const questions = this.cartaBlancaQuestions.map(q => q.trim()).filter(q => q.length > 0);
+                if (questions.length < 2) {
+                    this.showToast('Escribe al menos 2 preguntas para comenzar.', 'error');
+                    return;
+                }
+
+                this.playerNickname = p1Name;
+                localStorage.setItem('adivina_nickname', p1Name);
+
+                const btn = document.getElementById('btn-create-cartablanca');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Creando sala...';
+
+                const rounds = questions.map(q => ({ question: q, type: 'open', options: [] }));
+                const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+                const roomData = {
+                    roomId,
+                    mode: 'confesiones',
+                    hostId: this.playerId,
+                    temperature: this.cartaBlancaSelectedTemp || 'Picante & Retos',
+                    answerMode: 'text',
+                    maxPlayers: 2,
+                    totalRounds: rounds.length,
+                    currentRound: 0,
+                    rounds,
+                    status: 'waiting',
+                    p1Name,
+                    p2Name: 'Tu pareja',
+                    players: {
+                        [this.playerId]: {
+                            id: this.playerId,
+                            nickname: p1Name,
+                            status: 'waiting',
+                            answer: '',
+                            duration: 0
+                        }
+                    },
+                    createdAt: Date.now()
+                };
+
+                try {
+                    await this.saveRoomDoc(roomId, roomData);
+                    this.listenToRoom(roomId);
+                    this.showToast('¡Sala creada! Comparte el código con tu pareja.', 'success');
+                } catch(e) {
+                    this.showToast('Error al crear la sala: ' + e.message, 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Crear Sala con Mis Preguntas';
+                }
             }
         };
 
