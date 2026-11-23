@@ -92,6 +92,15 @@
             50% { transform: none; animation-timing-function: cubic-bezier(0,0,0.2,1); }
         }
         .animate-bounce-slow { animation: bounce-slow 2s infinite; }
+        @keyframes fig-spin {
+            0%   { transform: perspective(120px) rotateY(0deg); }
+            25%  { transform: perspective(120px) rotateY(25deg) scaleX(0.92); }
+            50%  { transform: perspective(120px) rotateY(0deg); }
+            75%  { transform: perspective(120px) rotateY(-25deg) scaleX(0.92); }
+            100% { transform: perspective(120px) rotateY(0deg); }
+        }
+        .fig-spin-3d { animation: fig-spin 3s ease-in-out infinite; display:inline-block; }
+        .fig-spin-3d svg { filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.5)); }
         /* ── 3D Dice ───────────────────────────────────────────────── */
         .dice-scene{width:76px;height:76px;perspective:240px;cursor:default;}
         .dice-cube{width:76px;height:76px;position:relative;transform-style:preserve-3d;transition:transform 1.15s cubic-bezier(0.17,0.67,0.12,0.99);}
@@ -2966,7 +2975,7 @@ JSON (sin texto extra):
                                     class="w-full h-2 rounded-full accent-orange-500 cursor-pointer">
                                 <div class="flex justify-between text-[9px] text-slate-500 mt-0.5 font-bold"><span>1</span><span>12</span></div>
                             </div>
-                            <div id="cloth-fig-${i}" class="flex-shrink-0">${this._renderClothingFigure(p, i)}</div>
+                            <div id="cloth-fig-${i}" class="flex-shrink-0"><div class="fig-spin-3d">${this._renderClothingFigure(p, i)}</div></div>
                         </div>
                     `;
                     container.appendChild(div);
@@ -3092,6 +3101,7 @@ JSON (sin texto extra):
                     players: players.map(p => ({ ...p, currentClothes: p.maxClothes || 7, position: 0, _nakedToasted: false })),
                     currentPlayerIndex: 0, pendingAction: null
                 };
+                this._usedStripActions = new Set();
                 this.navTo('strip-game');
                 this.renderStripGame();
                 this.showToast(`¡Juego iniciado con ${players.length} jugadores!`, 'success');
@@ -3214,6 +3224,7 @@ JSON (sin texto extra):
                 });
                 this.stripState.currentPlayerIndex = 0;
                 this.stripState.pendingAction = null;
+                this._usedStripActions = new Set();
                 this.navTo('strip-game');
                 this.renderStripGame();
             },
@@ -3271,7 +3282,7 @@ JSON (sin texto extra):
             _updateClothingFigure(idx) {
                 const el = document.getElementById(`cloth-fig-${idx}`);
                 if (!el || !this.stripState) return;
-                el.innerHTML = this._renderClothingFigure(this.stripState.players[idx], idx);
+                el.innerHTML = `<div class="fig-spin-3d">${this._renderClothingFigure(this.stripState.players[idx], idx)}</div>`;
             },
 
             _renderClothingFigure(player, figIdx = 0, small = false) {
@@ -3629,7 +3640,7 @@ JSON (sin texto extra):
                 }
                 setTimeout(() => {
                     const sq = this._stripBoard[player.position];
-                    const action = this._getStripAction(sq.type, player.gender);
+                    const action = this._getStripAction(sq.type, player.gender, player.position);
                     state.pendingAction = action;
                     this._showStripActionModal(player, sq, action);
                 }, 350);
@@ -3676,46 +3687,147 @@ JSON (sin texto extra):
                 document.body.appendChild(modal);
             },
 
-            _getStripAction(type, gender) {
+            _getStripAction(type, gender, position = 1) {
+                // Tier 1: pos 1-15 (juguetón), 2: 16-30 (coqueto), 3: 31-45 (caliente), 4: 46-50 (erótico)
+                const tier = position <= 15 ? 1 : position <= 30 ? 2 : position <= 45 ? 3 : 4;
+                if (!this._usedStripActions) this._usedStripActions = new Set();
                 const pools = {
-                    beber: [
-                        {text:'Toma 2 tragos y quítate una prenda — sin excusas.', removePrenda:true},
-                        {text:'Shot obligatorio. Luego quítate la prenda más accesible que tengas.', removePrenda:true},
-                        {text:'Elige: toma 3 tragos seguidos O quítate una prenda ahora mismo.', removePrenda:false},
-                        {text:'Brindis con todos — y te quitas una prenda como penitencia de honor.', removePrenda:true},
-                        {text:'Toma y pasa la botella — quien la reciba también quita una prenda.', removePrenda:true},
-                    ],
-                    reto: [
-                        {text:'Baila de forma sensual 30 segundos con quien elijas. Si no puedes, quítate una prenda.', removePrenda:false},
-                        {text:'Di tu fantasía más loca en voz alta. Si no la dices, quítate una prenda.', removePrenda:false},
-                        {text:'Quitarte una prenda de forma lenta y seductora frente a todos.', removePrenda:true},
-                        {text:'Haz un striptease de 1 prenda con música imaginaria — el grupo elige cuál.', removePrenda:true},
-                        {text:'Susúrrale algo atrevido al oído a quien quieras. Si te niegas, quítate una prenda.', removePrenda:false},
-                        {text:'Imita el sonido más atrevido que puedas. Si te da vergüenza, quítate una prenda.', removePrenda:false},
-                        {text:'Recibe un trago en la boca de quien elijas. Si no, quítate una prenda.', removePrenda:false},
-                        {text:'El grupo vota qué prenda te quitas — y te la quitas ahora.', removePrenda:true},
-                        {text:'Describe sin vergüenza la prenda más íntima que llevas puesta. Si no, quítate una.', removePrenda:false},
-                        {text:'Haz una pose provocativa durante 10 segundos. Si no puedes, quítate una prenda.', removePrenda:false},
-                    ],
-                    castigo: [
-                        {text:'¡Castigo directo! El grupo vota qué prenda te quitas — ahora mismo, sin negociar.', removePrenda:true},
-                        {text:'Quitarte una prenda ya — el que tarde más de 10 segundos, quita dos.', removePrenda:true},
-                        {text:'Penitencia doble: quítate una prenda Y toma 2 shots seguidos.', removePrenda:true},
-                        {text:'El grupo elige la prenda más comprometedora. ¡A quitársela!', removePrenda:true},
-                        {text:'Sin excusas y sin negociar: una prenda al suelo ahora mismo.', removePrenda:true},
-                    ],
-                    premio: [
-                        {text:'¡Premio! Puedes ponerte una prenda que ya te quitaste.', removePrenda:false, addPrenda:true},
-                        {text:'¡Premio! Elige a otro jugador y mándalo a quitarse una prenda.', removePrenda:false},
-                        {text:'¡Premio! Estás a salvo y recuperas una prenda. ¡Salvado!', removePrenda:false, addPrenda:true},
-                        {text:'¡Premio! Puedes ponerte una prenda O mandas a quien quieras a quitarse una.', removePrenda:false, addPrenda:true},
-                    ],
-                    inicio: [
-                        {text:'¡Estás en el inicio! Presentación — di tu nombre y cuántas prendas tienes. Luego tira el dado de nuevo.', removePrenda:false},
-                    ],
+                    beber: {
+                        1: [
+                            {text:'Toma 2 tragos y quítate la prenda más externa que tengas.', removePrenda:true},
+                            {text:'Shot obligatorio. Quítate lo que te sea más cómodo, sin excusas.', removePrenda:true},
+                            {text:'Elige: 3 tragos seguidos O quítate tu prenda más externa.', removePrenda:false},
+                            {text:'Brindis con todos y te quitas una prenda como tributo.', removePrenda:true},
+                            {text:'Toma y pasa la botella. Quien la recibe también bebe y se quita una prenda.', removePrenda:true},
+                        ],
+                        2: [
+                            {text:'2 shots y el grupo señala cuál prenda te quitas.', removePrenda:true},
+                            {text:'Toma un trago de los labios de quien elijas — o quítate una prenda.', removePrenda:false},
+                            {text:'Shot doble. Quítate algo y descríbelo de forma seductora antes de soltarlo.', removePrenda:true},
+                            {text:'3 tragos seguidos. El grupo vota entre dos prendas cuál te quitas.', removePrenda:true},
+                            {text:'Toma tu vaso entero. Luego quítate la prenda más interesante que llevas.', removePrenda:true},
+                        ],
+                        3: [
+                            {text:'3 shots. Quítate una prenda íntima — el grupo vota cuál.', removePrenda:true},
+                            {text:'Termina tu bebida de un tirón y quítate algo de forma lenta y sugestiva.', removePrenda:true},
+                            {text:'Un shot directo de la piel de quien elijas. Luego quítate una prenda.', removePrenda:true},
+                            {text:'2 shots. Quítate la prenda más comprometedora que te quede.', removePrenda:true},
+                        ],
+                        4: [
+                            {text:'Vacía tu copa de un tirón. Luego quítate la prenda más íntima que te quede, sin prisa.', removePrenda:true},
+                            {text:'3 shots. Quítate lo último que llevas arriba O abajo — el grupo vota.', removePrenda:true},
+                            {text:'Trago en la boca de quien elijas, sin manos. Al terminar, pierdes tu prenda más íntima.', removePrenda:true},
+                        ],
+                    },
+                    reto: {
+                        1: [
+                            {text:'Baila 20 segundos al ritmo que pongas. Si paras, quítate una prenda.', removePrenda:false},
+                            {text:'Di un cumplido atrevido a cada jugador. Si te niegas, quítate una prenda.', removePrenda:false},
+                            {text:'Cuenta un secreto que nunca hayas dicho. Si te niegas, quítate dos prendas.', removePrenda:false},
+                            {text:'Susúrrale algo tierno pero atrevido al oído a quien elijas.', removePrenda:false},
+                            {text:'Haz la pose más ridícula posible. Si el grupo no aprueba, quítate una prenda.', removePrenda:false},
+                            {text:'Imita a un personaje famoso de forma seductora. Si nadie adivina, quítate una prenda.', removePrenda:false},
+                        ],
+                        2: [
+                            {text:'Baila de forma seductora 30 segundos con quien elijas. Si no, quítate una prenda.', removePrenda:false},
+                            {text:'Di tu fantasía más loca en voz alta. Si no la dices, quítate una prenda.', removePrenda:false},
+                            {text:'Haz un striptease de 1 prenda con música imaginaria — el grupo elige cuál.', removePrenda:true},
+                            {text:'Describe sin vergüenza la prenda más íntima que llevas. Si no, quítate una.', removePrenda:false},
+                            {text:'Susúrrale algo atrevido al oído a quien quieras. Si te niegas, quítate una prenda.', removePrenda:false},
+                            {text:'Recibe un trago en la boca de quien elijas. Si no, quítate una prenda.', removePrenda:false},
+                        ],
+                        3: [
+                            {text:'Quítate una prenda de forma lenta y seductora frente a todos — el grupo elige cuál.', removePrenda:true},
+                            {text:'Deja que quien elijas te quite una prenda sin que uses las manos.', removePrenda:true},
+                            {text:'Di en voz alta qué te gustaría hacerle al jugador que más te atrae del grupo.', removePrenda:false},
+                            {text:'Imita el sonido más erótico que puedas durante 15 segundos. Sin vergüenza.', removePrenda:false},
+                            {text:'Haz una pose provocativa durante 20 segundos. Si no puedes, quítate dos prendas.', removePrenda:false},
+                            {text:'Deja que el grupo dibuje algo en tu cuerpo con un dedo — sin que te rías — y luego quítate una prenda.', removePrenda:true},
+                        ],
+                        4: [
+                            {text:'Deja que quien elijas te quite la prenda más íntima que llevas. Con los ojos cerrados.', removePrenda:true},
+                            {text:'Describe en detalle tu fantasía más recurrente. Si no terminas, pierdes 2 prendas.', removePrenda:false},
+                            {text:'Siéntate en el regazo del jugador que elijas durante 60 segundos. Sin quejarte.', removePrenda:false},
+                            {text:'Deja que el grupo vote tu prenda más íntima — te la quitas frente a todos sin apresurarte.', removePrenda:true},
+                            {text:'Haz lo que el jugador a tu izquierda te pida durante 30 segundos. Sin negociar.', removePrenda:false},
+                        ],
+                    },
+                    castigo: {
+                        1: [
+                            {text:'¡Castigo! El grupo vota qué prenda te quitas — ahora mismo.', removePrenda:true},
+                            {text:'Sin excusas: una prenda al suelo ahora mismo.', removePrenda:true},
+                            {text:'El que tarde más de 10 segundos en quitarse una prenda, quita dos.', removePrenda:true},
+                            {text:'La prenda más externa que llevas — al suelo. ¡Ya!', removePrenda:true},
+                        ],
+                        2: [
+                            {text:'Penitencia doble: quítate una prenda Y toma 2 shots seguidos.', removePrenda:true},
+                            {text:'El grupo elige la prenda menos obvia que llevas. ¡A quitársela!', removePrenda:true},
+                            {text:'La prenda que el jugador a tu derecha señale — al suelo, sin apelación.', removePrenda:true},
+                            {text:'Quítate una prenda y regálasela al jugador que elijas. No la recuperas hasta el final.', removePrenda:true},
+                        ],
+                        3: [
+                            {text:'Castigo: quítate la prenda que más vergüenza te dé quitarte.', removePrenda:true},
+                            {text:'El grupo vota la prenda más comprometedora que tienes. Se quita ahora mismo.', removePrenda:true},
+                            {text:'Quítate una prenda íntima y luego 3 shots de penalti.', removePrenda:true},
+                            {text:'Te quitas 2 prendas de una vez — el grupo celebra con un trago.', removePrenda:true},
+                        ],
+                        4: [
+                            {text:'¡Castigo final! Te quitas la prenda más íntima que te quede — sin que nadie aparte la mirada.', removePrenda:true},
+                            {text:'Penitencia máxima: quítate lo último de arriba O abajo. El grupo vota.', removePrenda:true},
+                            {text:'Sin excusas, sin negociación: la prenda más íntima que tengas puesta — al suelo. Ahora.', removePrenda:true},
+                        ],
+                    },
+                    premio: {
+                        1: [
+                            {text:'¡Premio! Puedes ponerte una prenda que ya te quitaste.', removePrenda:false, addPrenda:true},
+                            {text:'¡Premio! Estás a salvo esta ronda. Recuperas una prenda.', removePrenda:false, addPrenda:true},
+                        ],
+                        2: [
+                            {text:'¡Premio! Recuperas una prenda O mandas a quien quieras a quitarse la suya.', removePrenda:false, addPrenda:true},
+                            {text:'¡Premio! Elige a otro jugador y mándalo a quitarse una prenda.', removePrenda:false},
+                            {text:'¡Premio! Inmune al próximo castigo y recuperas una prenda.', removePrenda:false, addPrenda:true},
+                        ],
+                        3: [
+                            {text:'¡Premio! Dos jugadores se quitan una prenda en tu honor. Tú eliges quiénes.', removePrenda:false},
+                            {text:'¡Premio especial! Recuperas una prenda Y mandas un shot a quien elijas.', removePrenda:false, addPrenda:true},
+                            {text:'¡Premio! Decides qué prenda se quita cada jugador este turno.', removePrenda:false},
+                        ],
+                        4: [
+                            {text:'¡GRAN PREMIO! Todos los demás se quitan una prenda en tu honor. Ahora mismo.', removePrenda:false},
+                            {text:'¡Premio máximo! Recuperas todas las prendas que quieras O mandas a todos a quitarse una.', removePrenda:false, addPrenda:true},
+                        ],
+                    },
+                    inicio: {
+                        1: [{text:'¡Inicio! Presentación: di tu nombre y cuántas prendas tienes. Luego tira el dado de nuevo.', removePrenda:false}],
+                    },
                 };
-                const list = pools[type]||pools.reto;
-                return list[Math.floor(Math.random()*list.length)];
+                const typePools = pools[type] || pools.reto;
+                // Try current tier first (prefer hotter actions), then fall back to lower tiers
+                for (let t = tier; t >= 1; t--) {
+                    const unused = (typePools[t] || []).filter(a => !this._usedStripActions.has(a.text));
+                    if (unused.length > 0) {
+                        const action = unused[Math.floor(Math.random() * unused.length)];
+                        this._usedStripActions.add(action.text);
+                        return action;
+                    }
+                }
+                // All tiers below current used — try higher tiers
+                for (let t = tier + 1; t <= 4; t++) {
+                    const unused = (typePools[t] || []).filter(a => !this._usedStripActions.has(a.text));
+                    if (unused.length > 0) {
+                        const action = unused[Math.floor(Math.random() * unused.length)];
+                        this._usedStripActions.add(action.text);
+                        return action;
+                    }
+                }
+                // All exhausted — reset and pick from current tier
+                const fallback = typePools[tier] || typePools[1] || [];
+                if (fallback.length > 0) {
+                    const action = fallback[Math.floor(Math.random() * fallback.length)];
+                    this._usedStripActions.add(action.text);
+                    return action;
+                }
+                return {text:'¡El grupo decide qué pasa ahora — sin límites!', removePrenda:true};
             },
 
             confirmStripAction() {
