@@ -92,6 +92,18 @@
             50% { transform: none; animation-timing-function: cubic-bezier(0,0,0.2,1); }
         }
         .animate-bounce-slow { animation: bounce-slow 2s infinite; }
+        /* ── 3D Dice ───────────────────────────────────────────────── */
+        .dice-scene{width:76px;height:76px;perspective:240px;cursor:default;}
+        .dice-cube{width:76px;height:76px;position:relative;transform-style:preserve-3d;transition:transform 1.15s cubic-bezier(0.17,0.67,0.12,0.99);}
+        .dice-cube .d-face{position:absolute;width:76px;height:76px;background:linear-gradient(135deg,#f97316,#b91c1c);border:3px solid rgba(255,255,255,0.4);border-radius:14px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:11px;box-sizing:border-box;box-shadow:inset 0 0 16px rgba(0,0,0,0.5),0 4px 20px rgba(249,115,22,0.3);}
+        .dice-cube .d-face span{display:block;background:white;border-radius:50%;width:14px;height:14px;margin:auto;box-shadow:0 1px 3px rgba(0,0,0,0.4);}
+        .dice-cube .d-face span.off{background:transparent;box-shadow:none;}
+        .dice-cube .f1{transform:translateZ(38px);}
+        .dice-cube .f2{transform:rotateY(90deg) translateZ(38px);}
+        .dice-cube .f3{transform:rotateX(-90deg) translateZ(38px);}
+        .dice-cube .f4{transform:rotateX(90deg) translateZ(38px);}
+        .dice-cube .f5{transform:rotateY(-90deg) translateZ(38px);}
+        .dice-cube .f6{transform:rotateY(180deg) translateZ(38px);}
         /* Fallback: ensure hidden works even if Tailwind fails to load */
         .hidden { display: none !important; }
     </style>
@@ -762,16 +774,43 @@
             <!-- Player bars -->
             <div id="strip-player-bars" class="glass-card p-3 rounded-3xl border border-slate-700 space-y-2 shadow-xl"></div>
             <!-- Current player + dice -->
-            <div class="glass-card p-4 rounded-2xl border border-orange-500/30 flex items-center justify-between shadow-lg">
-                <div>
-                    <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Turno de</div>
-                    <div id="strip-current-player" class="text-lg font-black text-orange-300">---</div>
+            <div class="glass-card p-4 rounded-2xl border border-orange-500/30 shadow-lg">
+                <div class="flex items-center justify-between gap-3">
+                    <!-- Player info -->
+                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                        <div id="strip-player-avatar-game" class="text-4xl leading-none flex-shrink-0 select-none">🧑</div>
+                        <div class="min-w-0">
+                            <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Turno de</div>
+                            <div id="strip-current-player" class="text-xl font-black text-orange-300 truncate">---</div>
+                        </div>
+                    </div>
+                    <!-- 3D dice + result number -->
+                    <div class="flex flex-col items-center gap-1 flex-shrink-0">
+                        <div class="dice-scene">
+                            <div class="dice-cube" id="dice-cube-3d">
+                                <!-- face 1: center -->
+                                <div class="d-face f1"><span class="off"></span><span class="off"></span><span class="off"></span><span class="off"></span><span></span><span class="off"></span><span class="off"></span><span class="off"></span><span class="off"></span></div>
+                                <!-- face 2: top-right + bot-left -->
+                                <div class="d-face f2"><span class="off"></span><span class="off"></span><span></span><span class="off"></span><span class="off"></span><span class="off"></span><span></span><span class="off"></span><span class="off"></span></div>
+                                <!-- face 3: diagonal -->
+                                <div class="d-face f3"><span class="off"></span><span class="off"></span><span></span><span class="off"></span><span></span><span class="off"></span><span></span><span class="off"></span><span class="off"></span></div>
+                                <!-- face 4: four corners -->
+                                <div class="d-face f4"><span></span><span class="off"></span><span></span><span class="off"></span><span class="off"></span><span class="off"></span><span></span><span class="off"></span><span></span></div>
+                                <!-- face 5: corners + center -->
+                                <div class="d-face f5"><span></span><span class="off"></span><span></span><span class="off"></span><span></span><span class="off"></span><span></span><span class="off"></span><span></span></div>
+                                <!-- face 6: two columns -->
+                                <div class="d-face f6"><span></span><span class="off"></span><span></span><span></span><span class="off"></span><span></span><span></span><span class="off"></span><span></span></div>
+                            </div>
+                        </div>
+                        <div id="strip-dice-result" class="text-2xl font-black text-orange-100 h-8 flex items-center justify-center leading-none"></div>
+                    </div>
+                    <!-- Roll button -->
+                    <button onclick="app.rollStripDice()" id="btn-strip-dice"
+                        class="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 disabled:opacity-50 text-white font-extrabold px-5 py-4 rounded-xl shadow-lg shadow-orange-500/20 flex flex-col items-center gap-1 transition flex-shrink-0">
+                        <i class="fa-solid fa-dice text-2xl"></i>
+                        <span class="text-[11px] font-black tracking-widest">LANZAR</span>
+                    </button>
                 </div>
-                <button onclick="app.rollStripDice()" id="btn-strip-dice"
-                    class="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 disabled:opacity-50 text-white font-extrabold px-6 py-3 rounded-xl shadow-lg shadow-orange-500/20 flex items-center gap-2 transition">
-                    <span id="strip-dice-icon" class="text-2xl leading-none">🎲</span>
-                    <span>LANZAR DADO</span>
-                </button>
             </div>
             <!-- Board -->
             <div class="glass-card p-3 rounded-3xl border border-slate-700 shadow-xl">
@@ -2723,8 +2762,8 @@ JSON (sin texto extra):
             initStripSetup() {
                 this.stripState = {
                     players: [
-                        { name: '', gender: 'hombre', maxClothes: 7, currentClothes: 7, position: 0 },
-                        { name: '', gender: 'mujer', maxClothes: 7, currentClothes: 7, position: 0 }
+                        { name: '', gender: 'hombre', maxClothes: 7, currentClothes: 7, position: 0, avatar: '👨' },
+                        { name: '', gender: 'mujer', maxClothes: 7, currentClothes: 7, position: 0, avatar: '👩' }
                     ],
                     currentPlayerIndex: 0,
                     pendingAction: null
@@ -2736,9 +2775,14 @@ JSON (sin texto extra):
                 const container = document.getElementById('strip-players-setup');
                 if (!container) return;
                 container.innerHTML = '';
+                const avatarOptions = ['👨','👩','🧔','👸','🕺','💃','🤖','🧛','🦸','🧙','🐺','🦊'];
                 this.stripState.players.forEach((p, i) => {
                     const div = document.createElement('div');
                     div.className = 'glass-card p-4 rounded-2xl border border-orange-500/20 space-y-3';
+                    const avatarBtns = avatarOptions.map(a =>
+                        `<button type="button" onclick="app.stripState.players[${i}].avatar='${a}';this.closest('.av-grid').querySelectorAll('button').forEach(b=>b.classList.remove('ring-2','ring-orange-400','bg-orange-500/30'));this.classList.add('ring-2','ring-orange-400','bg-orange-500/30')"
+                        class="w-9 h-9 rounded-xl text-xl flex items-center justify-center transition hover:bg-slate-700/60 ${p.avatar===a?'ring-2 ring-orange-400 bg-orange-500/30':''}">${a}</button>`
+                    ).join('');
                     div.innerHTML = `
                         <div class="flex items-center justify-between">
                             <span class="text-xs font-bold text-orange-300 uppercase flex items-center gap-2">
@@ -2751,19 +2795,29 @@ JSON (sin texto extra):
                             <input type="text" placeholder="Nombre" value="${p.name}"
                                 oninput="app.stripState.players[${i}].name = this.value"
                                 class="glass-input flex-1 px-3 py-2.5 rounded-xl text-white text-sm font-semibold">
-                            <select onchange="app.stripState.players[${i}].gender = this.value"
+                            <select onchange="app.stripState.players[${i}].gender = this.value; app._updateClothingFigure(${i})"
                                 class="glass-input px-2 py-2.5 rounded-xl text-white text-sm bg-slate-800 border border-slate-600">
                                 <option value="hombre" ${p.gender==='hombre'?'selected':''}>♂ Hombre</option>
                                 <option value="mujer" ${p.gender==='mujer'?'selected':''}>♀ Mujer</option>
                                 <option value="otro" ${p.gender==='otro'?'selected':''}>⚧ Otro</option>
                             </select>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <span class="text-xs text-slate-400 flex-shrink-0 font-bold">Prendas:</span>
-                            <input type="range" min="4" max="12" value="${p.maxClothes}"
-                                oninput="app.stripState.players[${i}].maxClothes = +this.value; app.stripState.players[${i}].currentClothes = +this.value; this.nextElementSibling.innerText = this.value"
-                                class="flex-1 h-2 rounded-full accent-orange-500 cursor-pointer">
-                            <span class="text-sm font-black text-orange-300 w-6 text-center">${p.maxClothes}</span>
+                        <div>
+                            <div class="text-[10px] font-bold text-slate-400 uppercase mb-1.5">Elige tu avatar</div>
+                            <div class="av-grid flex flex-wrap gap-1">${avatarBtns}</div>
+                        </div>
+                        <div class="flex items-end gap-3">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-xs text-slate-400 font-bold">Prendas iniciales</span>
+                                    <span class="text-sm font-black text-orange-300" id="cloth-count-${i}">${p.maxClothes}</span>
+                                </div>
+                                <input type="range" min="4" max="12" value="${p.maxClothes}"
+                                    oninput="app.stripState.players[${i}].maxClothes=+this.value;app.stripState.players[${i}].currentClothes=+this.value;document.getElementById('cloth-count-${i}').innerText=this.value;app._updateClothingFigure(${i})"
+                                    class="w-full h-2 rounded-full accent-orange-500 cursor-pointer">
+                                <div class="flex justify-between text-[9px] text-slate-500 mt-0.5 font-bold"><span>4</span><span>12</span></div>
+                            </div>
+                            <div id="cloth-fig-${i}" class="flex-shrink-0">${this._renderClothingFigure(p)}</div>
                         </div>
                     `;
                     container.appendChild(div);
@@ -2776,7 +2830,7 @@ JSON (sin texto extra):
 
             addStripPlayer() {
                 if (!this.stripState || this.stripState.players.length >= 6) return;
-                this.stripState.players.push({ name: '', gender: 'hombre', maxClothes: 7, currentClothes: 7, position: 0 });
+                this.stripState.players.push({ name: '', gender: 'hombre', maxClothes: 7, currentClothes: 7, position: 0, avatar: '👨' });
                 this.renderStripSetup();
             },
 
@@ -2804,10 +2858,12 @@ JSON (sin texto extra):
                 if (!this.stripState) return;
                 const cp = this.stripState.players[this.stripState.currentPlayerIndex];
                 document.getElementById('strip-current-player').innerText = cp.name;
+                const avatarEl = document.getElementById('strip-player-avatar-game');
+                if (avatarEl) avatarEl.innerText = cp.avatar || '🧑';
                 const btn = document.getElementById('btn-strip-dice');
                 if (btn) btn.disabled = false;
-                const icon = document.getElementById('strip-dice-icon');
-                if (icon) icon.innerText = '🎲';
+                const resultEl = document.getElementById('strip-dice-result');
+                if (resultEl) resultEl.innerText = '';
                 this.renderStripPlayerBars();
                 this.renderStripBoard();
             },
@@ -2819,7 +2875,7 @@ JSON (sin texto extra):
                 this.stripState.players.forEach((p, i) => {
                     const isActive = i === this.stripState.currentPlayerIndex;
                     const pct = p.maxClothes > 0 ? Math.round((p.currentClothes / p.maxClothes) * 100) : 0;
-                    const gEmoji = {hombre:'👨',mujer:'👩',otro:'🧑'}[p.gender]||'🧑';
+                    const gEmoji = p.avatar || {hombre:'👨',mujer:'👩',otro:'🧑'}[p.gender] || '🧑';
                     const bar = document.createElement('div');
                     bar.className = `flex items-center gap-3 p-2.5 rounded-xl transition-all ${isActive ? 'bg-orange-500/10 border border-orange-500/30' : 'opacity-55'}`;
                     bar.innerHTML = `
@@ -2850,6 +2906,46 @@ JSON (sin texto extra):
                 return pool.slice(0, Math.min(count, pool.length)).join('');
             },
 
+            _updateClothingFigure(idx) {
+                const el = document.getElementById(`cloth-fig-${idx}`);
+                if (!el || !this.stripState) return;
+                el.innerHTML = this._renderClothingFigure(this.stripState.players[idx]);
+            },
+
+            _renderClothingFigure(player) {
+                const { currentClothes: c, maxClothes: m, gender } = player;
+                const pct = m > 0 ? c / m : 0;
+                const isMujer = gender === 'mujer';
+                const skin = '#fca5a5';
+                const hair = isMujer ? '#7c3aed' : '#1e293b';
+                const shirt = pct > 0.5 ? (isMujer ? '#ec4899' : '#3b82f6') : skin;
+                const pants = pct > 0.25 ? (isMujer ? '#8b5cf6' : '#1d4ed8') : skin;
+                const shoes = pct > 0.1 ? '#374151' : skin;
+                const jacketOp = pct > 0.75 ? '0.65' : '0';
+                const skirt = isMujer && pct > 0.5;
+                return `<svg viewBox="0 0 50 92" width="54" height="92" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="25" cy="11" r="9" fill="${skin}" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+                    ${isMujer
+                        ? `<ellipse cx="25" cy="4" rx="9" ry="5" fill="${hair}"/>
+                           <path d="M16 9 Q25 15 34 9" stroke="${hair}" stroke-width="2.5" fill="none" stroke-linecap="round"/>`
+                        : `<ellipse cx="25" cy="5" rx="8" ry="4" fill="${hair}"/>`}
+                    ${skirt
+                        ? `<path d="M17 22 Q15 48 13 68 L37 68 Q35 48 33 22 Z" fill="${shirt}"/>`
+                        : `<rect x="15" y="22" width="20" height="27" rx="4" fill="${shirt}"/>`}
+                    <rect x="5" y="23" width="9" height="5" rx="2.5" fill="${shirt}"/>
+                    <rect x="36" y="23" width="9" height="5" rx="2.5" fill="${shirt}"/>
+                    <rect x="12" y="22" width="26" height="27" rx="4" fill="#0f172a" opacity="${jacketOp}"/>
+                    ${skirt
+                        ? ''
+                        : `<rect x="15" y="49" width="8" height="22" rx="3" fill="${pants}"/>
+                           <rect x="27" y="49" width="8" height="22" rx="3" fill="${pants}"/>`}
+                    <rect x="12" y="69" width="11" height="6" rx="2" fill="${shoes}"/>
+                    <rect x="27" y="69" width="11" height="6" rx="2" fill="${shoes}"/>
+                    ${c === 0 ? '<text x="25" y="79" text-anchor="middle" font-size="13">🫣</text>' : ''}
+                    ${c <= 1 && c > 0 ? '<circle cx="25" cy="40" r="8" fill="rgba(239,68,68,0.15)" stroke="rgba(239,68,68,0.3)" stroke-width="1"/>' : ''}
+                </svg>`;
+            },
+
             renderStripBoard() {
                 const grid = document.getElementById('strip-board-grid');
                 if (!grid || !this.stripState) return;
@@ -2865,7 +2961,8 @@ JSON (sin texto extra):
                     const here = this.stripState.players.filter(p => p.position === idx);
                     const avatars = here.map(p => {
                         const isCP = this.stripState.players[this.stripState.currentPlayerIndex] === p;
-                        return `<span class="w-5 h-5 rounded-full ${isCP?'bg-orange-500 ring-1 ring-white':'bg-slate-500'} text-[9px] inline-flex items-center justify-center font-black text-white leading-none" title="${p.name}">${p.name.charAt(0).toUpperCase()}</span>`;
+                        const av = p.avatar || p.name.charAt(0).toUpperCase();
+                        return `<span class="rounded-full ${isCP?'ring-2 ring-orange-300 scale-110':'opacity-70'} text-sm inline-flex items-center justify-center leading-none transition-transform select-none" title="${p.name}">${av}</span>`;
                     }).join('');
                     return `<div class="relative p-1 rounded-lg border ${colorMap[sq.type]||colorMap.reto} text-center min-h-[52px] flex flex-col items-center justify-center gap-0.5 select-none">
                         <div class="text-sm leading-none">${emojiMap[sq.type]||'❓'}</div>
@@ -2880,21 +2977,41 @@ JSON (sin texto extra):
                 if (!this.stripState || this.stripState.pendingAction) return;
                 const btn = document.getElementById('btn-strip-dice');
                 if (btn) btn.disabled = true;
-                const icon = document.getElementById('strip-dice-icon');
-                const faces = ['⚀','⚁','⚂','⚃','⚄','⚅'];
-                let ticks = 0;
-                const anim = setInterval(() => {
-                    if (icon) icon.innerText = faces[Math.floor(Math.random()*6)];
-                    ticks++;
-                    if (ticks >= 10) {
-                        clearInterval(anim);
-                        const roll = Math.floor(Math.random()*6)+1;
-                        if (icon) icon.innerText = faces[roll-1];
-                        const cp = this.stripState.players[this.stripState.currentPlayerIndex];
-                        this.showToast(`🎲 ${cp.name} sacó ${roll}`, 'info');
-                        setTimeout(() => this._stripMovePlayer(roll), 500);
+                const cube = document.getElementById('dice-cube-3d');
+                const resultEl = document.getElementById('strip-dice-result');
+                if (resultEl) resultEl.innerText = '';
+
+                // Face positioning: f1=front(Z+), f2=right(rotY90), f3=top(rotX-90),
+                //                   f4=bottom(rotX90), f5=left(rotY-90), f6=back(rotY180)
+                // To show face N at front: rotate cube so that face comes forward
+                // face→[rotX,rotY] using positive-normalized angles (0–359)
+                const faceRot = { 1:[0,0], 2:[0,270], 3:[90,0], 4:[270,0], 5:[0,90], 6:[0,180] };
+                const roll = Math.floor(Math.random() * 6) + 1;
+                const [tx, ty] = faceRot[roll];
+                const minSpins = (3 + Math.floor(Math.random() * 3)) * 360;
+                const prevX = this._diceRotX || 0;
+                const prevY = this._diceRotY || 0;
+                const deltaX = ((tx - (prevX % 360)) + 360) % 360;
+                const deltaY = ((ty - (prevY % 360)) + 360) % 360;
+                this._diceRotX = prevX + deltaX + minSpins;
+                this._diceRotY = prevY + deltaY + minSpins;
+
+                if (cube) {
+                    cube.style.transition = 'transform 1.15s cubic-bezier(0.17,0.67,0.12,0.99)';
+                    cube.style.transform = `rotateX(${this._diceRotX}deg) rotateY(${this._diceRotY}deg)`;
+                }
+
+                const cp = this.stripState.players[this.stripState.currentPlayerIndex];
+                setTimeout(() => {
+                    if (resultEl) {
+                        resultEl.innerText = `¡${roll}!`;
+                        resultEl.style.animation = 'none';
+                        resultEl.offsetHeight; // reflow
+                        resultEl.style.animation = '';
                     }
-                }, 80);
+                    this.showToast(`🎲 ${cp.name} sacó ${roll}`, 'info');
+                    setTimeout(() => this._stripMovePlayer(roll), 700);
+                }, 1200);
             },
 
             _stripMovePlayer(steps) {
