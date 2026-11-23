@@ -817,14 +817,15 @@
                 <div class="flex items-center gap-2 mb-3">
                     <i class="fa-solid fa-dice text-orange-400 text-xs"></i>
                     <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tablero</span>
-                    <div class="flex items-center gap-3 ml-auto text-[9px] font-bold">
+                    <div class="flex items-center gap-2 ml-auto text-[9px] font-bold">
                         <span class="flex items-center gap-1 text-amber-400"><span class="w-2 h-2 rounded bg-amber-500/70 inline-block"></span>BEBER</span>
                         <span class="flex items-center gap-1 text-purple-400"><span class="w-2 h-2 rounded bg-purple-500/70 inline-block"></span>RETO</span>
                         <span class="flex items-center gap-1 text-rose-400"><span class="w-2 h-2 rounded bg-rose-500/70 inline-block"></span>CASTIGO</span>
                         <span class="flex items-center gap-1 text-emerald-400"><span class="w-2 h-2 rounded bg-emerald-500/70 inline-block"></span>PREMIO</span>
+                        <span class="flex items-center gap-1 text-amber-200"><span class="w-2 h-2 rounded bg-amber-400 inline-block"></span>🏁50</span>
                     </div>
                 </div>
-                <div id="strip-board-grid" class="grid grid-cols-5 gap-1.5"></div>
+                <div id="strip-board-grid" class="grid grid-cols-10 gap-0.5"></div>
             </div>
             <button onclick="app.navTo('menu')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl border border-slate-700 text-sm">
                 Volver al Menú
@@ -2750,13 +2751,17 @@ JSON (sin texto extra):
             // ── Strip Game ─────────────────────────────────────────────────
             stripState: null,
             _stripBoard: [
-                {type:'inicio'},{type:'beber'},{type:'beber'},{type:'beber'},{type:'reto'},
-                {type:'castigo'},{type:'castigo'},{type:'reto'},{type:'beber'},{type:'reto'},
-                {type:'premio'},{type:'premio'},{type:'reto'},{type:'beber'},{type:'reto'},
-                {type:'reto'},{type:'reto'},{type:'premio'},{type:'reto'},{type:'reto'},
-                {type:'reto'},{type:'reto'},{type:'castigo'},{type:'reto'},{type:'reto'},
-                {type:'premio'},{type:'beber'},{type:'reto'},{type:'castigo'},{type:'reto'},
-                {type:'premio'}
+                {type:'inicio'},                                                                // 0
+                {type:'beber'},{type:'beber'},{type:'reto'},{type:'beber'},{type:'castigo'},    // 1-5
+                {type:'reto'},{type:'beber'},{type:'castigo'},{type:'reto'},{type:'premio'},    // 6-10
+                {type:'beber'},{type:'castigo'},{type:'reto'},{type:'beber'},{type:'reto'},     // 11-15
+                {type:'castigo'},{type:'beber'},{type:'reto'},{type:'premio'},{type:'reto'},    // 16-20
+                {type:'beber'},{type:'castigo'},{type:'reto'},{type:'beber'},{type:'premio'},   // 21-25
+                {type:'castigo'},{type:'reto'},{type:'beber'},{type:'castigo'},{type:'reto'},   // 26-30
+                {type:'beber'},{type:'reto'},{type:'castigo'},{type:'beber'},{type:'reto'},     // 31-35
+                {type:'premio'},{type:'castigo'},{type:'beber'},{type:'reto'},{type:'castigo'}, // 36-40
+                {type:'beber'},{type:'reto'},{type:'castigo'},{type:'beber'},{type:'reto'},     // 41-45
+                {type:'castigo'},{type:'beber'},{type:'reto'},{type:'castigo'},{type:'meta'}    // 46-50
             ],
 
             initStripSetup() {
@@ -2775,7 +2780,7 @@ JSON (sin texto extra):
                 const container = document.getElementById('strip-players-setup');
                 if (!container) return;
                 container.innerHTML = '';
-                const avatarOptions = ['👨','👩','🧔','👸','🕺','💃','🤖','🧛','🦸','🧙','🐺','🦊'];
+                const avatarOptions = ['😈','💋','🔥','🌶️','🫦','💃','🕺','🌹','🐺','🦊','🍑','😏','👄','🌺','🦋','🧜','🦁','🌙','🍷','🎭'];
                 this.stripState.players.forEach((p, i) => {
                     const div = document.createElement('div');
                     div.className = 'glass-card p-4 rounded-2xl border border-orange-500/20 space-y-3';
@@ -2812,12 +2817,12 @@ JSON (sin texto extra):
                                     <span class="text-xs text-slate-400 font-bold">Prendas iniciales</span>
                                     <span class="text-sm font-black text-orange-300" id="cloth-count-${i}">${p.maxClothes}</span>
                                 </div>
-                                <input type="range" min="4" max="12" value="${p.maxClothes}"
+                                <input type="range" min="1" max="12" value="${p.maxClothes}"
                                     oninput="app.stripState.players[${i}].maxClothes=+this.value;app.stripState.players[${i}].currentClothes=+this.value;document.getElementById('cloth-count-${i}').innerText=this.value;app._updateClothingFigure(${i})"
                                     class="w-full h-2 rounded-full accent-orange-500 cursor-pointer">
-                                <div class="flex justify-between text-[9px] text-slate-500 mt-0.5 font-bold"><span>4</span><span>12</span></div>
+                                <div class="flex justify-between text-[9px] text-slate-500 mt-0.5 font-bold"><span>1</span><span>12</span></div>
                             </div>
-                            <div id="cloth-fig-${i}" class="flex-shrink-0">${this._renderClothingFigure(p)}</div>
+                            <div id="cloth-fig-${i}" class="flex-shrink-0">${this._renderClothingFigure(p, i)}</div>
                         </div>
                     `;
                     container.appendChild(div);
@@ -2875,20 +2880,18 @@ JSON (sin texto extra):
                 this.stripState.players.forEach((p, i) => {
                     const isActive = i === this.stripState.currentPlayerIndex;
                     const pct = p.maxClothes > 0 ? Math.round((p.currentClothes / p.maxClothes) * 100) : 0;
-                    const gEmoji = p.avatar || {hombre:'👨',mujer:'👩',otro:'🧑'}[p.gender] || '🧑';
                     const bar = document.createElement('div');
-                    bar.className = `flex items-center gap-3 p-2.5 rounded-xl transition-all ${isActive ? 'bg-orange-500/10 border border-orange-500/30' : 'opacity-55'}`;
+                    bar.className = `flex items-center gap-2 p-2 rounded-xl transition-all ${isActive ? 'bg-orange-500/10 border border-orange-500/30' : 'opacity-55'}`;
                     bar.innerHTML = `
-                        <div class="text-2xl leading-none flex-shrink-0 ${p.currentClothes===0?'grayscale opacity-50':''}">${gEmoji}</div>
+                        <div class="flex-shrink-0 ${p.currentClothes===0?'opacity-40':''}" style="line-height:0">${this._renderClothingFigure(p, i, true)}</div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center justify-between mb-1">
                                 <span class="text-xs font-black ${isActive?'text-orange-200':'text-slate-300'} truncate">${p.name}${isActive?' <span class="text-orange-400 text-[10px] ml-1">▶</span>':''}</span>
-                                <span class="text-[11px] font-bold ml-2 flex-shrink-0 ${p.currentClothes===0?'text-rose-400 animate-pulse':p.currentClothes<=2?'text-amber-400':'text-slate-400'}">${p.currentClothes} prendas</span>
+                                <span class="text-[11px] font-bold ml-1 flex-shrink-0 ${p.currentClothes===0?'text-rose-400 animate-pulse':p.currentClothes<=2?'text-amber-400':'text-slate-400'}">${p.currentClothes}🩲</span>
                             </div>
-                            <div class="w-full bg-slate-800/80 h-3 rounded-full overflow-hidden border border-slate-700">
+                            <div class="w-full bg-slate-800/80 h-2.5 rounded-full overflow-hidden border border-slate-700">
                                 <div class="h-full rounded-full transition-all duration-700 ${p.currentClothes===0?'bg-rose-500':p.currentClothes<=2?'bg-amber-500':'bg-gradient-to-r from-orange-500 to-amber-400'}" style="width:${pct}%"></div>
                             </div>
-                            <div class="text-xs mt-0.5 leading-none tracking-widest">${this._stripClothesEmojis(p.currentClothes, p.gender)}</div>
                         </div>
                     `;
                     container.appendChild(bar);
@@ -2909,44 +2912,72 @@ JSON (sin texto extra):
             _updateClothingFigure(idx) {
                 const el = document.getElementById(`cloth-fig-${idx}`);
                 if (!el || !this.stripState) return;
-                el.innerHTML = this._renderClothingFigure(this.stripState.players[idx]);
+                el.innerHTML = this._renderClothingFigure(this.stripState.players[idx], idx);
             },
 
-            _renderClothingFigure(player) {
-                const { currentClothes: c, maxClothes: m, gender } = player;
+            _renderClothingFigure(player, figIdx = 0, small = false) {
+                const { currentClothes: c, gender } = player;
                 const isMujer = gender === 'mujer';
                 const show = n => c >= n;
-                const skin = '#fca5a5';
                 const nude = c === 0;
+                const uid = `f${figIdx}`;
+                const W = small ? 36 : 54;
+                const H = small ? 60 : 92;
+
+                // Gradient defs for 3D effect
+                const defs = `<defs>
+  <radialGradient id="hg${uid}" cx="38%" cy="28%" r="65%">
+    <stop offset="0%" stop-color="#ffe4e6"/>
+    <stop offset="55%" stop-color="#fca5a5"/>
+    <stop offset="100%" stop-color="#e07575"/>
+  </radialGradient>
+  <radialGradient id="bg${uid}" cx="30%" cy="20%" r="80%">
+    <stop offset="0%" stop-color="#fdb6b6"/>
+    <stop offset="65%" stop-color="#fca5a5"/>
+    <stop offset="100%" stop-color="#e07575"/>
+  </radialGradient>
+  <linearGradient id="lg${uid}" x1="0%" y1="0%" x2="100%" y2="0%">
+    <stop offset="0%" stop-color="#e07575"/>
+    <stop offset="25%" stop-color="#fca5a5"/>
+    <stop offset="75%" stop-color="#fca5a5"/>
+    <stop offset="100%" stop-color="#e07575"/>
+  </linearGradient>
+</defs>`;
+                const HG = `url(#hg${uid})`; // head sphere gradient
+                const BG = `url(#bg${uid})`; // body gradient
+                const LG = `url(#lg${uid})`; // limb gradient
+                const skin = '#fca5a5';
 
                 if (!isMujer) {
-                    // ─── MALE ────────────────────────────────────────────────────
-                    // Layers: 1=boxers 2=pants 3=shirt 4=shoes 5=socks 6=belt 7=overshirt 8=watch 9=cap 10=jacket 11=scarf 12=gloves
-                    return `<svg viewBox="0 0 50 92" width="54" height="92" xmlns="http://www.w3.org/2000/svg">
+                    return `<svg viewBox="0 0 50 92" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+  ${defs}
   <ellipse cx="25" cy="4.5" rx="8.5" ry="4.5" fill="#1e293b"/>
-  <circle cx="25" cy="11" r="9" fill="${skin}"/>
-  <ellipse cx="16.2" cy="11" rx="1.8" ry="2.5" fill="${skin}"/>
-  <ellipse cx="33.8" cy="11" rx="1.8" ry="2.5" fill="${skin}"/>
-  <rect x="22" y="19" width="6" height="5" fill="${skin}"/>
-  <rect x="16" y="23" width="18" height="22" rx="3" fill="${skin}"/>
-  <rect x="7" y="23" width="8" height="20" rx="4" fill="${skin}"/>
-  <rect x="35" y="23" width="8" height="20" rx="4" fill="${skin}"/>
-  <ellipse cx="11" cy="44" rx="4" ry="3" fill="${skin}"/>
-  <ellipse cx="39" cy="44" rx="4" ry="3" fill="${skin}"/>
-  <rect x="16" y="44" width="18" height="6" rx="2" fill="${skin}"/>
-  <rect x="16" y="49" width="8" height="24" rx="4" fill="${skin}"/>
-  <rect x="26" y="49" width="8" height="24" rx="4" fill="${skin}"/>
-  <rect x="13" y="71" width="12" height="6" rx="2" fill="${skin}"/>
-  <rect x="25" y="71" width="12" height="6" rx="2" fill="${skin}"/>
+  <circle cx="25" cy="11" r="9" fill="${HG}"/>
+  <circle cx="22" cy="8.5" r="2" fill="rgba(255,255,255,0.22)"/>
+  <ellipse cx="16.2" cy="11" rx="1.8" ry="2.5" fill="${LG}"/>
+  <ellipse cx="33.8" cy="11" rx="1.8" ry="2.5" fill="${LG}"/>
+  <rect x="22" y="19" width="6" height="5" fill="${LG}"/>
+  <rect x="16" y="23" width="18" height="22" rx="3" fill="${BG}"/>
+  <rect x="7" y="23" width="8" height="20" rx="4" fill="${LG}"/>
+  <rect x="35" y="23" width="8" height="20" rx="4" fill="${LG}"/>
+  <ellipse cx="11" cy="44" rx="4" ry="3" fill="${LG}"/>
+  <ellipse cx="39" cy="44" rx="4" ry="3" fill="${LG}"/>
+  <rect x="16" y="44" width="18" height="6" rx="2" fill="${LG}"/>
+  <rect x="16" y="49" width="8" height="24" rx="4" fill="${LG}"/>
+  <rect x="26" y="49" width="8" height="24" rx="4" fill="${LG}"/>
+  <rect x="13" y="71" width="12" height="6" rx="2" fill="${LG}"/>
+  <rect x="25" y="71" width="12" height="6" rx="2" fill="${LG}"/>
   ${show(1) ? `<rect x="15" y="44" width="20" height="13" rx="3" fill="#94a3b8"/>
   <line x1="25" y1="44" x2="25" y2="57" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
   <rect x="15" y="44" width="20" height="4" rx="2" fill="rgba(255,255,255,0.12)"/>` : ''}
   ${show(2) ? `<rect x="15" y="49" width="9" height="24" rx="4" fill="#1d4ed8"/>
   <rect x="26" y="49" width="9" height="24" rx="4" fill="#1d4ed8"/>
-  <rect x="15" y="44" width="20" height="10" rx="3" fill="#1d4ed8"/>` : ''}
+  <rect x="15" y="44" width="20" height="10" rx="3" fill="#1d4ed8"/>
+  <rect x="15" y="44" width="20" height="4" rx="2" fill="rgba(255,255,255,0.1)"/>` : ''}
   ${show(3) ? `<rect x="14" y="23" width="22" height="22" rx="3" fill="#3b82f6"/>
   <rect x="7" y="23" width="10" height="13" rx="4" fill="#3b82f6"/>
   <rect x="33" y="23" width="10" height="13" rx="4" fill="#3b82f6"/>
+  <rect x="14" y="23" width="22" height="6" rx="3" fill="rgba(255,255,255,0.12)"/>
   <path d="M22 23 L25 28 L28 23" stroke="rgba(255,255,255,0.3)" stroke-width="1" fill="none"/>` : ''}
   ${show(4) ? `<path d="M13 71 L12 78 L24 78 L25 71 Z" fill="#292524"/>
   <path d="M25 71 L26 78 L38 78 L37 71 Z" fill="#292524"/>
@@ -2981,30 +3012,31 @@ JSON (sin texto extra):
   ${c <= 1 && c > 0 ? `<circle cx="25" cy="40" r="10" fill="none" stroke="rgba(239,68,68,0.28)" stroke-width="1.5" stroke-dasharray="3,2"/>` : ''}
 </svg>`;
                 } else {
-                    // ─── FEMALE ──────────────────────────────────────────────────
-                    // Layers: 1=panties 2=bra 3=skirt 4=heels 5=top 6=stockings 7=belt 8=jewelry 9=bag 10=coat 11=scarf 12=hat
-                    return `<svg viewBox="0 0 50 92" width="54" height="92" xmlns="http://www.w3.org/2000/svg">
+                    return `<svg viewBox="0 0 50 92" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+  ${defs}
   <ellipse cx="25" cy="8" rx="11" ry="9" fill="#7c3aed" opacity="0.9"/>
-  <circle cx="25" cy="11" r="9" fill="${skin}"/>
+  <circle cx="25" cy="11" r="9" fill="${HG}"/>
+  <circle cx="22" cy="8.5" r="2.5" fill="rgba(255,255,255,0.22)"/>
   <path d="M14 9 Q12 20 15 28" stroke="#7c3aed" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.85"/>
   <path d="M36 9 Q38 20 35 28" stroke="#7c3aed" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.85"/>
-  <rect x="22" y="19" width="6" height="5" fill="${skin}"/>
-  <path d="M17 23 Q25 20 33 23 L32 46 Q25 49 18 46 Z" fill="${skin}"/>
-  <rect x="7" y="23" width="8" height="19" rx="4" fill="${skin}"/>
-  <rect x="35" y="23" width="8" height="19" rx="4" fill="${skin}"/>
-  <ellipse cx="11" cy="43" rx="4" ry="3" fill="${skin}"/>
-  <ellipse cx="39" cy="43" rx="4" ry="3" fill="${skin}"/>
-  <path d="M15 44 Q14 50 16 52 L34 52 Q36 50 35 44 Z" fill="${skin}"/>
-  <rect x="16" y="51" width="7" height="22" rx="3.5" fill="${skin}"/>
-  <rect x="27" y="51" width="7" height="22" rx="3.5" fill="${skin}"/>
-  <rect x="14" y="71" width="10" height="6" rx="2" fill="${skin}"/>
-  <rect x="26" y="71" width="10" height="6" rx="2" fill="${skin}"/>
+  <rect x="22" y="19" width="6" height="5" fill="${LG}"/>
+  <path d="M17 23 Q25 20 33 23 L32 46 Q25 49 18 46 Z" fill="${BG}"/>
+  <rect x="7" y="23" width="8" height="19" rx="4" fill="${LG}"/>
+  <rect x="35" y="23" width="8" height="19" rx="4" fill="${LG}"/>
+  <ellipse cx="11" cy="43" rx="4" ry="3" fill="${LG}"/>
+  <ellipse cx="39" cy="43" rx="4" ry="3" fill="${LG}"/>
+  <path d="M15 44 Q14 50 16 52 L34 52 Q36 50 35 44 Z" fill="${LG}"/>
+  <rect x="16" y="51" width="7" height="22" rx="3.5" fill="${LG}"/>
+  <rect x="27" y="51" width="7" height="22" rx="3.5" fill="${LG}"/>
+  <rect x="14" y="71" width="10" height="6" rx="2" fill="${LG}"/>
+  <rect x="26" y="71" width="10" height="6" rx="2" fill="${LG}"/>
   ${show(1) ? `<path d="M16 46 L34 46 L33 56 Q25 60 17 56 Z" fill="#f9a8d4"/>
   <rect x="16" y="46" width="18" height="4" fill="rgba(255,255,255,0.15)" rx="1"/>` : ''}
   ${show(2) ? `<path d="M17 30 Q25 35 33 30 L32 39 Q25 42 18 39 Z" fill="#f9a8d4"/>
   <line x1="25" y1="30" x2="25" y2="39" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
   <circle cx="25" cy="30" r="1.5" fill="rgba(255,255,255,0.4)"/>` : ''}
-  ${show(3) ? `<path d="M15 44 Q12 68 13 77 L37 77 Q38 68 35 44 Z" fill="#8b5cf6"/>` : ''}
+  ${show(3) ? `<path d="M15 44 Q12 68 13 77 L37 77 Q38 68 35 44 Z" fill="#8b5cf6"/>
+  <path d="M15 44 Q12 52 13 56 L37 56 Q38 52 35 44 Z" fill="rgba(255,255,255,0.08)"/>` : ''}
   ${show(4) ? `<path d="M14 72 L14 78 L23 78 L24 72 Z" fill="#be185d"/>
   <line x1="23" y1="78" x2="25" y2="85" stroke="#be185d" stroke-width="2.5" stroke-linecap="round"/>
   <path d="M26 72 L26 78 L35 78 L36 72 Z" fill="#be185d"/>
@@ -3012,7 +3044,8 @@ JSON (sin texto extra):
   ${show(5) ? `<path d="M15 23 Q25 20 35 23 L34 44 Q25 47 16 44 Z" fill="#ec4899"/>
   <rect x="7" y="23" width="10" height="10" rx="4" fill="#ec4899"/>
   <rect x="33" y="23" width="10" height="10" rx="4" fill="#ec4899"/>
-  <path d="M21 23 L25 30 L29 23" stroke="rgba(255,255,255,0.25)" stroke-width="1" fill="none"/>` : ''}
+  <path d="M21 23 L25 30 L29 23" stroke="rgba(255,255,255,0.25)" stroke-width="1" fill="none"/>
+  <path d="M15 23 Q25 20 35 23 L35 28 Q25 25 15 28 Z" fill="rgba(255,255,255,0.1)"/>` : ''}
   ${show(6) ? `<rect x="16" y="51" width="7" height="22" rx="3.5" fill="#fde68a" opacity="0.65"/>
   <rect x="27" y="51" width="7" height="22" rx="3.5" fill="#fde68a" opacity="0.65"/>` : ''}
   ${show(7) ? `<rect x="15" y="43" width="20" height="3" rx="1.5" fill="#be185d"/>
@@ -3047,6 +3080,54 @@ JSON (sin texto extra):
                 }
             },
 
+
+            _showStripWinner(player) {
+                const existing = document.getElementById('strip-action-modal');
+                if (existing) existing.remove();
+                const prize = this._getWinnerPrize();
+                const otherPlayers = this.stripState.players.filter(p => p !== player).map(p => p.name).join(', ');
+                const modal = document.createElement('div');
+                modal.id = 'strip-action-modal';
+                modal.className = 'fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4';
+                modal.innerHTML = `
+                    <div class="glass-card max-w-sm w-full p-8 rounded-3xl border border-amber-400/60 bg-amber-950/40 space-y-5 shadow-2xl text-center">
+                        <div class="text-6xl mb-2">🏆</div>
+                        <div class="text-xs font-black text-amber-400 uppercase tracking-widest animate-pulse">¡GANADOR!</div>
+                        <div class="text-2xl font-black text-white">${player.name} llegó a la casilla 50</div>
+                        <div class="p-4 rounded-2xl border border-amber-500/40 bg-amber-900/30 space-y-2">
+                            <div class="text-xs font-black text-amber-300 uppercase tracking-wider">🎁 Premio sobre todos los demás</div>
+                            <p class="text-sm text-white leading-relaxed">${prize}</p>
+                            ${otherPlayers ? `<div class="text-[11px] text-amber-400 mt-1">Afectados: ${otherPlayers}</div>` : ''}
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="app.stripState.currentPlayerIndex=(app.stripState.currentPlayerIndex+1)%app.stripState.players.length;document.getElementById('strip-action-modal').remove();app.renderStripGame();"
+                                class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition text-sm">
+                                Continuar jugando
+                            </button>
+                            <button onclick="document.getElementById('strip-action-modal').remove();app.navTo('menu')"
+                                class="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-extrabold py-3 rounded-xl shadow-lg transition text-sm">
+                                🎉 ¡Celebrar!
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                if (typeof confetti !== 'undefined') confetti({ particleCount: 180, spread: 90, origin: { y: 0.5 } });
+            },
+
+            _getWinnerPrize() {
+                const prizes = [
+                    'El ganador da la orden: todos los demás se quitan 2 prendas ahora mismo, sin excusas ni negociación.',
+                    'El ganador elige 1 persona que debe quitarse TODAS sus prendas restantes de inmediato.',
+                    'El ganador manda a hacer lo que quiera a quien quiera — no se puede negar. Sin límites.',
+                    'Todos los demás toman 3 shots consecutivos Y se quitan una prenda como tributo al campeón.',
+                    'El ganador escoge la penitencia grupal: todos hacen lo que el campeón ordene durante 1 minuto.',
+                    'El ganador señala a 2 jugadores que deben intercambiar una prenda entre ellos.',
+                    'El ganador elige una actividad atrevida que todos deben hacer juntos ahora mismo.',
+                ];
+                return prizes[Math.floor(Math.random() * prizes.length)];
+            },
+
             renderStripBoard() {
                 const grid = document.getElementById('strip-board-grid');
                 if (!grid || !this.stripState) return;
@@ -3056,20 +3137,20 @@ JSON (sin texto extra):
                     reto:    'bg-purple-900/50 border-purple-500/50 text-purple-300',
                     castigo: 'bg-rose-900/50 border-rose-500/50 text-rose-300',
                     premio:  'bg-emerald-900/50 border-emerald-500/50 text-emerald-300',
+                    meta:    'bg-gradient-to-br from-amber-400/90 to-yellow-300/90 border-amber-200 text-slate-900 font-black animate-pulse',
                 };
-                const emojiMap = {inicio:'🏠',beber:'🥃',reto:'🎭',castigo:'🔥',premio:'🏆'};
+                const emojiMap = {inicio:'🏠',beber:'🥃',reto:'🎭',castigo:'🔥',premio:'🏆',meta:'🏁'};
                 grid.innerHTML = this._stripBoard.map((sq, idx) => {
                     const here = this.stripState.players.filter(p => p.position === idx);
                     const avatars = here.map(p => {
                         const isCP = this.stripState.players[this.stripState.currentPlayerIndex] === p;
                         const av = p.avatar || p.name.charAt(0).toUpperCase();
-                        return `<span class="rounded-full ${isCP?'ring-2 ring-orange-300 scale-110':'opacity-70'} text-sm inline-flex items-center justify-center leading-none transition-transform select-none" title="${p.name}">${av}</span>`;
+                        return `<span class="rounded-full ${isCP?'ring-2 ring-orange-300 scale-110':'opacity-70'} text-xs inline-flex items-center justify-center leading-none transition-transform select-none" title="${p.name}">${av}</span>`;
                     }).join('');
-                    return `<div class="relative p-1 rounded-lg border ${colorMap[sq.type]||colorMap.reto} text-center min-h-[52px] flex flex-col items-center justify-center gap-0.5 select-none">
+                    return `<div class="relative p-0.5 rounded-md border ${colorMap[sq.type]||colorMap.reto} text-center min-h-[38px] flex flex-col items-center justify-center select-none" title="${sq.type==='meta'?'🏁 META — ¡GANADOR!':sq.type.toUpperCase()+' #'+idx}">
                         <div class="text-sm leading-none">${emojiMap[sq.type]||'❓'}</div>
-                        <div class="text-[8px] font-black uppercase tracking-wide leading-none">${sq.type==='inicio'?'INICIO':sq.type.toUpperCase()}</div>
-                        <div class="text-[9px] text-slate-500 leading-none">${idx===0?'':idx}</div>
-                        ${here.length?`<div class="flex flex-wrap gap-0.5 justify-center mt-0.5">${avatars}</div>`:''}
+                        <div class="text-[7px] text-current/60 leading-none font-mono opacity-70">${idx===0?'·':idx}</div>
+                        ${here.length?`<div class="flex flex-wrap gap-0 justify-center">${avatars}</div>`:''}
                     </div>`;
                 }).join('');
             },
@@ -3118,9 +3199,20 @@ JSON (sin texto extra):
             _stripMovePlayer(steps) {
                 const state = this.stripState;
                 const player = state.players[state.currentPlayerIndex];
-                player.position = (player.position + steps) % this._stripBoard.length;
+                const maxPos = 50;
+                let newPos = player.position + steps;
+                if (newPos > maxPos) {
+                    const bounce = newPos - maxPos;
+                    newPos = maxPos - bounce;
+                    this.showToast(`🔄 ¡${player.name} rebotó ${bounce} casillas! → pos. ${newPos}`, 'info');
+                }
+                player.position = newPos;
                 this.renderStripBoard();
                 this.renderStripPlayerBars();
+                if (newPos === maxPos) {
+                    setTimeout(() => this._showStripWinner(player), 350);
+                    return;
+                }
                 setTimeout(() => {
                     const sq = this._stripBoard[player.position];
                     const action = this._getStripAction(sq.type, player.gender);
