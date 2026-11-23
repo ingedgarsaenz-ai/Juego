@@ -914,6 +914,17 @@
                 </div>
                 <div id="strip-board-grid" class="grid grid-cols-10 gap-0.5"></div>
             </div>
+            <!-- Game history log -->
+            <div class="glass-card p-3 rounded-3xl border border-slate-700 shadow-xl">
+                <div class="flex items-center gap-2 mb-2">
+                    <i class="fa-solid fa-scroll text-slate-400 text-xs"></i>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Historial</span>
+                    <span id="strip-history-count" class="text-[9px] text-slate-500 ml-auto"></span>
+                </div>
+                <div id="strip-history-log" class="space-y-1.5 max-h-52 overflow-y-auto pr-1 scroll-smooth">
+                    <div class="text-xs text-slate-600 text-center py-2 italic">Aún no hay movimientos</div>
+                </div>
+            </div>
             <button onclick="app.navTo('menu')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl border border-slate-700 text-sm">
                 Volver al Menú
             </button>
@@ -2652,7 +2663,33 @@ JSON (sin texto extra):
                 if (hash && hash.includes('room=')) {
                     const code = hash.split('room=')[1].substring(0, 6);
                     if (code) {
-                        this.showJoinNamePrompt(code);
+                        // For strip rooms, joinRoom shows the strip setup modal directly (single prompt).
+                        // Wait for Firebase auth if needed, then route.
+                        const tryJoin = () => {
+                            if (this.db) {
+                                const docRef = doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', code);
+                                getDoc(docRef).then(snap => {
+                                    if (!snap.exists()) { this.showJoinNamePrompt(code); return; }
+                                    const data = snap.data();
+                                    if (data.mode === 'strip') {
+                                        // Strip room: joinRoom handles setup modal directly (no generic name prompt)
+                                        this.joinRoom(code);
+                                    } else {
+                                        // Non-strip: keep existing generic name prompt flow
+                                        this.showJoinNamePrompt(code);
+                                    }
+                                }).catch(() => this.showJoinNamePrompt(code));
+                            } else {
+                                this.showJoinNamePrompt(code);
+                            }
+                        };
+                        if (this.auth && !this.auth.currentUser) {
+                            const unsub = onAuthStateChanged(this.auth, (user) => {
+                                if (user) { unsub(); tryJoin(); }
+                            });
+                        } else {
+                            tryJoin();
+                        }
                     }
                 }
             },
@@ -2934,18 +2971,27 @@ JSON (sin texto extra):
                 {type:'castigo',erotic:true},{type:'reto',erotic:true},{type:'castigo',erotic:true},{type:'premio',erotic:true},{type:'meta',erotic:true},           // 96-100
             ],
 
-            _generateDynamicBoard(size) {
-                // size must be a multiple of 10 (e.g. maxClothes * 10)
-                const board = [{type:'inicio'}]; // position 0
+            _generateDynamicBoard(size, seed = '') {
                 const base = ['beber','beber','reto','beber','castigo','reto','beber','castigo','reto'];
                 const groups = size / 10;
+                // Collect all interior tiles (excluding inicio and meta)
+                const tiles = [];
                 for (let g = 0; g < groups; g++) {
                     const isLast = g === groups - 1;
                     const isEven = (g + 1) % 2 === 0;
-                    for (let p = 0; p < 9; p++) board.push({type: base[p]});
-                    board.push({type: isLast ? 'meta' : isEven ? 'castigo_todos' : 'premio'});
+                    for (let p = 0; p < 9; p++) tiles.push({type: base[p]});
+                    if (!isLast) tiles.push({type: isEven ? 'castigo_todos' : 'premio'});
                 }
-                return board;
+                // Seeded shuffle: same roomId → same board on all devices; local games use random seed
+                let h = seed
+                    ? seed.split('').reduce((a, c) => Math.imul(31, a) + c.charCodeAt(0) | 0, 0)
+                    : (Math.random() * 2 ** 31) | 0;
+                const rng = () => { h ^= h << 13; h ^= h >> 17; h ^= h << 5; return (h >>> 0) / 2 ** 32; };
+                for (let i = tiles.length - 1; i > 0; i--) {
+                    const j = Math.floor(rng() * (i + 1));
+                    [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
+                }
+                return [{type:'inicio'}, ...tiles, {type:'meta'}];
             },
 
             initStripSetup() {
@@ -3130,7 +3176,7 @@ JSON (sin texto extra):
                     }
                 } else {
                     if (actionsEl) actionsEl.classList.add('hidden');
-                    if (hintEl) hintEl.innerHTML = '✅ <strong class="text-white">¡Listo!</strong> Cuando sea tu turno el host te pasará el teléfono.';
+                    if (hintEl) hintEl.innerHTML = '✅ <strong class="text-white">¡Listo!</strong> Cuando sea tu turno podrás lanzar el dado desde tu dispositivo.';
                 }
             },
 
@@ -3141,7 +3187,7 @@ JSON (sin texto extra):
                 if (players.length < 2) { this.showToast('Mínimo 2 jugadores para iniciar.', 'error'); return; }
                 const maxClothes = Math.max(...players.map(p => p.maxClothes || 7));
                 const boardSize = Math.min(60, Math.max(10, Math.ceil(maxClothes * 6 / 10) * 10));
-                this._stripBoard = this._generateDynamicBoard(boardSize);
+                this._stripBoard = this._generateDynamicBoard(boardSize, data.roomId || '');
                 const gamePlayers = players.map(p => ({ ...p, currentClothes: p.maxClothes || 7, position: 0, _nakedToasted: false }));
                 this.stripState = {
                     players: gamePlayers,
@@ -3255,7 +3301,7 @@ JSON (sin texto extra):
                 this.listenToRoom(roomId);
                 this.navTo('strip-lobby');
                 this.renderStripLobbyView(data);
-                this.showToast('¡Te uniste! Cuando sea tu turno, el host te pasará el teléfono.', 'success');
+                this.showToast('¡Te uniste! Cuando sea tu turno podrás lanzar el dado desde aquí.', 'success');
             },
 
             handleStripRoomUpdate(data) {
@@ -3269,30 +3315,39 @@ JSON (sin texto extra):
                     if (!inGame) {
                         // Transition all players from lobby to game board
                         const boardSize = gs.boardSize || 60;
-                        this._stripBoard = this._generateDynamicBoard(boardSize);
+                        this._stripBoard = this._generateDynamicBoard(boardSize, data.roomId || '');
                         if (gs.eroticoMode) {
                             this._stripBoard[boardSize] = {type:'reto', erotic:true};
                             for (let i = 1; i <= 40; i++) this._stripBoard.push(this._eroticoBoard[i]);
                         }
                         this.stripState = { ...gs, pendingAction: null };
                         this._usedStripActions = new Set();
+                        this._stripHistory = gs.history || [];
                         this.navTo('strip-game');
                         this.renderStripGame();
                         this.showToast('¡El juego ha comenzado!', 'success');
                     } else {
-                        // Already in game — sync state if no action modal is in progress
-                        const modalOpen = !!document.getElementById('strip-action-modal');
-                        if (!modalOpen) {
-                            const boardSize = gs.boardSize || 60;
-                            const prevErotic = this.stripState?.eroticoMode;
-                            if (gs.eroticoMode && !prevErotic) {
-                                // Erotic mode was just activated — extend the board
-                                this._stripBoard = this._generateDynamicBoard(boardSize);
-                                this._stripBoard[boardSize] = {type:'reto', erotic:true};
-                                for (let i = 1; i <= 40; i++) this._stripBoard.push(this._eroticoBoard[i]);
-                            }
-                            this.stripState = { ...gs, pendingAction: this.stripState?.pendingAction || null };
+                        // Already in game — sync board and show/dismiss action modal
+                        const boardSize = gs.boardSize || 60;
+                        const prevErotic = this.stripState?.eroticoMode;
+                        if (gs.eroticoMode && !prevErotic) {
+                            this._stripBoard = this._generateDynamicBoard(boardSize, data.roomId || '');
+                            this._stripBoard[boardSize] = {type:'reto', erotic:true};
+                            for (let i = 1; i <= 40; i++) this._stripBoard.push(this._eroticoBoard[i]);
+                        }
+                        // Auto-close spectator modal when current player confirmed (pendingAction cleared)
+                        const modalEl = document.getElementById('strip-action-modal');
+                        if (modalEl && !gs.pendingAction) modalEl.remove();
+                        // Render if no modal is blocking
+                        if (!document.getElementById('strip-action-modal')) {
+                            if (gs.history) this._stripHistory = gs.history;
+                            this.stripState = { ...gs, pendingAction: gs.pendingAction || null };
                             this.renderStripGame();
+                            if (gs.pendingAction) {
+                                const cp = this.stripState.players[this.stripState.currentPlayerIndex];
+                                const sq = this._stripBoard[cp.position] || { type: 'reto', erotic: false };
+                                this._showStripActionModal(cp, sq, gs.pendingAction);
+                            }
                         }
                     }
                     return;
@@ -3308,7 +3363,7 @@ JSON (sin texto extra):
                 if (!this.stripState) return;
                 const maxClothes = Math.max(...this.stripState.players.map(p => p.maxClothes || 7));
                 const boardSize = Math.min(60, Math.max(10, Math.ceil(maxClothes * 6 / 10) * 10));
-                this._stripBoard = this._generateDynamicBoard(boardSize);
+                this._stripBoard = this._generateDynamicBoard(boardSize, this._stripRoomId || '');
                 this.stripState.boardSize = boardSize;
                 this.stripState.maxPos = boardSize;
                 this.stripState.players.forEach((p, i) => {
@@ -3320,6 +3375,7 @@ JSON (sin texto extra):
                 this.stripState.currentPlayerIndex = 0;
                 this.stripState.pendingAction = null;
                 this._usedStripActions = new Set();
+                this._stripHistory = [];
                 this.navTo('strip-game');
                 this.renderStripGame();
             },
@@ -3340,6 +3396,35 @@ JSON (sin texto extra):
                 if (resultEl) resultEl.innerText = '';
                 this.renderStripPlayerBars();
                 this.renderStripBoard();
+                this.renderStripHistory();
+            },
+
+            renderStripHistory() {
+                const container = document.getElementById('strip-history-log');
+                if (!container) return;
+                const history = this._stripHistory || [];
+                const countEl = document.getElementById('strip-history-count');
+                if (countEl) countEl.textContent = history.length ? history.length + ' movimiento' + (history.length !== 1 ? 's' : '') : '';
+                if (!history.length) {
+                    container.innerHTML = '<div class="text-xs text-slate-600 text-center py-2 italic">Aún no hay movimientos</div>';
+                    return;
+                }
+                const tileColor = {beber:'text-amber-300',reto:'text-purple-300',castigo:'text-rose-300',premio:'text-emerald-300',castigo_todos:'text-red-300',ereto:'text-pink-300',ecastigo:'text-fuchsia-300',epremio:'text-rose-300',ecastigo_todos:'text-purple-300'};
+                const tileIcon  = {beber:'🥃',reto:'🎭',castigo:'🔥',premio:'🏆',castigo_todos:'💀',ereto:'💋',ecastigo:'🔞',epremio:'💝',ecastigo_todos:'🫦'};
+                container.innerHTML = [...history].reverse().map(e => {
+                    const tk = e.erotic ? ('e' + e.tileType) : e.tileType;
+                    return `<div class="flex items-start gap-2 py-1.5 border-b border-slate-800/60 last:border-0">
+                        <span class="text-xl leading-none flex-shrink-0 mt-0.5">${e.avatar}</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="text-[11px] font-black text-white">${e.playerName}</span>
+                                <span class="text-[10px] text-slate-500">🎲${e.roll} → casilla ${e.position}</span>
+                                <span class="text-[10px] font-bold ${tileColor[tk]||'text-slate-300'}">${tileIcon[tk]||'❓'} ${e.tileLabel}</span>
+                            </div>
+                            <p class="text-[10px] text-slate-400 leading-tight mt-0.5 line-clamp-2">${e.actionText}</p>
+                        </div>
+                    </div>`;
+                }).join('');
             },
 
             renderStripPlayerBars() {
@@ -3802,6 +3887,27 @@ JSON (sin texto extra):
                     const action = this._getStripAction(sq.type, player.gender, player.position, player.currentClothes);
                     state.pendingAction = action;
                     this._showStripActionModal(player, sq, action);
+                    // Record in local history
+                    if (!this._stripHistory) this._stripHistory = [];
+                    const _tileLabels = {beber:'BEBER',reto:'RETO',castigo:'CASTIGO',premio:'PREMIO',castigo_todos:'CASTIGO TODOS',inicio:'INICIO',meta:'META',ereto:'RETO ERÓTICO',ecastigo:'CASTIGO ERÓTICO',epremio:'PREMIO ERÓTICO',ecastigo_todos:'CASTIGO TODOS ERÓTICO'};
+                    const _tkey = sq.erotic ? ('e' + sq.type) : sq.type;
+                    this._stripHistory.push({ playerName: player.name, avatar: player.avatar || '🧑', roll: steps, position: player.position, tileType: sq.type, tileLabel: _tileLabels[_tkey] || sq.type.toUpperCase(), erotic: !!sq.erotic, actionText: action.text });
+                    this.renderStripHistory();
+                    // Sync new position + pending action to Firestore so all players see the modal
+                    if (this.currentRoomId && this.currentRoomData) {
+                        const stripGameState = {
+                            players: state.players,
+                            currentPlayerIndex: state.currentPlayerIndex,
+                            boardSize: state.boardSize,
+                            maxPos: state.maxPos,
+                            eroticoMode: state.eroticoMode || false,
+                            pendingAction: action,
+                            history: this._stripHistory.slice(-40)
+                        };
+                        const roomData = { ...this.currentRoomData, stripGameState };
+                        this.currentRoomData = roomData;
+                        this.saveRoomDoc(this.currentRoomId, roomData).catch(() => {});
+                    }
                 }, 350);
             },
 
@@ -3847,10 +3953,15 @@ JSON (sin texto extra):
                             <p class="text-sm font-semibold text-white leading-relaxed text-center">${action.text}</p>
                         </div>
                         ${grupalNote}${removesNote}${addsNote}${nakedNote}
-                        <button onclick="app.confirmStripAction()"
-                            class="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-check"></i> ¡LISTO, LO CUMPLIMOS TODOS!
-                        </button>
+                        ${(!this.currentRoomId || player.id === this.playerId)
+                            ? `<button onclick="app.confirmStripAction()"
+                                class="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-check"></i> ¡LISTO, LO CUMPLIMOS TODOS!
+                              </button>`
+                            : `<div class="text-center py-3 text-xs text-slate-400 flex items-center justify-center gap-2 animate-pulse">
+                                <i class="fa-solid fa-spinner fa-spin"></i> Esperando que ${player.name} confirme…
+                              </div>`
+                        }
                     </div>
                 `;
                 document.body.appendChild(modal);
@@ -4624,7 +4735,8 @@ JSON (sin texto extra):
                         currentPlayerIndex: state.currentPlayerIndex,
                         boardSize: state.boardSize,
                         maxPos: state.maxPos,
-                        eroticoMode: state.eroticoMode || false
+                        eroticoMode: state.eroticoMode || false,
+                        history: (this._stripHistory || []).slice(-40)
                     };
                     const roomData = { ...this.currentRoomData, stripGameState };
                     this.currentRoomData = roomData;
