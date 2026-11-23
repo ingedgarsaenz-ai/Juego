@@ -2914,36 +2914,137 @@ JSON (sin texto extra):
 
             _renderClothingFigure(player) {
                 const { currentClothes: c, maxClothes: m, gender } = player;
-                const pct = m > 0 ? c / m : 0;
                 const isMujer = gender === 'mujer';
+                const show = n => c >= n;
                 const skin = '#fca5a5';
-                const hair = isMujer ? '#7c3aed' : '#1e293b';
-                const shirt = pct > 0.5 ? (isMujer ? '#ec4899' : '#3b82f6') : skin;
-                const pants = pct > 0.25 ? (isMujer ? '#8b5cf6' : '#1d4ed8') : skin;
-                const shoes = pct > 0.1 ? '#374151' : skin;
-                const jacketOp = pct > 0.75 ? '0.65' : '0';
-                const skirt = isMujer && pct > 0.5;
-                return `<svg viewBox="0 0 50 92" width="54" height="92" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="25" cy="11" r="9" fill="${skin}" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
-                    ${isMujer
-                        ? `<ellipse cx="25" cy="4" rx="9" ry="5" fill="${hair}"/>
-                           <path d="M16 9 Q25 15 34 9" stroke="${hair}" stroke-width="2.5" fill="none" stroke-linecap="round"/>`
-                        : `<ellipse cx="25" cy="5" rx="8" ry="4" fill="${hair}"/>`}
-                    ${skirt
-                        ? `<path d="M17 22 Q15 48 13 68 L37 68 Q35 48 33 22 Z" fill="${shirt}"/>`
-                        : `<rect x="15" y="22" width="20" height="27" rx="4" fill="${shirt}"/>`}
-                    <rect x="5" y="23" width="9" height="5" rx="2.5" fill="${shirt}"/>
-                    <rect x="36" y="23" width="9" height="5" rx="2.5" fill="${shirt}"/>
-                    <rect x="12" y="22" width="26" height="27" rx="4" fill="#0f172a" opacity="${jacketOp}"/>
-                    ${skirt
-                        ? ''
-                        : `<rect x="15" y="49" width="8" height="22" rx="3" fill="${pants}"/>
-                           <rect x="27" y="49" width="8" height="22" rx="3" fill="${pants}"/>`}
-                    <rect x="12" y="69" width="11" height="6" rx="2" fill="${shoes}"/>
-                    <rect x="27" y="69" width="11" height="6" rx="2" fill="${shoes}"/>
-                    ${c === 0 ? '<text x="25" y="79" text-anchor="middle" font-size="13">🫣</text>' : ''}
-                    ${c <= 1 && c > 0 ? '<circle cx="25" cy="40" r="8" fill="rgba(239,68,68,0.15)" stroke="rgba(239,68,68,0.3)" stroke-width="1"/>' : ''}
-                </svg>`;
+                const nude = c === 0;
+
+                if (!isMujer) {
+                    // ─── MALE ────────────────────────────────────────────────────
+                    // Layers: 1=boxers 2=pants 3=shirt 4=shoes 5=socks 6=belt 7=overshirt 8=watch 9=cap 10=jacket 11=scarf 12=gloves
+                    return `<svg viewBox="0 0 50 92" width="54" height="92" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="25" cy="4.5" rx="8.5" ry="4.5" fill="#1e293b"/>
+  <circle cx="25" cy="11" r="9" fill="${skin}"/>
+  <ellipse cx="16.2" cy="11" rx="1.8" ry="2.5" fill="${skin}"/>
+  <ellipse cx="33.8" cy="11" rx="1.8" ry="2.5" fill="${skin}"/>
+  <rect x="22" y="19" width="6" height="5" fill="${skin}"/>
+  <rect x="16" y="23" width="18" height="22" rx="3" fill="${skin}"/>
+  <rect x="7" y="23" width="8" height="20" rx="4" fill="${skin}"/>
+  <rect x="35" y="23" width="8" height="20" rx="4" fill="${skin}"/>
+  <ellipse cx="11" cy="44" rx="4" ry="3" fill="${skin}"/>
+  <ellipse cx="39" cy="44" rx="4" ry="3" fill="${skin}"/>
+  <rect x="16" y="44" width="18" height="6" rx="2" fill="${skin}"/>
+  <rect x="16" y="49" width="8" height="24" rx="4" fill="${skin}"/>
+  <rect x="26" y="49" width="8" height="24" rx="4" fill="${skin}"/>
+  <rect x="13" y="71" width="12" height="6" rx="2" fill="${skin}"/>
+  <rect x="25" y="71" width="12" height="6" rx="2" fill="${skin}"/>
+  ${show(1) ? `<rect x="15" y="44" width="20" height="13" rx="3" fill="#94a3b8"/>
+  <line x1="25" y1="44" x2="25" y2="57" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+  <rect x="15" y="44" width="20" height="4" rx="2" fill="rgba(255,255,255,0.12)"/>` : ''}
+  ${show(2) ? `<rect x="15" y="49" width="9" height="24" rx="4" fill="#1d4ed8"/>
+  <rect x="26" y="49" width="9" height="24" rx="4" fill="#1d4ed8"/>
+  <rect x="15" y="44" width="20" height="10" rx="3" fill="#1d4ed8"/>` : ''}
+  ${show(3) ? `<rect x="14" y="23" width="22" height="22" rx="3" fill="#3b82f6"/>
+  <rect x="7" y="23" width="10" height="13" rx="4" fill="#3b82f6"/>
+  <rect x="33" y="23" width="10" height="13" rx="4" fill="#3b82f6"/>
+  <path d="M22 23 L25 28 L28 23" stroke="rgba(255,255,255,0.3)" stroke-width="1" fill="none"/>` : ''}
+  ${show(4) ? `<path d="M13 71 L12 78 L24 78 L25 71 Z" fill="#292524"/>
+  <path d="M25 71 L26 78 L38 78 L37 71 Z" fill="#292524"/>
+  <rect x="12" y="71" width="13" height="2.5" fill="rgba(255,255,255,0.08)"/>
+  <rect x="25" y="71" width="13" height="2.5" fill="rgba(255,255,255,0.08)"/>` : ''}
+  ${show(5) ? `<rect x="14" y="68" width="10" height="4" rx="2" fill="#f1f5f9"/>
+  <rect x="26" y="68" width="10" height="4" rx="2" fill="#f1f5f9"/>` : ''}
+  ${show(6) ? `<rect x="14" y="43" width="22" height="3.5" rx="1.5" fill="#78350f"/>
+  <rect x="23" y="42" width="4" height="5.5" rx="1" fill="#b45309"/>
+  <rect x="24" y="43" width="2" height="3.5" fill="#78350f"/>` : ''}
+  ${show(7) ? `<path d="M14 23 L14 45 L20 45 L25 42 L30 45 L36 45 L36 23 Z" fill="#1e40af" opacity="0.75"/>
+  <rect x="7" y="23" width="9" height="13" rx="4" fill="#1e40af" opacity="0.75"/>
+  <rect x="34" y="23" width="9" height="13" rx="4" fill="#1e40af" opacity="0.75"/>
+  <line x1="14" y1="23" x2="14" y2="45" stroke="rgba(255,255,255,0.25)" stroke-width="0.8"/>
+  <line x1="36" y1="23" x2="36" y2="45" stroke="rgba(255,255,255,0.25)" stroke-width="0.8"/>` : ''}
+  ${show(8) ? `<rect x="7" y="39" width="8" height="4" rx="1.5" fill="#78716c"/>
+  <rect x="8" y="40" width="6" height="2" rx="0.5" fill="#93c5fd"/>` : ''}
+  ${show(9) ? `<ellipse cx="25" cy="4.5" rx="11" ry="4.5" fill="#6366f1"/>
+  <rect x="11" y="6" width="5" height="2.5" rx="1" fill="#6366f1"/>` : ''}
+  ${show(10) ? `<path d="M6 22 L6 46 L14 46 L14 23 Z" fill="#0f2a4a" opacity="0.9"/>
+  <path d="M44 22 L44 46 L36 46 L36 23 Z" fill="#0f2a4a" opacity="0.9"/>
+  <path d="M14 23 L19 26 L25 24 L31 26 L36 23 L36 46 L14 46 Z" fill="#0f2a4a" opacity="0.9"/>
+  <line x1="25" y1="26" x2="25" y2="46" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>` : ''}
+  ${show(11) ? `<path d="M16 20 Q25 25 34 20 Q33 27 25 28 Q17 27 16 20Z" fill="#ef4444" opacity="0.9"/>
+  <path d="M25 27 L23 35 Q22 37 24 38 L26 38 Q28 37 27 35 Z" fill="#ef4444" opacity="0.85"/>` : ''}
+  ${show(12) ? `<ellipse cx="11" cy="44" rx="4.5" ry="3.5" fill="#374151"/>
+  <ellipse cx="39" cy="44" rx="4.5" ry="3.5" fill="#374151"/>` : ''}
+  <circle cx="21.5" cy="10.5" r="1.3" fill="#374151"/>
+  <circle cx="28.5" cy="10.5" r="1.3" fill="#374151"/>
+  ${nude ? `<path d="M22 15 Q25 13.5 28 15" stroke="#374151" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <text x="25" y="88" text-anchor="middle" font-size="11">🫣</text>` : `<path d="M22 15 Q25 17 28 15" stroke="#374151" stroke-width="1" fill="none" stroke-linecap="round"/>`}
+  ${c <= 1 && c > 0 ? `<circle cx="25" cy="40" r="10" fill="none" stroke="rgba(239,68,68,0.28)" stroke-width="1.5" stroke-dasharray="3,2"/>` : ''}
+</svg>`;
+                } else {
+                    // ─── FEMALE ──────────────────────────────────────────────────
+                    // Layers: 1=panties 2=bra 3=skirt 4=heels 5=top 6=stockings 7=belt 8=jewelry 9=bag 10=coat 11=scarf 12=hat
+                    return `<svg viewBox="0 0 50 92" width="54" height="92" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="25" cy="8" rx="11" ry="9" fill="#7c3aed" opacity="0.9"/>
+  <circle cx="25" cy="11" r="9" fill="${skin}"/>
+  <path d="M14 9 Q12 20 15 28" stroke="#7c3aed" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.85"/>
+  <path d="M36 9 Q38 20 35 28" stroke="#7c3aed" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.85"/>
+  <rect x="22" y="19" width="6" height="5" fill="${skin}"/>
+  <path d="M17 23 Q25 20 33 23 L32 46 Q25 49 18 46 Z" fill="${skin}"/>
+  <rect x="7" y="23" width="8" height="19" rx="4" fill="${skin}"/>
+  <rect x="35" y="23" width="8" height="19" rx="4" fill="${skin}"/>
+  <ellipse cx="11" cy="43" rx="4" ry="3" fill="${skin}"/>
+  <ellipse cx="39" cy="43" rx="4" ry="3" fill="${skin}"/>
+  <path d="M15 44 Q14 50 16 52 L34 52 Q36 50 35 44 Z" fill="${skin}"/>
+  <rect x="16" y="51" width="7" height="22" rx="3.5" fill="${skin}"/>
+  <rect x="27" y="51" width="7" height="22" rx="3.5" fill="${skin}"/>
+  <rect x="14" y="71" width="10" height="6" rx="2" fill="${skin}"/>
+  <rect x="26" y="71" width="10" height="6" rx="2" fill="${skin}"/>
+  ${show(1) ? `<path d="M16 46 L34 46 L33 56 Q25 60 17 56 Z" fill="#f9a8d4"/>
+  <rect x="16" y="46" width="18" height="4" fill="rgba(255,255,255,0.15)" rx="1"/>` : ''}
+  ${show(2) ? `<path d="M17 30 Q25 35 33 30 L32 39 Q25 42 18 39 Z" fill="#f9a8d4"/>
+  <line x1="25" y1="30" x2="25" y2="39" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+  <circle cx="25" cy="30" r="1.5" fill="rgba(255,255,255,0.4)"/>` : ''}
+  ${show(3) ? `<path d="M15 44 Q12 68 13 77 L37 77 Q38 68 35 44 Z" fill="#8b5cf6"/>` : ''}
+  ${show(4) ? `<path d="M14 72 L14 78 L23 78 L24 72 Z" fill="#be185d"/>
+  <line x1="23" y1="78" x2="25" y2="85" stroke="#be185d" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M26 72 L26 78 L35 78 L36 72 Z" fill="#be185d"/>
+  <line x1="35" y1="78" x2="37" y2="85" stroke="#be185d" stroke-width="2.5" stroke-linecap="round"/>` : ''}
+  ${show(5) ? `<path d="M15 23 Q25 20 35 23 L34 44 Q25 47 16 44 Z" fill="#ec4899"/>
+  <rect x="7" y="23" width="10" height="10" rx="4" fill="#ec4899"/>
+  <rect x="33" y="23" width="10" height="10" rx="4" fill="#ec4899"/>
+  <path d="M21 23 L25 30 L29 23" stroke="rgba(255,255,255,0.25)" stroke-width="1" fill="none"/>` : ''}
+  ${show(6) ? `<rect x="16" y="51" width="7" height="22" rx="3.5" fill="#fde68a" opacity="0.65"/>
+  <rect x="27" y="51" width="7" height="22" rx="3.5" fill="#fde68a" opacity="0.65"/>` : ''}
+  ${show(7) ? `<rect x="15" y="43" width="20" height="3" rx="1.5" fill="#be185d"/>
+  <rect x="23" y="42" width="4" height="5" rx="1" fill="#9d174d"/>` : ''}
+  ${show(8) ? `<path d="M20 23 Q25 29 30 23" stroke="#fbbf24" stroke-width="1.5" fill="none"/>
+  <circle cx="25" cy="28" r="1.8" fill="#fbbf24"/>
+  <circle cx="16" cy="13" r="1.8" fill="#fbbf24"/>
+  <circle cx="34" cy="13" r="1.8" fill="#fbbf24"/>` : ''}
+  ${show(9) ? `<rect x="2" y="37" width="8" height="8" rx="2" fill="#be185d"/>
+  <path d="M4 37 Q6 32 8 37" stroke="#be185d" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <rect x="3" y="39" width="6" height="1" fill="rgba(255,255,255,0.3)"/>` : ''}
+  ${show(10) ? `<path d="M6 22 L6 46 L15 46 L15 23 Z" fill="#6d28d9" opacity="0.85"/>
+  <path d="M44 22 L44 46 L35 46 L35 23 Z" fill="#6d28d9" opacity="0.85"/>
+  <path d="M15 23 L20 26 L25 24 L30 26 L35 23 L35 46 L15 46 Z" fill="#6d28d9" opacity="0.85"/>
+  <line x1="25" y1="26" x2="25" y2="46" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>` : ''}
+  ${show(11) ? `<path d="M16 20 Q25 25 34 20 Q33 27 25 28 Q17 27 16 20Z" fill="#f43f5e" opacity="0.9"/>
+  <path d="M25 27 L23 35 Q22 37 24 38 L26 38 Q28 37 27 35 Z" fill="#f43f5e" opacity="0.85"/>` : ''}
+  ${show(12) ? `<ellipse cx="25" cy="4" rx="13" ry="5" fill="#581c87"/>
+  <ellipse cx="25" cy="5" rx="9" ry="4" fill="#581c87" opacity="0.8"/>` : ''}
+  <circle cx="21.5" cy="10" r="1.2" fill="#374151"/>
+  <circle cx="28.5" cy="10" r="1.2" fill="#374151"/>
+  <line x1="20.5" y1="8.5" x2="21.5" y2="7.5" stroke="#374151" stroke-width="0.8"/>
+  <line x1="22.5" y1="8" x2="22.5" y2="7" stroke="#374151" stroke-width="0.8"/>
+  <line x1="27.5" y1="8" x2="27.5" y2="7" stroke="#374151" stroke-width="0.8"/>
+  <line x1="29.5" y1="8.5" x2="28.5" y2="7.5" stroke="#374151" stroke-width="0.8"/>
+  <ellipse cx="19.5" cy="13" rx="2.5" ry="1.5" fill="#f9a8d4" opacity="0.5"/>
+  <ellipse cx="30.5" cy="13" rx="2.5" ry="1.5" fill="#f9a8d4" opacity="0.5"/>
+  ${nude ? `<path d="M22 15.5 Q25 13.5 28 15.5" stroke="#374151" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <text x="25" y="88" text-anchor="middle" font-size="11">🫣</text>` : `<path d="M22 15.5 Q25 17.5 28 15.5" stroke="#374151" stroke-width="1" fill="none" stroke-linecap="round"/>`}
+  ${c <= 1 && c > 0 ? `<circle cx="25" cy="40" r="10" fill="none" stroke="rgba(239,68,68,0.28)" stroke-width="1.5" stroke-dasharray="3,2"/>` : ''}
+</svg>`;
+                }
             },
 
             renderStripBoard() {
