@@ -232,7 +232,7 @@
             </div>
 
             <!-- Modo Quitar Prendas Card -->
-            <div onclick="app.navTo('create-strip')" class="sm:col-span-2 group relative glass-card p-6 rounded-3xl border border-orange-500/20 hover:border-orange-500/60 transition-all duration-300 cursor-pointer overflow-hidden shadow-xl hover:shadow-orange-500/10 hover:-translate-y-1">
+            <div onclick="app.navTo('strip-mode')" class="sm:col-span-2 group relative glass-card p-6 rounded-3xl border border-orange-500/20 hover:border-orange-500/60 transition-all duration-300 cursor-pointer overflow-hidden shadow-xl hover:shadow-orange-500/10 hover:-translate-y-1">
                 <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-orange-600/10 rounded-full blur-2xl group-hover:bg-orange-600/20 transition"></div>
                 <div class="flex flex-col sm:flex-row sm:items-center gap-4">
                     <div class="flex items-center gap-4">
@@ -733,11 +733,83 @@
         </section>
 
         <!-- ========================================== -->
-        <!-- VIEW: CREATE STRIP ROOM                    -->
+        <!-- VIEW: STRIP MODE SELECTION                 -->
+        <!-- ========================================== -->
+        <section id="view-strip-mode" class="hidden space-y-5 max-w-xl mx-auto py-4">
+            <div class="flex items-center gap-3 mb-2">
+                <button onclick="app.navTo('menu')" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2"><span>🎲</span> Modo Quitar Prendas</h2>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Single Device -->
+                <button onclick="app.navTo('create-strip')"
+                    class="glass-card p-6 rounded-3xl border border-orange-500/30 hover:border-orange-400/60 transition-all group flex flex-col items-center gap-4 hover:bg-orange-500/5 hover:-translate-y-1 shadow-xl cursor-pointer">
+                    <div class="text-5xl group-hover:scale-110 transition-transform">🎮</div>
+                    <div class="text-center space-y-1">
+                        <div class="font-extrabold text-white text-base">Un solo dispositivo</div>
+                        <div class="text-xs text-slate-400 leading-relaxed">Todos juegan en el mismo celular, se pasan el teléfono en cada turno</div>
+                    </div>
+                    <div class="mt-auto w-full bg-orange-500/15 border border-orange-500/30 rounded-xl py-2.5 text-orange-300 font-bold text-sm text-center group-hover:bg-orange-500/25 transition">
+                        Configurar jugadores →
+                    </div>
+                </button>
+                <!-- Multi Device Online -->
+                <button onclick="app._showStripOnlineSetup()"
+                    class="glass-card p-6 rounded-3xl border border-purple-500/30 hover:border-purple-400/60 transition-all group flex flex-col items-center gap-4 hover:bg-purple-500/5 hover:-translate-y-1 shadow-xl cursor-pointer">
+                    <div class="text-5xl group-hover:scale-110 transition-transform">📱</div>
+                    <div class="text-center space-y-1">
+                        <div class="font-extrabold text-white text-base">Cada uno con su teléfono</div>
+                        <div class="text-xs text-slate-400 leading-relaxed">Cada jugador se une escaneando un QR o con un código desde su propio celular</div>
+                    </div>
+                    <div class="mt-auto w-full bg-purple-500/15 border border-purple-500/30 rounded-xl py-2.5 text-purple-300 font-bold text-sm text-center group-hover:bg-purple-500/25 transition">
+                        Crear sala online →
+                    </div>
+                </button>
+            </div>
+
+            <!-- Online Host Setup Panel (shown when multi-device chosen) -->
+            <div id="strip-online-setup-panel" class="hidden glass-card p-5 rounded-3xl border border-purple-500/40 shadow-xl space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-purple-300 text-sm uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-user-gear"></i> Tu perfil (host)
+                    </h3>
+                    <button onclick="document.getElementById('strip-online-setup-panel').classList.add('hidden')"
+                        class="text-slate-500 hover:text-slate-300 w-6 h-6 flex items-center justify-center">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                </div>
+                <div class="flex gap-3">
+                    <input type="text" id="strip-oh-name" placeholder="Tu nombre" maxlength="20"
+                        class="glass-input flex-1 px-3 py-2.5 rounded-xl text-white text-sm font-semibold">
+                    <select id="strip-oh-gender" class="glass-input px-3 py-2.5 rounded-xl text-white text-sm bg-slate-800 border border-slate-600">
+                        <option value="hombre">♂ Hombre</option>
+                        <option value="mujer">♀ Mujer</option>
+                        <option value="otro">⚧ Otro</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400 mb-1 block">Prendas: <span id="strip-oh-clothes-val">7</span></label>
+                    <input type="range" id="strip-oh-clothes" min="1" max="12" value="7"
+                        oninput="document.getElementById('strip-oh-clothes-val').textContent=this.value"
+                        class="w-full accent-purple-500">
+                </div>
+                <div class="grid grid-cols-10 gap-1 av-grid" id="strip-oh-avatars"></div>
+                <button onclick="app.initAndCreateOnlineRoom()"
+                    class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold py-3 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-qrcode"></i> Crear Sala y Generar QR
+                </button>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW: CREATE STRIP ROOM (local)            -->
         <!-- ========================================== -->
         <section id="view-create-strip" class="hidden space-y-6 max-w-xl mx-auto py-4">
             <div class="flex items-center gap-3 mb-2">
-                <button onclick="app.navTo('menu')" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center">
+                <button onclick="app.navTo('strip-mode')" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center">
                     <i class="fa-solid fa-arrow-left"></i>
                 </button>
                 <h2 class="text-2xl font-bold text-white flex items-center gap-2">
@@ -760,10 +832,12 @@
                         <i class="fa-solid fa-plus"></i> Agregar jugador
                     </button>
                 </div>
-                <button onclick="app.startStripGame()"
-                    class="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg shadow-orange-500/30 transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-dice"></i> ¡INICIAR JUEGO!
-                </button>
+                <div class="space-y-2">
+                    <button onclick="app.startStripGame()"
+                        class="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg shadow-orange-500/30 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-dice"></i> ¡INICIAR JUEGO!
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -830,6 +904,55 @@
             <button onclick="app.navTo('menu')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl border border-slate-700 text-sm">
                 Volver al Menú
             </button>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW: STRIP GAME LOBBY (COMPARTIR / UNIRSE) -->
+        <!-- ========================================== -->
+        <section id="view-strip-lobby" class="hidden space-y-4 max-w-xl mx-auto py-4">
+            <div class="flex items-center gap-3">
+                <button onclick="app.navTo('create-strip')" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <h2 class="text-xl font-bold text-white flex items-center gap-2"><span>🎲</span> Strip Game — Sala de espera</h2>
+            </div>
+            <!-- Share card -->
+            <div class="glass-card p-5 rounded-3xl border border-orange-500/30 shadow-xl space-y-4">
+                <div class="text-xs font-black text-orange-300 uppercase tracking-widest flex items-center gap-2"><i class="fa-solid fa-share-nodes text-orange-400"></i> Comparte con tus amigos</div>
+                <div class="flex gap-4 items-center">
+                    <div id="strip-lobby-qr" class="flex-shrink-0 w-[110px] h-[110px] rounded-2xl overflow-hidden border border-slate-700 bg-slate-800/80 flex items-center justify-center">
+                        <i class="fa-solid fa-qrcode text-4xl text-slate-500"></i>
+                    </div>
+                    <div class="flex-1 space-y-2">
+                        <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700/80 text-center">
+                            <div class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Código de sala</div>
+                            <div id="strip-lobby-code" class="font-mono text-2xl font-black text-orange-400 tracking-widest mt-1">------</div>
+                        </div>
+                        <button onclick="app.copyStripRoomLink()" class="w-full bg-orange-500/15 hover:bg-orange-500/30 border border-orange-500/40 text-orange-300 font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-2 transition">
+                            <i class="fa-regular fa-copy"></i> Copiar enlace
+                        </button>
+                        <button onclick="app.shareStripViaWhatsApp()" class="w-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-2 transition">
+                            <i class="fa-brands fa-whatsapp text-emerald-400"></i> Compartir por WhatsApp
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- Players joined -->
+            <div class="glass-card p-5 rounded-3xl border border-slate-700 shadow-xl space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-users text-orange-400"></i> Jugadores en la sala</span>
+                    <span id="strip-lobby-count" class="text-xs font-bold text-orange-300 bg-orange-500/10 px-2 py-1 rounded-full border border-orange-500/20">1 / 6</span>
+                </div>
+                <div id="strip-lobby-players" class="space-y-2"></div>
+                <p id="strip-lobby-hint" class="text-[11px] text-slate-500 text-center pt-1">Esperando que escaneen el QR o abran el enlace…</p>
+            </div>
+            <!-- Acciones (host vs invitado) -->
+            <div id="strip-lobby-host-actions">
+                <button id="btn-start-strip-online" onclick="app.startStripGameOnline()" disabled
+                    class="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-extrabold py-4 rounded-xl shadow-lg shadow-orange-500/30 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-clock"></i> Esperando jugadores (mín. 2)…
+                </button>
+            </div>
         </section>
 
     </main>
@@ -1090,7 +1213,7 @@
 
             // Navigation controller
             navTo(viewId) {
-                const views = ['menu', 'create-fiesta', 'create-pareja', 'create-confesiones', 'create-strip', 'strip-game', 'lobby', 'pre-question', 'gameplay', 'waiting-others', 'results-fiesta', 'results-pareja'];
+                const views = ['menu', 'create-fiesta', 'create-pareja', 'create-confesiones', 'strip-mode', 'create-strip', 'strip-game', 'strip-lobby', 'lobby', 'pre-question', 'gameplay', 'waiting-others', 'results-fiesta', 'results-pareja'];
                 views.forEach(v => {
                     const el = document.getElementById(`view-${v}`);
                     if (el) el.classList.add('hidden');
@@ -1596,6 +1719,22 @@ Retorna ÚNICAMENTE este JSON válido (sin texto extra, sin markdown):
                         return;
                     }
 
+                    // Handle strip rooms: show player-setup modal instead of normal join flow
+                    if (data.mode === 'strip') {
+                        if (data.players && data.players[this.playerId]) {
+                            // Already in this room — show lobby
+                            this.currentRoomId = roomId;
+                            this.updateRoomBadge(roomId);
+                            this.listenToRoom(roomId);
+                            this.navTo('strip-lobby');
+                            this.renderStripLobbyView(data);
+                        } else {
+                            this._pendingStripRoomData = data;
+                            this.showStripPlayerSetupModal(data);
+                        }
+                        return;
+                    }
+
                     // Add current player if not already joined
                     if (!data.players[this.playerId]) {
                         const existingCount = Object.keys(data.players).length;
@@ -1624,6 +1763,10 @@ Retorna ÚNICAMENTE este JSON válido (sin texto extra, sin markdown):
 
             // Room state handler dispatcher
             handleRoomUpdate(data) {
+                if (data.mode === 'strip') {
+                    this.handleStripRoomUpdate(data);
+                    return;
+                }
                 // Prevent stale Firestore snapshots from overriding a locally-finished player state.
                 // Skip this protection when the server has intentionally advanced the game state,
                 // otherwise the player-status reset for between_rounds/evaluated never takes effect.
@@ -2767,12 +2910,13 @@ JSON (sin texto extra):
             initStripSetup() {
                 this.stripState = {
                     players: [
-                        { name: '', gender: 'hombre', maxClothes: 7, currentClothes: 7, position: 0, avatar: '👨' },
-                        { name: '', gender: 'mujer', maxClothes: 7, currentClothes: 7, position: 0, avatar: '👩' }
+                        { name: '', gender: 'hombre', maxClothes: 7, currentClothes: 7, position: 0, avatar: '😈', id: this.playerId, isHost: true },
+                        { name: '', gender: 'mujer', maxClothes: 7, currentClothes: 7, position: 0, avatar: '💋' }
                     ],
                     currentPlayerIndex: 0,
                     pendingAction: null
                 };
+                this._stripRoomId = null;
                 this.renderStripSetup();
             },
 
@@ -2843,6 +2987,221 @@ JSON (sin texto extra):
                 if (!this.stripState || this.stripState.players.length <= 2) return;
                 this.stripState.players.splice(idx, 1);
                 this.renderStripSetup();
+            },
+
+            _showStripOnlineSetup() {
+                const panel = document.getElementById('strip-online-setup-panel');
+                if (!panel) return;
+                panel.classList.remove('hidden');
+                const avatarOptions = ['😈','💋','🔥','🌶️','🫦','💃','🕺','🌹','🐺','🦊','🍑','😏','👄','🌺','🦋','🧜','🦁','🌙','🍷','🎭'];
+                const grid = document.getElementById('strip-oh-avatars');
+                if (grid && !grid.dataset.filled) {
+                    grid.dataset.filled = '1';
+                    grid.innerHTML = avatarOptions.map((a, i) =>
+                        `<button type="button" onclick="app._ohAvatar='${a}';this.closest('.av-grid').querySelectorAll('button').forEach(b=>b.classList.remove('ring-2','ring-purple-400','bg-purple-500/30'));this.classList.add('ring-2','ring-purple-400','bg-purple-500/30')"
+                        class="w-8 h-8 rounded-lg text-lg flex items-center justify-center transition hover:bg-slate-700/60 ${i===0?'ring-2 ring-purple-400 bg-purple-500/30':''}">${a}</button>`
+                    ).join('');
+                }
+                this._ohAvatar = '😈';
+                panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            },
+
+            async initAndCreateOnlineRoom() {
+                const name = (document.getElementById('strip-oh-name')?.value || '').trim() || 'Jugador';
+                const gender = document.getElementById('strip-oh-gender')?.value || 'hombre';
+                const maxClothes = parseInt(document.getElementById('strip-oh-clothes')?.value) || 7;
+                const avatar = this._ohAvatar || '😈';
+                this.stripState = {
+                    players: [{ name, gender, maxClothes, currentClothes: maxClothes, position: 0, avatar, id: this.playerId, isHost: true }],
+                    currentPlayerIndex: 0, pendingAction: null
+                };
+                this._stripRoomId = null;
+                await this.createStripOnlineRoom();
+            },
+
+            async createStripOnlineRoom() {
+                const p = this.stripState && this.stripState.players[0];
+                if (!p) return;
+                try {
+                    const name = (p.name && p.name.trim()) || this.playerNickname || 'Anfitrión';
+                    const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+                    const players = {};
+                    players[this.playerId] = {
+                        id: this.playerId, name, nickname: name,
+                        gender: p.gender || 'hombre', avatar: p.avatar || '😈',
+                        maxClothes: p.maxClothes || 7, currentClothes: p.maxClothes || 7,
+                        position: 0, isHost: true
+                    };
+                    const roomData = { roomId, mode: 'strip', status: 'lobby', hostId: this.playerId, maxPlayers: 6, players, createdAt: Date.now() };
+                    this._stripRoomId = roomId;
+                    await this.saveRoomDoc(roomId, roomData);
+                    this.listenToRoom(roomId);
+                    this.navTo('strip-lobby');
+                    this.renderStripLobbyView(roomData);
+                    this.showToast('¡Sala creada! Comparte el enlace con tus amigos.', 'success');
+                } catch(e) {
+                    this.showToast('Error al crear la sala: ' + e.message, 'error');
+                } finally {
+                    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-share-nodes"></i> Compartir enlace / QR para invitar'; }
+                }
+            },
+
+            renderStripLobbyView(data) {
+                const roomId = data.roomId;
+                document.getElementById('strip-lobby-code').innerText = roomId;
+                const link = `${window.location.origin}${window.location.pathname}#room=${roomId}`;
+                const qrEl = document.getElementById('strip-lobby-qr');
+                if (qrEl) qrEl.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&color=f97316&bgcolor=1e293b&margin=4&data=${encodeURIComponent(link)}" alt="QR" class="w-full h-full object-contain rounded-xl" onerror="this.parentElement.innerHTML='<i class=\\'fa-solid fa-qrcode text-4xl text-slate-500\\'></i>'">`;
+                const players = Object.values(data.players || {});
+                const isHost = data.hostId === this.playerId;
+                const pList = document.getElementById('strip-lobby-players');
+                if (pList) pList.innerHTML = players.map(p => `
+                    <div class="flex items-center gap-3 p-2.5 rounded-xl ${p.id === this.playerId ? 'bg-orange-500/10 border border-orange-500/20' : 'bg-slate-800/60'}">
+                        <span class="text-2xl leading-none select-none">${p.avatar || '👤'}</span>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-sm font-bold text-white truncate">${p.name}${p.id === this.playerId ? ' <span class="text-orange-400 text-[10px]">(Tú)</span>' : ''}${p.isHost ? ' <span class="text-amber-400 text-[10px]">★ Host</span>' : ''}</div>
+                            <div class="text-[10px] text-slate-400">${p.gender || 'hombre'} · ${p.maxClothes || 7} prendas</div>
+                        </div>
+                        <span class="text-xs text-orange-300 font-bold">🩲${p.maxClothes || 7}</span>
+                    </div>`).join('');
+                document.getElementById('strip-lobby-count').innerText = `${players.length} / 6`;
+                const hintEl = document.getElementById('strip-lobby-hint');
+                const actionsEl = document.getElementById('strip-lobby-host-actions');
+                const btn = document.getElementById('btn-start-strip-online');
+                if (isHost) {
+                    if (actionsEl) actionsEl.classList.remove('hidden');
+                    if (hintEl) hintEl.innerText = players.length < 2 ? 'Esperando que se unan al menos 2 jugadores…' : '¡Listo para empezar!';
+                    if (btn) {
+                        btn.disabled = players.length < 2;
+                        btn.innerHTML = players.length < 2
+                            ? '<i class="fa-solid fa-clock"></i> Esperando jugadores (mín. 2)…'
+                            : `<i class="fa-solid fa-dice"></i> ¡INICIAR JUEGO con ${players.length} jugadores!`;
+                    }
+                } else {
+                    if (actionsEl) actionsEl.classList.add('hidden');
+                    if (hintEl) hintEl.innerHTML = '✅ <strong class="text-white">¡Listo!</strong> Cuando sea tu turno el host te pasará el teléfono.';
+                }
+            },
+
+            startStripGameOnline() {
+                const data = this.currentRoomData;
+                if (!data || !data.players) return;
+                const players = Object.values(data.players);
+                if (players.length < 2) { this.showToast('Mínimo 2 jugadores para iniciar.', 'error'); return; }
+                this.stripState = {
+                    players: players.map(p => ({ ...p, currentClothes: p.maxClothes || 7, position: 0, _nakedToasted: false })),
+                    currentPlayerIndex: 0, pendingAction: null
+                };
+                this.navTo('strip-game');
+                this.renderStripGame();
+                this.showToast(`¡Juego iniciado con ${players.length} jugadores!`, 'success');
+            },
+
+            copyStripRoomLink() {
+                const roomId = this._stripRoomId || this.currentRoomId;
+                if (!roomId) return;
+                const link = `${window.location.origin}${window.location.pathname}#room=${roomId}`;
+                const dummy = document.createElement('input');
+                document.body.appendChild(dummy);
+                dummy.value = link;
+                dummy.select();
+                document.execCommand('copy');
+                document.body.removeChild(dummy);
+                this.showToast('¡Enlace copiado al portapapeles!', 'success');
+            },
+
+            shareStripViaWhatsApp() {
+                const roomId = this._stripRoomId || this.currentRoomId;
+                if (!roomId) return;
+                const link = `${window.location.origin}${window.location.pathname}#room=${roomId}`;
+                const msg = encodeURIComponent(`🎲 ¡Únete al Strip Game! Código: ${roomId}\n${link}`);
+                window.open(`https://wa.me/?text=${msg}`, '_blank');
+            },
+
+            showStripPlayerSetupModal(data) {
+                const existing = document.getElementById('join-strip-modal');
+                if (existing) existing.remove();
+                const avatarOptions = ['😈','💋','🔥','🌶️','🫦','💃','🕺','🌹','🐺','🦊','🍑','😏','👄','🌺','🦋','🧜','🦁','🌙','🍷','🎭'];
+                window._joinStripAvatar = '😈';
+                const avatarBtns = avatarOptions.map((a, i) =>
+                    `<button type="button" onclick="this.closest('.av-grid').querySelectorAll('button').forEach(b=>b.classList.remove('ring-2','ring-orange-400','bg-orange-500/30'));this.classList.add('ring-2','ring-orange-400','bg-orange-500/30');window._joinStripAvatar='${a}'"
+                    class="w-9 h-9 rounded-xl text-xl flex items-center justify-center transition hover:bg-slate-700/60 ${i===0?'ring-2 ring-orange-400 bg-orange-500/30':''}">${a}</button>`
+                ).join('');
+                const modal = document.createElement('div');
+                modal.id = 'join-strip-modal';
+                modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto';
+                modal.innerHTML = `
+                    <div class="glass-card p-6 rounded-3xl border border-orange-500/40 w-full max-w-sm space-y-4 shadow-2xl my-4">
+                        <div class="text-center">
+                            <div class="text-3xl mb-2">🎲</div>
+                            <h2 class="text-xl font-black text-white">Unirse al Strip Game</h2>
+                            <p class="text-xs text-slate-400 mt-1">Sala <span class="font-mono font-bold text-orange-400">${data.roomId}</span> · ${Object.keys(data.players||{}).length} jugador(es) en espera</p>
+                        </div>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-xs font-bold text-slate-300 uppercase">Tu nombre</label>
+                                <input type="text" id="join-strip-name" value="${this.playerNickname || ''}" placeholder="Ej: Alex" class="glass-input w-full px-4 py-3 rounded-xl text-white font-semibold mt-1">
+                            </div>
+                            <div class="flex gap-2">
+                                <div class="flex-1">
+                                    <label class="text-xs font-bold text-slate-300 uppercase">Género</label>
+                                    <select id="join-strip-gender" class="glass-input w-full px-3 py-2.5 rounded-xl text-white bg-slate-800 border border-slate-600 mt-1">
+                                        <option value="hombre">♂ Hombre</option>
+                                        <option value="mujer">♀ Mujer</option>
+                                        <option value="otro">⚧ Otro</option>
+                                    </select>
+                                </div>
+                                <div class="flex-1">
+                                    <label class="text-xs font-bold text-slate-300 uppercase">Prendas</label>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <input type="range" min="1" max="12" value="7" id="join-strip-clothes" oninput="document.getElementById('join-strip-clothes-count').innerText=this.value" class="flex-1 h-2 rounded-full accent-orange-500">
+                                        <span id="join-strip-clothes-count" class="text-sm font-black text-orange-300 w-6 text-center">7</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-300 uppercase">Avatar</label>
+                                <div class="av-grid flex flex-wrap gap-1 mt-1">${avatarBtns}</div>
+                            </div>
+                        </div>
+                        <button onclick="app.confirmJoinStrip('${data.roomId}')"
+                            class="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-dice"></i> ¡Unirme al Juego!
+                        </button>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                setTimeout(() => document.getElementById('join-strip-name')?.focus(), 100);
+            },
+
+            async confirmJoinStrip(roomId) {
+                const name = (document.getElementById('join-strip-name')?.value.trim()) || this.playerNickname || 'Jugador';
+                const gender = document.getElementById('join-strip-gender')?.value || 'hombre';
+                const maxClothes = parseInt(document.getElementById('join-strip-clothes')?.value) || 7;
+                const avatar = window._joinStripAvatar || '😈';
+                this.playerNickname = name;
+                localStorage.setItem('adivina_nickname', name);
+                document.getElementById('join-strip-modal')?.remove();
+                const data = this._pendingStripRoomData;
+                if (!data) { this.showToast('Error: datos de sala no encontrados.', 'error'); return; }
+                if (Object.keys(data.players || {}).length >= (data.maxPlayers || 6)) { this.showToast('La sala está llena.', 'error'); return; }
+                if (!data.players) data.players = {};
+                data.players[this.playerId] = { id: this.playerId, name, nickname: name, gender, avatar, maxClothes, currentClothes: maxClothes, position: 0, isHost: false };
+                await this.saveRoomDoc(roomId, data);
+                this.currentRoomId = roomId;
+                this.updateRoomBadge(roomId);
+                this.listenToRoom(roomId);
+                this.navTo('strip-lobby');
+                this.renderStripLobbyView(data);
+                this.showToast('¡Te uniste! Cuando sea tu turno, el host te pasará el teléfono.', 'success');
+            },
+
+            handleStripRoomUpdate(data) {
+                this.currentRoomData = data;
+                const lobbyView = document.getElementById('view-strip-lobby');
+                if (lobbyView && !lobbyView.classList.contains('hidden')) {
+                    this.renderStripLobbyView(data);
+                }
             },
 
             startStripGame() {
@@ -2923,159 +3282,191 @@ JSON (sin texto extra):
                 const uid = `f${figIdx}`;
                 const W = small ? 36 : 54;
                 const H = small ? 60 : 92;
-
-                // Gradient defs for 3D effect
-                const defs = `<defs>
-  <radialGradient id="hg${uid}" cx="38%" cy="28%" r="65%">
-    <stop offset="0%" stop-color="#ffe4e6"/>
-    <stop offset="55%" stop-color="#fca5a5"/>
-    <stop offset="100%" stop-color="#e07575"/>
-  </radialGradient>
-  <radialGradient id="bg${uid}" cx="30%" cy="20%" r="80%">
-    <stop offset="0%" stop-color="#fdb6b6"/>
-    <stop offset="65%" stop-color="#fca5a5"/>
-    <stop offset="100%" stop-color="#e07575"/>
-  </radialGradient>
-  <linearGradient id="lg${uid}" x1="0%" y1="0%" x2="100%" y2="0%">
-    <stop offset="0%" stop-color="#e07575"/>
-    <stop offset="25%" stop-color="#fca5a5"/>
-    <stop offset="75%" stop-color="#fca5a5"/>
-    <stop offset="100%" stop-color="#e07575"/>
-  </linearGradient>
-</defs>`;
-                const HG = `url(#hg${uid})`; // head sphere gradient
-                const BG = `url(#bg${uid})`; // body gradient
-                const LG = `url(#lg${uid})`; // limb gradient
-                const skin = '#fca5a5';
+                const sk = '#f5b88a';
+                const sh = 'rgba(210,118,48,0.28)';
+                const defs = ``;
 
                 if (!isMujer) {
                     return `<svg viewBox="0 0 50 92" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
-  ${defs}
-  <ellipse cx="25" cy="4.5" rx="8.5" ry="4.5" fill="#1e293b"/>
-  <circle cx="25" cy="11" r="9" fill="${HG}"/>
-  <circle cx="22" cy="8.5" r="2" fill="rgba(255,255,255,0.22)"/>
-  <ellipse cx="16.2" cy="11" rx="1.8" ry="2.5" fill="${LG}"/>
-  <ellipse cx="33.8" cy="11" rx="1.8" ry="2.5" fill="${LG}"/>
-  <rect x="22" y="19" width="6" height="5" fill="${LG}"/>
-  <rect x="16" y="23" width="18" height="22" rx="3" fill="${BG}"/>
-  <rect x="7" y="23" width="8" height="20" rx="4" fill="${LG}"/>
-  <rect x="35" y="23" width="8" height="20" rx="4" fill="${LG}"/>
-  <ellipse cx="11" cy="44" rx="4" ry="3" fill="${LG}"/>
-  <ellipse cx="39" cy="44" rx="4" ry="3" fill="${LG}"/>
-  <rect x="16" y="44" width="18" height="6" rx="2" fill="${LG}"/>
-  <rect x="16" y="49" width="8" height="24" rx="4" fill="${LG}"/>
-  <rect x="26" y="49" width="8" height="24" rx="4" fill="${LG}"/>
-  <rect x="13" y="71" width="12" height="6" rx="2" fill="${LG}"/>
-  <rect x="25" y="71" width="12" height="6" rx="2" fill="${LG}"/>
-  ${show(1) ? `<rect x="15" y="44" width="20" height="13" rx="3" fill="#94a3b8"/>
-  <line x1="25" y1="44" x2="25" y2="57" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
-  <rect x="15" y="44" width="20" height="4" rx="2" fill="rgba(255,255,255,0.12)"/>` : ''}
-  ${show(2) ? `<rect x="15" y="49" width="9" height="24" rx="4" fill="#1d4ed8"/>
-  <rect x="26" y="49" width="9" height="24" rx="4" fill="#1d4ed8"/>
-  <rect x="15" y="44" width="20" height="10" rx="3" fill="#1d4ed8"/>
-  <rect x="15" y="44" width="20" height="4" rx="2" fill="rgba(255,255,255,0.1)"/>` : ''}
-  ${show(3) ? `<rect x="14" y="23" width="22" height="22" rx="3" fill="#3b82f6"/>
-  <rect x="7" y="23" width="10" height="13" rx="4" fill="#3b82f6"/>
-  <rect x="33" y="23" width="10" height="13" rx="4" fill="#3b82f6"/>
-  <rect x="14" y="23" width="22" height="6" rx="3" fill="rgba(255,255,255,0.12)"/>
-  <path d="M22 23 L25 28 L28 23" stroke="rgba(255,255,255,0.3)" stroke-width="1" fill="none"/>` : ''}
-  ${show(4) ? `<path d="M13 71 L12 78 L24 78 L25 71 Z" fill="#292524"/>
-  <path d="M25 71 L26 78 L38 78 L37 71 Z" fill="#292524"/>
-  <rect x="12" y="71" width="13" height="2.5" fill="rgba(255,255,255,0.08)"/>
-  <rect x="25" y="71" width="13" height="2.5" fill="rgba(255,255,255,0.08)"/>` : ''}
-  ${show(5) ? `<rect x="14" y="68" width="10" height="4" rx="2" fill="#f1f5f9"/>
-  <rect x="26" y="68" width="10" height="4" rx="2" fill="#f1f5f9"/>` : ''}
-  ${show(6) ? `<rect x="14" y="43" width="22" height="3.5" rx="1.5" fill="#78350f"/>
-  <rect x="23" y="42" width="4" height="5.5" rx="1" fill="#b45309"/>
-  <rect x="24" y="43" width="2" height="3.5" fill="#78350f"/>` : ''}
-  ${show(7) ? `<path d="M14 23 L14 45 L20 45 L25 42 L30 45 L36 45 L36 23 Z" fill="#1e40af" opacity="0.75"/>
-  <rect x="7" y="23" width="9" height="13" rx="4" fill="#1e40af" opacity="0.75"/>
-  <rect x="34" y="23" width="9" height="13" rx="4" fill="#1e40af" opacity="0.75"/>
-  <line x1="14" y1="23" x2="14" y2="45" stroke="rgba(255,255,255,0.25)" stroke-width="0.8"/>
-  <line x1="36" y1="23" x2="36" y2="45" stroke="rgba(255,255,255,0.25)" stroke-width="0.8"/>` : ''}
-  ${show(8) ? `<rect x="7" y="39" width="8" height="4" rx="1.5" fill="#78716c"/>
-  <rect x="8" y="40" width="6" height="2" rx="0.5" fill="#93c5fd"/>` : ''}
-  ${show(9) ? `<ellipse cx="25" cy="4.5" rx="11" ry="4.5" fill="#6366f1"/>
-  <rect x="11" y="6" width="5" height="2.5" rx="1" fill="#6366f1"/>` : ''}
-  ${show(10) ? `<path d="M6 22 L6 46 L14 46 L14 23 Z" fill="#0f2a4a" opacity="0.9"/>
-  <path d="M44 22 L44 46 L36 46 L36 23 Z" fill="#0f2a4a" opacity="0.9"/>
-  <path d="M14 23 L19 26 L25 24 L31 26 L36 23 L36 46 L14 46 Z" fill="#0f2a4a" opacity="0.9"/>
-  <line x1="25" y1="26" x2="25" y2="46" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>` : ''}
-  ${show(11) ? `<path d="M16 20 Q25 25 34 20 Q33 27 25 28 Q17 27 16 20Z" fill="#ef4444" opacity="0.9"/>
-  <path d="M25 27 L23 35 Q22 37 24 38 L26 38 Q28 37 27 35 Z" fill="#ef4444" opacity="0.85"/>` : ''}
-  ${show(12) ? `<ellipse cx="11" cy="44" rx="4.5" ry="3.5" fill="#374151"/>
-  <ellipse cx="39" cy="44" rx="4.5" ry="3.5" fill="#374151"/>` : ''}
-  <circle cx="21.5" cy="10.5" r="1.3" fill="#374151"/>
-  <circle cx="28.5" cy="10.5" r="1.3" fill="#374151"/>
-  ${nude ? `<path d="M22 15 Q25 13.5 28 15" stroke="#374151" stroke-width="1" fill="none" stroke-linecap="round"/>
-  <text x="25" y="88" text-anchor="middle" font-size="11">🫣</text>` : `<path d="M22 15 Q25 17 28 15" stroke="#374151" stroke-width="1" fill="none" stroke-linecap="round"/>`}
-  ${c <= 1 && c > 0 ? `<circle cx="25" cy="40" r="10" fill="none" stroke="rgba(239,68,68,0.28)" stroke-width="1.5" stroke-dasharray="3,2"/>` : ''}
+  <!-- HAIR (dark brown, styled) -->
+  <ellipse cx="25.5" cy="7" rx="10.5" ry="8.5" fill="#2c1a0a"/>
+  <path d="M15 10 Q16 2 25.5 1.5 Q35 2 36 10 Q32 6 25.5 6 Q19 6 15 10Z" fill="#3d2010"/>
+  <!-- HEAD (flat vector style, no face features) -->
+  <circle cx="25" cy="12.5" r="10" fill="${sk}"/>
+  <circle cx="20.5" cy="10" r="3.2" fill="rgba(255,230,200,0.22)"/>
+  <!-- NECK -->
+  <path d="M22 22 L22.5 27.5 Q25 28.5 27.5 27.5 L28 22 Q25 23 22 22Z" fill="${sk}"/>
+  <!-- TORSO: athletic V-shape, shoulders 36px wide, waist 22px -->
+  <path d="M7 27.5 Q6 32 7 40 Q8 48 11 53 Q15 57 25 57 Q35 57 39 53 Q42 48 43 40 Q44 32 43 27.5 Q38 25 25 25 Q12 25 7 27.5Z" fill="${sk}"/>
+  <path d="M7.5 28 Q7 34 8 42 Q9 49 12 53" stroke="${sh}" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M42.5 28 Q43 34 42 42 Q41 49 38 53" stroke="${sh}" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <!-- Pectoral shadows -->
+  <ellipse cx="19.5" cy="31.5" rx="5" ry="3.5" fill="${sh}" transform="rotate(-8,19.5,31.5)"/>
+  <ellipse cx="30.5" cy="31.5" rx="5" ry="3.5" fill="${sh}" transform="rotate(8,30.5,31.5)"/>
+  <path d="M17 34 Q21.5 38.5 25 34 Q28.5 38.5 33 34" stroke="rgba(200,110,45,0.4)" stroke-width="1" fill="none"/>
+  <path d="M17 27.5 Q25 29 33 27.5" stroke="rgba(200,110,45,0.3)" stroke-width="1" fill="none"/>
+  <line x1="25" y1="28" x2="25" y2="55" stroke="rgba(200,110,45,0.2)" stroke-width="0.8"/>
+  <!-- ABS (visible at c<=4) -->
+  ${c <= 4 ? `<ellipse cx="21" cy="40" rx="3" ry="2.3" fill="${sh}"/>
+  <ellipse cx="29" cy="40" rx="3" ry="2.3" fill="${sh}"/>
+  <ellipse cx="21" cy="46" rx="3" ry="2.3" fill="${sh}"/>
+  <ellipse cx="29" cy="46" rx="3" ry="2.3" fill="${sh}"/>
+  <ellipse cx="21" cy="52" rx="2.5" ry="2" fill="rgba(210,118,48,0.2)"/>
+  <ellipse cx="29" cy="52" rx="2.5" ry="2" fill="rgba(210,118,48,0.2)"/>` : ''}
+  <!-- ARMS -->
+  <path d="M7 27.5 Q3 36 4.5 46" stroke="${sk}" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <path d="M7.5 28 Q4.5 36 5.5 43" stroke="${sh}" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <path d="M43 27.5 Q47 36 45.5 46" stroke="${sk}" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <path d="M42.5 28 Q45.5 36 44.5 43" stroke="${sh}" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <!-- HANDS -->
+  <ellipse cx="4.5" cy="47" rx="4.5" ry="4" fill="${sk}"/>
+  <ellipse cx="45.5" cy="47" rx="4.5" ry="4" fill="${sk}"/>
+  <!-- HIPS -->
+  <path d="M14.5 56 Q13 61 14 65 L36 65 Q37 61 35.5 56 Z" fill="${sk}"/>
+  <!-- THIGHS -->
+  <path d="M14 64 Q11 73 12 83" stroke="${sk}" stroke-width="12.5" fill="none" stroke-linecap="round"/>
+  <path d="M14.5 64 Q12 72 12.5 80" stroke="${sh}" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M36 64 Q39 73 38 83" stroke="${sk}" stroke-width="12.5" fill="none" stroke-linecap="round"/>
+  <path d="M35.5 64 Q38 72 37.5 80" stroke="${sh}" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <circle cx="13" cy="73.5" r="3.2" fill="rgba(255,210,170,0.35)"/>
+  <circle cx="37" cy="73.5" r="3.2" fill="rgba(255,210,170,0.35)"/>
+  <!-- CALVES -->
+  <path d="M12 83 Q11.5 87 13 91" stroke="${sk}" stroke-width="9.5" fill="none" stroke-linecap="round"/>
+  <path d="M38 83 Q38.5 87 37 91" stroke="${sk}" stroke-width="9.5" fill="none" stroke-linecap="round"/>
+  <!-- FEET -->
+  <ellipse cx="12.5" cy="91.5" rx="7" ry="2.5" fill="${sk}" transform="rotate(-8,12.5,91.5)"/>
+  <ellipse cx="37.5" cy="91.5" rx="7" ry="2.5" fill="${sk}" transform="rotate(8,37.5,91.5)"/>
+  <!-- CLOTHING LAYERS -->
+  ${show(1) ? `<path d="M14 56 Q13 63 14 68 L36 68 Q37 63 36 56 Z" fill="#4b5563"/>
+  <line x1="25" y1="56" x2="25" y2="68" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <path d="M14 56 Q13 59 14 61 L36 61 Q37 59 36 56 Z" fill="rgba(255,255,255,0.08)"/>` : ''}
+  ${show(2) ? `<path d="M13 55 Q10 70 11.5 85" stroke="#1e3a5f" stroke-width="12.5" fill="none" stroke-linecap="round"/>
+  <path d="M37 55 Q40 70 38.5 85" stroke="#1e3a5f" stroke-width="12.5" fill="none" stroke-linecap="round"/>
+  <path d="M13 55 L37 55 L36 66 Q25 70 14 66 Z" fill="#1e3a5f"/>
+  <line x1="25" y1="60" x2="25" y2="85" stroke="rgba(0,0,0,0.3)" stroke-width="1.2"/>` : ''}
+  ${show(3) ? `<path d="M7 27.5 Q6 43 7 55 Q14 59 25 59 Q36 59 43 55 Q44 43 43 27.5 Q38 25 25 25 Q12 25 7 27.5Z" fill="#6b7280"/>
+  <path d="M7 27.5 Q3 36 4.5 46" stroke="#6b7280" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <path d="M43 27.5 Q47 36 45.5 46" stroke="#6b7280" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <path d="M20 25 L25 31 L30 25" stroke="#4b5563" stroke-width="1.2" fill="none"/>` : ''}
+  ${show(4) ? `<path d="M6.5 90 Q12 93.5 20 91.5 Q12.5 88 6.5 90Z" fill="#1f2937"/>
+  <path d="M43.5 90 Q38 93.5 30 91.5 Q37.5 88 43.5 90Z" fill="#1f2937"/>` : ''}
+  ${show(5) ? `<path d="M11 83 Q11 87 12.5 91" stroke="white" stroke-width="8.5" fill="none" stroke-linecap="round" opacity="0.9"/>
+  <path d="M39 83 Q39 87 37.5 91" stroke="white" stroke-width="8.5" fill="none" stroke-linecap="round" opacity="0.9"/>` : ''}
+  ${show(6) ? `<path d="M14 55.5 Q25 57.5 36 55.5 Q36.5 58.5 25 60 Q13.5 58.5 14 55.5Z" fill="#6b3a1f"/>
+  <rect x="23.5" y="55" width="3" height="4.5" rx="0.5" fill="#b45309"/>` : ''}
+  ${show(7) ? `<path d="M6 27.5 Q5 44 6 56 Q13 61 25 61 Q37 61 44 56 Q45 44 44 27.5 Q38 25 25 25 Q12 25 6 27.5Z" fill="#1e3a5f" opacity="0.9"/>
+  <path d="M6 27.5 Q2 36 3.5 46" stroke="#1e3a5f" stroke-width="9" fill="none" stroke-linecap="round" opacity="0.9"/>
+  <path d="M44 27.5 Q48 36 46.5 46" stroke="#1e3a5f" stroke-width="9" fill="none" stroke-linecap="round" opacity="0.9"/>
+  <path d="M19.5 25 L22 42 L25 39 L28 42 L30.5 25" fill="#2a4a7a" opacity="0.9"/>` : ''}
+  ${show(8) ? `<rect x="1" y="43.5" width="6" height="4.5" rx="1.5" fill="#374151"/>
+  <rect x="1.8" y="44" width="4.4" height="3.5" rx="1" fill="#93c5fd"/>` : ''}
+  ${show(9) ? `<ellipse cx="25" cy="5.5" rx="13" ry="5" fill="#374151"/>
+  <rect x="12" y="1" width="26" height="8" rx="4" fill="#374151"/>
+  <rect x="12" y="4.5" width="26" height="2" fill="#4b5563"/>` : ''}
+  ${show(10) ? `<path d="M23.5 31.5 L22.5 54 L25 57 L27.5 54 L26.5 31.5 Q25 34 23.5 31.5Z" fill="#dc2626"/>
+  <path d="M23.5 31.5 L22.5 36 L25 38 L27.5 36 L26.5 31.5 Q25 32.5 23.5 31.5Z" fill="#991b1b"/>` : ''}
+  ${show(11) ? `<path d="M17 25 Q25 29 33 25 L32 32 Q25 35 18 32 Z" fill="#7c3aed"/>
+  <path d="M25 35 Q22.5 44 21.5 52" stroke="#7c3aed" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.9"/>` : ''}
+  ${show(12) ? `<ellipse cx="21.5" cy="12.5" rx="4.5" ry="3.5" fill="rgba(147,197,253,0.12)" stroke="#374151" stroke-width="1.3"/>
+  <ellipse cx="28.5" cy="12.5" rx="4.5" ry="3.5" fill="rgba(147,197,253,0.12)" stroke="#374151" stroke-width="1.3"/>
+  <line x1="10.5" y1="12" x2="17" y2="12.5" stroke="#374151" stroke-width="1.3"/>
+  <line x1="33" y1="12.5" x2="39.5" y2="12" stroke="#374151" stroke-width="1.3"/>` : ''}
+  ${nude ? `<text x="25" y="88" text-anchor="middle" font-size="10">🫣</text>` : ''}
+  ${c <= 1 && c > 0 ? `<circle cx="25" cy="43" r="11" fill="none" stroke="rgba(239,68,68,0.3)" stroke-width="1.5" stroke-dasharray="3,2"/>` : ''}
 </svg>`;
                 } else {
                     return `<svg viewBox="0 0 50 92" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
-  ${defs}
-  <ellipse cx="25" cy="8" rx="11" ry="9" fill="#7c3aed" opacity="0.9"/>
-  <circle cx="25" cy="11" r="9" fill="${HG}"/>
-  <circle cx="22" cy="8.5" r="2.5" fill="rgba(255,255,255,0.22)"/>
-  <path d="M14 9 Q12 20 15 28" stroke="#7c3aed" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.85"/>
-  <path d="M36 9 Q38 20 35 28" stroke="#7c3aed" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.85"/>
-  <rect x="22" y="19" width="6" height="5" fill="${LG}"/>
-  <path d="M17 23 Q25 20 33 23 L32 46 Q25 49 18 46 Z" fill="${BG}"/>
-  <rect x="7" y="23" width="8" height="19" rx="4" fill="${LG}"/>
-  <rect x="35" y="23" width="8" height="19" rx="4" fill="${LG}"/>
-  <ellipse cx="11" cy="43" rx="4" ry="3" fill="${LG}"/>
-  <ellipse cx="39" cy="43" rx="4" ry="3" fill="${LG}"/>
-  <path d="M15 44 Q14 50 16 52 L34 52 Q36 50 35 44 Z" fill="${LG}"/>
-  <rect x="16" y="51" width="7" height="22" rx="3.5" fill="${LG}"/>
-  <rect x="27" y="51" width="7" height="22" rx="3.5" fill="${LG}"/>
-  <rect x="14" y="71" width="10" height="6" rx="2" fill="${LG}"/>
-  <rect x="26" y="71" width="10" height="6" rx="2" fill="${LG}"/>
-  ${show(1) ? `<path d="M16 46 L34 46 L33 56 Q25 60 17 56 Z" fill="#f9a8d4"/>
-  <rect x="16" y="46" width="18" height="4" fill="rgba(255,255,255,0.15)" rx="1"/>` : ''}
-  ${show(2) ? `<path d="M17 30 Q25 35 33 30 L32 39 Q25 42 18 39 Z" fill="#f9a8d4"/>
-  <line x1="25" y1="30" x2="25" y2="39" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
-  <circle cx="25" cy="30" r="1.5" fill="rgba(255,255,255,0.4)"/>` : ''}
-  ${show(3) ? `<path d="M15 44 Q12 68 13 77 L37 77 Q38 68 35 44 Z" fill="#8b5cf6"/>
-  <path d="M15 44 Q12 52 13 56 L37 56 Q38 52 35 44 Z" fill="rgba(255,255,255,0.08)"/>` : ''}
-  ${show(4) ? `<path d="M14 72 L14 78 L23 78 L24 72 Z" fill="#be185d"/>
-  <line x1="23" y1="78" x2="25" y2="85" stroke="#be185d" stroke-width="2.5" stroke-linecap="round"/>
-  <path d="M26 72 L26 78 L35 78 L36 72 Z" fill="#be185d"/>
-  <line x1="35" y1="78" x2="37" y2="85" stroke="#be185d" stroke-width="2.5" stroke-linecap="round"/>` : ''}
-  ${show(5) ? `<path d="M15 23 Q25 20 35 23 L34 44 Q25 47 16 44 Z" fill="#ec4899"/>
-  <rect x="7" y="23" width="10" height="10" rx="4" fill="#ec4899"/>
-  <rect x="33" y="23" width="10" height="10" rx="4" fill="#ec4899"/>
-  <path d="M21 23 L25 30 L29 23" stroke="rgba(255,255,255,0.25)" stroke-width="1" fill="none"/>
-  <path d="M15 23 Q25 20 35 23 L35 28 Q25 25 15 28 Z" fill="rgba(255,255,255,0.1)"/>` : ''}
-  ${show(6) ? `<rect x="16" y="51" width="7" height="22" rx="3.5" fill="#fde68a" opacity="0.65"/>
-  <rect x="27" y="51" width="7" height="22" rx="3.5" fill="#fde68a" opacity="0.65"/>` : ''}
-  ${show(7) ? `<rect x="15" y="43" width="20" height="3" rx="1.5" fill="#be185d"/>
-  <rect x="23" y="42" width="4" height="5" rx="1" fill="#9d174d"/>` : ''}
-  ${show(8) ? `<path d="M20 23 Q25 29 30 23" stroke="#fbbf24" stroke-width="1.5" fill="none"/>
-  <circle cx="25" cy="28" r="1.8" fill="#fbbf24"/>
-  <circle cx="16" cy="13" r="1.8" fill="#fbbf24"/>
-  <circle cx="34" cy="13" r="1.8" fill="#fbbf24"/>` : ''}
-  ${show(9) ? `<rect x="2" y="37" width="8" height="8" rx="2" fill="#be185d"/>
-  <path d="M4 37 Q6 32 8 37" stroke="#be185d" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-  <rect x="3" y="39" width="6" height="1" fill="rgba(255,255,255,0.3)"/>` : ''}
-  ${show(10) ? `<path d="M6 22 L6 46 L15 46 L15 23 Z" fill="#6d28d9" opacity="0.85"/>
-  <path d="M44 22 L44 46 L35 46 L35 23 Z" fill="#6d28d9" opacity="0.85"/>
-  <path d="M15 23 L20 26 L25 24 L30 26 L35 23 L35 46 L15 46 Z" fill="#6d28d9" opacity="0.85"/>
-  <line x1="25" y1="26" x2="25" y2="46" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>` : ''}
-  ${show(11) ? `<path d="M16 20 Q25 25 34 20 Q33 27 25 28 Q17 27 16 20Z" fill="#f43f5e" opacity="0.9"/>
-  <path d="M25 27 L23 35 Q22 37 24 38 L26 38 Q28 37 27 35 Z" fill="#f43f5e" opacity="0.85"/>` : ''}
-  ${show(12) ? `<ellipse cx="25" cy="4" rx="13" ry="5" fill="#581c87"/>
-  <ellipse cx="25" cy="5" rx="9" ry="4" fill="#581c87" opacity="0.8"/>` : ''}
-  <circle cx="21.5" cy="10" r="1.2" fill="#374151"/>
-  <circle cx="28.5" cy="10" r="1.2" fill="#374151"/>
-  <line x1="20.5" y1="8.5" x2="21.5" y2="7.5" stroke="#374151" stroke-width="0.8"/>
-  <line x1="22.5" y1="8" x2="22.5" y2="7" stroke="#374151" stroke-width="0.8"/>
-  <line x1="27.5" y1="8" x2="27.5" y2="7" stroke="#374151" stroke-width="0.8"/>
-  <line x1="29.5" y1="8.5" x2="28.5" y2="7.5" stroke="#374151" stroke-width="0.8"/>
-  <ellipse cx="19.5" cy="13" rx="2.5" ry="1.5" fill="#f9a8d4" opacity="0.5"/>
-  <ellipse cx="30.5" cy="13" rx="2.5" ry="1.5" fill="#f9a8d4" opacity="0.5"/>
-  ${nude ? `<path d="M22 15.5 Q25 13.5 28 15.5" stroke="#374151" stroke-width="1" fill="none" stroke-linecap="round"/>
-  <text x="25" y="88" text-anchor="middle" font-size="11">🫣</text>` : `<path d="M22 15.5 Q25 17.5 28 15.5" stroke="#374151" stroke-width="1" fill="none" stroke-linecap="round"/>`}
-  ${c <= 1 && c > 0 ? `<circle cx="25" cy="40" r="10" fill="none" stroke="rgba(239,68,68,0.28)" stroke-width="1.5" stroke-dasharray="3,2"/>` : ''}
+  <!-- HAIR: dark, pulled back with ponytail flowing right -->
+  <ellipse cx="25" cy="8" rx="11.5" ry="9.5" fill="#2c1a0a"/>
+  <path d="M14 11 Q15 2 25 1.5 Q35 2 36 11 Q31 6 25 6 Q19 6 14 11Z" fill="#3d2010"/>
+  <path d="M35 10 Q39 15 41 24 Q39 20 36 16 Q35 13 35 10Z" fill="#2c1a0a"/>
+  <path d="M36 16 Q42 24 42 33 Q40 27 37 22 Q36 19 36 16Z" fill="#3d2010" opacity="0.85"/>
+  <!-- HEAD -->
+  <circle cx="25" cy="12.5" r="10" fill="${sk}"/>
+  <circle cx="21" cy="10" r="3" fill="rgba(255,230,200,0.2)"/>
+  <!-- NECK -->
+  <path d="M22.5 22.5 L23 28 Q25 29 27 28 L27.5 22.5 Q25 23.5 22.5 22.5Z" fill="${sk}"/>
+  <!-- TORSO: hourglass - bust ~30px wide, waist ~20px, hips ~32px -->
+  <path d="M10 27.5 Q8 33 9 40 Q10 46 12 51 Q16 57 25 57 Q34 57 38 51 Q40 46 41 40 Q42 33 40 27.5 Q35 25 25 25 Q15 25 10 27.5Z" fill="${sk}"/>
+  <!-- Side torso shadows for hourglass definition -->
+  <path d="M10.5 28 Q9 34 10 42 Q11 48 13 52" stroke="${sh}" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+  <path d="M39.5 28 Q41 34 40 42 Q39 48 37 52" stroke="${sh}" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+  <!-- Waist indentation shadows -->
+  <ellipse cx="11.5" cy="43" rx="3" ry="6" fill="${sh}" opacity="0.6"/>
+  <ellipse cx="38.5" cy="43" rx="3" ry="6" fill="${sh}" opacity="0.6"/>
+  <!-- BUST definition (visible at c<=4) -->
+  ${c <= 4 ? `<ellipse cx="19" cy="33" rx="5.5" ry="4" fill="${sh}"/>
+  <ellipse cx="31" cy="33" rx="5.5" ry="4" fill="${sh}"/>
+  <path d="M16 36.5 Q19.5 41 25 37 Q30.5 41 34 36.5" stroke="rgba(200,110,45,0.4)" stroke-width="1" fill="none"/>` : `<ellipse cx="19" cy="33" rx="4" ry="3" fill="${sh}" opacity="0.5"/>
+  <ellipse cx="31" cy="33" rx="4" ry="3" fill="${sh}" opacity="0.5"/>`}
+  <!-- ARMS: slender, feminine -->
+  <path d="M10 27.5 Q6 36 7 46" stroke="${sk}" stroke-width="7.5" fill="none" stroke-linecap="round"/>
+  <path d="M10.5 28 Q7 36 7.5 43" stroke="${sh}" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <path d="M40 27.5 Q44 36 43 46" stroke="${sk}" stroke-width="7.5" fill="none" stroke-linecap="round"/>
+  <path d="M39.5 28 Q43 36 42.5 43" stroke="${sh}" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <!-- HANDS -->
+  <ellipse cx="7" cy="47" rx="4" ry="3.5" fill="${sk}"/>
+  <ellipse cx="43" cy="47" rx="4" ry="3.5" fill="${sk}"/>
+  <!-- HIPS/PELVIS: wider feminine hips -->
+  <path d="M12 56 Q9 61 10 66 L40 66 Q41 61 38 56 Z" fill="${sk}"/>
+  <!-- Hip shadow -->
+  <ellipse cx="11.5" cy="62" rx="3.5" ry="5" fill="${sh}" opacity="0.6"/>
+  <ellipse cx="38.5" cy="62" rx="3.5" ry="5" fill="${sh}" opacity="0.6"/>
+  <!-- THIGHS: feminine curves -->
+  <path d="M12 65 Q9.5 74 10.5 83" stroke="${sk}" stroke-width="11.5" fill="none" stroke-linecap="round"/>
+  <path d="M12.5 65 Q10.5 73 11 80" stroke="${sh}" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+  <path d="M38 65 Q40.5 74 39.5 83" stroke="${sk}" stroke-width="11.5" fill="none" stroke-linecap="round"/>
+  <path d="M37.5 65 Q39.5 73 39 80" stroke="${sh}" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+  <circle cx="12" cy="74" r="2.8" fill="rgba(255,210,170,0.3)"/>
+  <circle cx="38" cy="74" r="2.8" fill="rgba(255,210,170,0.3)"/>
+  <!-- CALVES -->
+  <path d="M10.5 83 Q10 87 11.5 91" stroke="${sk}" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <path d="M39.5 83 Q40 87 38.5 91" stroke="${sk}" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <!-- FEET -->
+  <ellipse cx="11" cy="91.5" rx="6.5" ry="2.5" fill="${sk}" transform="rotate(-8,11,91.5)"/>
+  <ellipse cx="39" cy="91.5" rx="6.5" ry="2.5" fill="${sk}" transform="rotate(8,39,91.5)"/>
+  <!-- CLOTHING LAYERS -->
+  ${show(1) ? `<path d="M12 57 Q9 63 10 68 L40 68 Q41 63 38 57 Z" fill="#4b5563"/>
+  <line x1="25" y1="57" x2="25" y2="68" stroke="rgba(255,255,255,0.1)" stroke-width="0.8"/>
+  <path d="M12 57 Q10 60 11 62 L39 62 Q40 60 38 57 Z" fill="rgba(255,255,255,0.08)"/>` : ''}
+  ${show(2) ? `<path d="M11 65.5 Q9 75 10 86" stroke="#7c3aed" stroke-width="11.5" fill="none" stroke-linecap="round"/>
+  <path d="M39 65.5 Q41 75 40 86" stroke="#7c3aed" stroke-width="11.5" fill="none" stroke-linecap="round"/>
+  <path d="M11 65.5 L39 65.5 L38.5 76 Q25 80 11.5 76 Z" fill="#7c3aed"/>
+  <path d="M11.5 66 Q10 74 10.5 78" stroke="rgba(255,255,255,0.1)" stroke-width="3" fill="none" stroke-linecap="round"/>` : ''}
+  ${show(3) ? `<path d="M13 29 Q16.5 40 25 35.5 Q33.5 40 37 29 Q33 26.5 25 27 Q17 26.5 13 29Z" fill="#4b5563"/>
+  <line x1="25" y1="27" x2="25" y2="35.5" stroke="rgba(255,255,255,0.15)" stroke-width="0.8"/>
+  <path d="M13 29 Q16 32 25 30.5 Q34 32 37 29" stroke="rgba(255,255,255,0.1)" stroke-width="1" fill="none"/>` : ''}
+  ${show(4) ? `<path d="M7.5 89.5 Q11.5 93 18 91.5 Q12 88 7.5 89.5Z" fill="#be185d"/>
+  <path d="M42.5 89.5 Q38.5 93 32 91.5 Q38 88 42.5 89.5Z" fill="#be185d"/>` : ''}
+  ${show(5) ? `<path d="M11.5 65.5 Q9 75 10 86" stroke="white" stroke-width="8.5" fill="none" stroke-linecap="round" opacity="0.9"/>
+  <path d="M38.5 65.5 Q41 75 40 86" stroke="white" stroke-width="8.5" fill="none" stroke-linecap="round" opacity="0.9"/>` : ''}
+  ${show(6) ? `<path d="M12 56.5 Q25 59 38 56.5 Q38 59.5 25 61 Q12 59.5 12 56.5Z" fill="#b45309"/>
+  <rect x="23.5" y="55.5" width="3" height="4.5" rx="0.5" fill="#d97706"/>` : ''}
+  ${show(7) ? `<path d="M10 27.5 Q7 37 9 56 Q14 61 25 61 Q36 61 41 56 Q43 37 40 27.5 Q35 25 25 25 Q15 25 10 27.5Z" fill="#ec4899" opacity="0.9"/>
+  <path d="M10 27.5 Q6 36 7 46" stroke="#ec4899" stroke-width="7.5" fill="none" stroke-linecap="round" opacity="0.9"/>
+  <path d="M40 27.5 Q44 36 43 46" stroke="#ec4899" stroke-width="7.5" fill="none" stroke-linecap="round" opacity="0.9"/>
+  <path d="M18.5 25.5 L25 35 L31.5 25.5" fill="none" stroke="#f9a8d4" stroke-width="1.2" stroke-linecap="round"/>` : ''}
+  ${show(8) ? `<circle cx="14.5" cy="13" r="2" fill="#fbbf24"/>
+  <line x1="14.5" y1="15" x2="14.5" y2="20" stroke="#fbbf24" stroke-width="1.2"/>
+  <circle cx="14.5" cy="21" r="1.6" fill="#fbbf24"/>
+  <circle cx="35.5" cy="13" r="2" fill="#fbbf24"/>
+  <line x1="35.5" y1="15" x2="35.5" y2="20" stroke="#fbbf24" stroke-width="1.2"/>
+  <circle cx="35.5" cy="21" r="1.6" fill="#fbbf24"/>` : ''}
+  ${show(9) ? `<path d="M13 7 Q25 5 37 7 Q35 10 25 10 Q15 10 13 7Z" fill="#6366f1"/>
+  <circle cx="25" cy="6.5" r="2.3" fill="#818cf8"/>` : ''}
+  ${show(10) ? `<path d="M17 25.5 Q25 30.5 33 25.5" stroke="#fbbf24" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <circle cx="25" cy="29" r="1.8" fill="#f59e0b"/>` : ''}
+  ${show(11) ? `<path d="M9 27.5 Q6 38 8 56 Q13 63 25 63 Q37 63 42 56 Q44 38 41 27.5 Q35 25 25 25 Q15 25 9 27.5Z" fill="#6d28d9" opacity="0.85"/>
+  <path d="M9 27.5 Q4 36 6 47" stroke="#6d28d9" stroke-width="7.5" fill="none" stroke-linecap="round" opacity="0.85"/>
+  <path d="M41 27.5 Q46 36 44 47" stroke="#6d28d9" stroke-width="7.5" fill="none" stroke-linecap="round" opacity="0.85"/>
+  <path d="M18 25.5 L20.5 44 L25 40 L29.5 44 L32 25.5" fill="#7c3aed" opacity="0.85"/>` : ''}
+  ${show(12) ? `<path d="M15 12.5 Q21.5 9 24.5 12.5 L24.5 15.5 Q21.5 18.5 15 15.5 Z" fill="rgba(100,20,50,0.6)" stroke="#374151" stroke-width="0.9"/>
+  <path d="M25.5 12.5 Q28.5 9 35 12.5 L35 15.5 Q28.5 18.5 25.5 15.5 Z" fill="rgba(100,20,50,0.6)" stroke="#374151" stroke-width="0.9"/>
+  <line x1="24.5" y1="14" x2="25.5" y2="14" stroke="#374151" stroke-width="0.9"/>
+  <line x1="10" y1="13" x2="15" y2="13" stroke="#374151" stroke-width="1.1"/>
+  <line x1="35" y1="13" x2="40" y2="13" stroke="#374151" stroke-width="1.1"/>` : ''}
+  ${nude ? `<text x="25" y="88" text-anchor="middle" font-size="10">🫣</text>` : ''}
+  ${c <= 1 && c > 0 ? `<circle cx="25" cy="43" r="11" fill="none" stroke="rgba(239,68,68,0.3)" stroke-width="1.5" stroke-dasharray="3,2"/>` : ''}
 </svg>`;
                 }
             },
