@@ -219,6 +219,33 @@
                 </div>
             </div>
 
+            <!-- Modo Quitar Prendas Card -->
+            <div onclick="app.navTo('create-strip')" class="sm:col-span-2 group relative glass-card p-6 rounded-3xl border border-orange-500/20 hover:border-orange-500/60 transition-all duration-300 cursor-pointer overflow-hidden shadow-xl hover:shadow-orange-500/10 hover:-translate-y-1">
+                <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-orange-600/10 rounded-full blur-2xl group-hover:bg-orange-600/20 transition"></div>
+                <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-2xl text-white shadow-lg shadow-orange-500/30 flex-shrink-0">
+                            🎲
+                        </div>
+                        <div class="sm:hidden">
+                            <span class="text-xs font-bold px-3 py-1 rounded-full bg-orange-500/20 text-orange-300 border border-orange-500/30">2–6 Jugadores</span>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between mb-1">
+                            <h3 class="text-xl font-bold text-white group-hover:text-orange-300 transition">Modo Quitar Prendas</h3>
+                            <span class="hidden sm:inline text-xs font-bold px-3 py-1 rounded-full bg-orange-500/20 text-orange-300 border border-orange-500/30">2–6 Jugadores</span>
+                        </div>
+                        <p class="text-slate-400 text-xs leading-relaxed mb-3">
+                            Tablero de dados con casillas de BEBER, RETO, CASTIGO y PREMIO. Cada acción puede pedirte quitarte una prenda. ¡El que aguante más, gana!
+                        </p>
+                        <div class="flex items-center text-xs font-bold text-orange-400 group-hover:translate-x-1 transition">
+                            Crear Sala de Strip <i class="fa-solid fa-dice ml-2"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Join Existing Room Box -->
             <div class="glass-card p-6 rounded-3xl border border-slate-700/60 shadow-lg">
                 <h4 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
@@ -693,6 +720,78 @@
             </div>
         </section>
 
+        <!-- ========================================== -->
+        <!-- VIEW: CREATE STRIP ROOM                    -->
+        <!-- ========================================== -->
+        <section id="view-create-strip" class="hidden space-y-6 max-w-xl mx-auto py-4">
+            <div class="flex items-center gap-3 mb-2">
+                <button onclick="app.navTo('menu')" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <span>🎲</span> Modo Quitar Prendas
+                </h2>
+            </div>
+            <div class="glass-card p-6 rounded-3xl space-y-5 border border-orange-500/30 shadow-xl">
+                <div class="p-3 bg-orange-500/10 rounded-2xl border border-orange-500/20 text-xs text-orange-200 leading-relaxed flex items-start gap-2">
+                    <span class="text-lg flex-shrink-0">🎲</span>
+                    <span>Juego de tablero por turnos. Lanza el dado, cae en una casilla y sigue la acción. <strong>CASTIGO</strong> siempre quita prenda. <strong>RETO/BEBER</strong> dan la opción. <strong>PREMIO</strong> permite recuperar una.</span>
+                </div>
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <label class="text-xs font-bold text-slate-300 uppercase">Jugadores <span class="text-orange-400">(2–6)</span></label>
+                        <span id="strip-player-count" class="text-xs font-bold text-orange-300">2 jugadores</span>
+                    </div>
+                    <div id="strip-players-setup" class="space-y-3"></div>
+                    <button onclick="app.addStripPlayer()" id="btn-add-strip-player"
+                        class="mt-3 w-full py-2.5 border border-dashed border-orange-500/40 rounded-xl text-xs text-orange-400 hover:border-orange-400 hover:text-orange-300 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Agregar jugador
+                    </button>
+                </div>
+                <button onclick="app.startStripGame()"
+                    class="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg shadow-orange-500/30 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-dice"></i> ¡INICIAR JUEGO!
+                </button>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW: STRIP GAME BOARD                     -->
+        <!-- ========================================== -->
+        <section id="view-strip-game" class="hidden space-y-3 max-w-2xl mx-auto py-4">
+            <!-- Player bars -->
+            <div id="strip-player-bars" class="glass-card p-3 rounded-3xl border border-slate-700 space-y-2 shadow-xl"></div>
+            <!-- Current player + dice -->
+            <div class="glass-card p-4 rounded-2xl border border-orange-500/30 flex items-center justify-between shadow-lg">
+                <div>
+                    <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Turno de</div>
+                    <div id="strip-current-player" class="text-lg font-black text-orange-300">---</div>
+                </div>
+                <button onclick="app.rollStripDice()" id="btn-strip-dice"
+                    class="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 disabled:opacity-50 text-white font-extrabold px-6 py-3 rounded-xl shadow-lg shadow-orange-500/20 flex items-center gap-2 transition">
+                    <span id="strip-dice-icon" class="text-2xl leading-none">🎲</span>
+                    <span>LANZAR DADO</span>
+                </button>
+            </div>
+            <!-- Board -->
+            <div class="glass-card p-3 rounded-3xl border border-slate-700 shadow-xl">
+                <div class="flex items-center gap-2 mb-3">
+                    <i class="fa-solid fa-dice text-orange-400 text-xs"></i>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tablero</span>
+                    <div class="flex items-center gap-3 ml-auto text-[9px] font-bold">
+                        <span class="flex items-center gap-1 text-amber-400"><span class="w-2 h-2 rounded bg-amber-500/70 inline-block"></span>BEBER</span>
+                        <span class="flex items-center gap-1 text-purple-400"><span class="w-2 h-2 rounded bg-purple-500/70 inline-block"></span>RETO</span>
+                        <span class="flex items-center gap-1 text-rose-400"><span class="w-2 h-2 rounded bg-rose-500/70 inline-block"></span>CASTIGO</span>
+                        <span class="flex items-center gap-1 text-emerald-400"><span class="w-2 h-2 rounded bg-emerald-500/70 inline-block"></span>PREMIO</span>
+                    </div>
+                </div>
+                <div id="strip-board-grid" class="grid grid-cols-5 gap-1.5"></div>
+            </div>
+            <button onclick="app.navTo('menu')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl border border-slate-700 text-sm">
+                Volver al Menú
+            </button>
+        </section>
+
     </main>
 
     <!-- Modal: Settings (Gemini API & Firebase Config) -->
@@ -951,7 +1050,7 @@
 
             // Navigation controller
             navTo(viewId) {
-                const views = ['menu', 'create-fiesta', 'create-pareja', 'create-confesiones', 'lobby', 'pre-question', 'gameplay', 'waiting-others', 'results-fiesta', 'results-pareja'];
+                const views = ['menu', 'create-fiesta', 'create-pareja', 'create-confesiones', 'create-strip', 'strip-game', 'lobby', 'pre-question', 'gameplay', 'waiting-others', 'results-fiesta', 'results-pareja'];
                 views.forEach(v => {
                     const el = document.getElementById(`view-${v}`);
                     if (el) el.classList.add('hidden');
@@ -966,6 +1065,9 @@
                 if (viewId === 'create-confesiones') {
                     this.cartaBlancaQuestions = ['', '', ''];
                     this.renderCartaBlancaQuestions();
+                }
+                if (viewId === 'create-strip') {
+                    this.initStripSetup();
                 }
             },
 
@@ -2604,6 +2706,315 @@ JSON (sin texto extra):
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Crear Sala con Mis Preguntas';
                 }
+            },
+
+            // ── Strip Game ─────────────────────────────────────────────────
+            stripState: null,
+            _stripBoard: [
+                {type:'inicio'},{type:'beber'},{type:'beber'},{type:'beber'},{type:'reto'},
+                {type:'castigo'},{type:'castigo'},{type:'reto'},{type:'beber'},{type:'reto'},
+                {type:'premio'},{type:'premio'},{type:'reto'},{type:'beber'},{type:'reto'},
+                {type:'reto'},{type:'reto'},{type:'premio'},{type:'reto'},{type:'reto'},
+                {type:'reto'},{type:'reto'},{type:'castigo'},{type:'reto'},{type:'reto'},
+                {type:'premio'},{type:'beber'},{type:'reto'},{type:'castigo'},{type:'reto'},
+                {type:'premio'}
+            ],
+
+            initStripSetup() {
+                this.stripState = {
+                    players: [
+                        { name: '', gender: 'hombre', maxClothes: 7, currentClothes: 7, position: 0 },
+                        { name: '', gender: 'mujer', maxClothes: 7, currentClothes: 7, position: 0 }
+                    ],
+                    currentPlayerIndex: 0,
+                    pendingAction: null
+                };
+                this.renderStripSetup();
+            },
+
+            renderStripSetup() {
+                const container = document.getElementById('strip-players-setup');
+                if (!container) return;
+                container.innerHTML = '';
+                this.stripState.players.forEach((p, i) => {
+                    const div = document.createElement('div');
+                    div.className = 'glass-card p-4 rounded-2xl border border-orange-500/20 space-y-3';
+                    div.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-orange-300 uppercase flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-orange-500/30 flex items-center justify-center text-[11px] font-black">${i+1}</span>
+                                Jugador ${i+1}
+                            </span>
+                            ${this.stripState.players.length > 2 ? `<button onclick="app.removeStripPlayer(${i})" class="text-slate-500 hover:text-rose-400 transition w-6 h-6 flex items-center justify-center rounded-lg hover:bg-rose-500/10"><i class="fa-solid fa-xmark text-xs"></i></button>` : ''}
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="text" placeholder="Nombre" value="${p.name}"
+                                oninput="app.stripState.players[${i}].name = this.value"
+                                class="glass-input flex-1 px-3 py-2.5 rounded-xl text-white text-sm font-semibold">
+                            <select onchange="app.stripState.players[${i}].gender = this.value"
+                                class="glass-input px-2 py-2.5 rounded-xl text-white text-sm bg-slate-800 border border-slate-600">
+                                <option value="hombre" ${p.gender==='hombre'?'selected':''}>♂ Hombre</option>
+                                <option value="mujer" ${p.gender==='mujer'?'selected':''}>♀ Mujer</option>
+                                <option value="otro" ${p.gender==='otro'?'selected':''}>⚧ Otro</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs text-slate-400 flex-shrink-0 font-bold">Prendas:</span>
+                            <input type="range" min="4" max="12" value="${p.maxClothes}"
+                                oninput="app.stripState.players[${i}].maxClothes = +this.value; app.stripState.players[${i}].currentClothes = +this.value; this.nextElementSibling.innerText = this.value"
+                                class="flex-1 h-2 rounded-full accent-orange-500 cursor-pointer">
+                            <span class="text-sm font-black text-orange-300 w-6 text-center">${p.maxClothes}</span>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+                const countEl = document.getElementById('strip-player-count');
+                if (countEl) countEl.innerText = `${this.stripState.players.length} jugador${this.stripState.players.length > 1 ? 'es' : ''}`;
+                const addBtn = document.getElementById('btn-add-strip-player');
+                if (addBtn) addBtn.style.display = this.stripState.players.length >= 6 ? 'none' : 'flex';
+            },
+
+            addStripPlayer() {
+                if (!this.stripState || this.stripState.players.length >= 6) return;
+                this.stripState.players.push({ name: '', gender: 'hombre', maxClothes: 7, currentClothes: 7, position: 0 });
+                this.renderStripSetup();
+            },
+
+            removeStripPlayer(idx) {
+                if (!this.stripState || this.stripState.players.length <= 2) return;
+                this.stripState.players.splice(idx, 1);
+                this.renderStripSetup();
+            },
+
+            startStripGame() {
+                if (!this.stripState) return;
+                this.stripState.players.forEach((p, i) => {
+                    if (!p.name.trim()) p.name = `Jugador ${i+1}`;
+                    p.position = 0;
+                    p.currentClothes = p.maxClothes;
+                    p._nakedToasted = false;
+                });
+                this.stripState.currentPlayerIndex = 0;
+                this.stripState.pendingAction = null;
+                this.navTo('strip-game');
+                this.renderStripGame();
+            },
+
+            renderStripGame() {
+                if (!this.stripState) return;
+                const cp = this.stripState.players[this.stripState.currentPlayerIndex];
+                document.getElementById('strip-current-player').innerText = cp.name;
+                const btn = document.getElementById('btn-strip-dice');
+                if (btn) btn.disabled = false;
+                const icon = document.getElementById('strip-dice-icon');
+                if (icon) icon.innerText = '🎲';
+                this.renderStripPlayerBars();
+                this.renderStripBoard();
+            },
+
+            renderStripPlayerBars() {
+                const container = document.getElementById('strip-player-bars');
+                if (!container || !this.stripState) return;
+                container.innerHTML = '';
+                this.stripState.players.forEach((p, i) => {
+                    const isActive = i === this.stripState.currentPlayerIndex;
+                    const pct = p.maxClothes > 0 ? Math.round((p.currentClothes / p.maxClothes) * 100) : 0;
+                    const gEmoji = {hombre:'👨',mujer:'👩',otro:'🧑'}[p.gender]||'🧑';
+                    const bar = document.createElement('div');
+                    bar.className = `flex items-center gap-3 p-2.5 rounded-xl transition-all ${isActive ? 'bg-orange-500/10 border border-orange-500/30' : 'opacity-55'}`;
+                    bar.innerHTML = `
+                        <div class="text-2xl leading-none flex-shrink-0 ${p.currentClothes===0?'grayscale opacity-50':''}">${gEmoji}</div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-xs font-black ${isActive?'text-orange-200':'text-slate-300'} truncate">${p.name}${isActive?' <span class="text-orange-400 text-[10px] ml-1">▶</span>':''}</span>
+                                <span class="text-[11px] font-bold ml-2 flex-shrink-0 ${p.currentClothes===0?'text-rose-400 animate-pulse':p.currentClothes<=2?'text-amber-400':'text-slate-400'}">${p.currentClothes} prendas</span>
+                            </div>
+                            <div class="w-full bg-slate-800/80 h-3 rounded-full overflow-hidden border border-slate-700">
+                                <div class="h-full rounded-full transition-all duration-700 ${p.currentClothes===0?'bg-rose-500':p.currentClothes<=2?'bg-amber-500':'bg-gradient-to-r from-orange-500 to-amber-400'}" style="width:${pct}%"></div>
+                            </div>
+                            <div class="text-xs mt-0.5 leading-none tracking-widest">${this._stripClothesEmojis(p.currentClothes, p.gender)}</div>
+                        </div>
+                    `;
+                    container.appendChild(bar);
+                });
+            },
+
+            _stripClothesEmojis(count, gender) {
+                const sets = {
+                    hombre: ['👕','👖','🩲','👟','🧦','🧢','⌚','🧤','🕶️','🧣','🩴','🎽'],
+                    mujer:  ['👗','👙','🩲','👠','🧦','🎀','💍','🧤','👒','🧣','🩴','🩱'],
+                    otro:   ['👕','👖','🩲','👟','🧦','🧢','⌚','🧤','🕶️','🧣','🩴','🎽'],
+                };
+                const pool = sets[gender] || sets.otro;
+                if (count <= 0) return '🫣';
+                return pool.slice(0, Math.min(count, pool.length)).join('');
+            },
+
+            renderStripBoard() {
+                const grid = document.getElementById('strip-board-grid');
+                if (!grid || !this.stripState) return;
+                const colorMap = {
+                    inicio:  'bg-slate-700/70 border-slate-500/60 text-slate-200',
+                    beber:   'bg-amber-900/50 border-amber-500/50 text-amber-300',
+                    reto:    'bg-purple-900/50 border-purple-500/50 text-purple-300',
+                    castigo: 'bg-rose-900/50 border-rose-500/50 text-rose-300',
+                    premio:  'bg-emerald-900/50 border-emerald-500/50 text-emerald-300',
+                };
+                const emojiMap = {inicio:'🏠',beber:'🥃',reto:'🎭',castigo:'🔥',premio:'🏆'};
+                grid.innerHTML = this._stripBoard.map((sq, idx) => {
+                    const here = this.stripState.players.filter(p => p.position === idx);
+                    const avatars = here.map(p => {
+                        const isCP = this.stripState.players[this.stripState.currentPlayerIndex] === p;
+                        return `<span class="w-5 h-5 rounded-full ${isCP?'bg-orange-500 ring-1 ring-white':'bg-slate-500'} text-[9px] inline-flex items-center justify-center font-black text-white leading-none" title="${p.name}">${p.name.charAt(0).toUpperCase()}</span>`;
+                    }).join('');
+                    return `<div class="relative p-1 rounded-lg border ${colorMap[sq.type]||colorMap.reto} text-center min-h-[52px] flex flex-col items-center justify-center gap-0.5 select-none">
+                        <div class="text-sm leading-none">${emojiMap[sq.type]||'❓'}</div>
+                        <div class="text-[8px] font-black uppercase tracking-wide leading-none">${sq.type==='inicio'?'INICIO':sq.type.toUpperCase()}</div>
+                        <div class="text-[9px] text-slate-500 leading-none">${idx===0?'':idx}</div>
+                        ${here.length?`<div class="flex flex-wrap gap-0.5 justify-center mt-0.5">${avatars}</div>`:''}
+                    </div>`;
+                }).join('');
+            },
+
+            rollStripDice() {
+                if (!this.stripState || this.stripState.pendingAction) return;
+                const btn = document.getElementById('btn-strip-dice');
+                if (btn) btn.disabled = true;
+                const icon = document.getElementById('strip-dice-icon');
+                const faces = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+                let ticks = 0;
+                const anim = setInterval(() => {
+                    if (icon) icon.innerText = faces[Math.floor(Math.random()*6)];
+                    ticks++;
+                    if (ticks >= 10) {
+                        clearInterval(anim);
+                        const roll = Math.floor(Math.random()*6)+1;
+                        if (icon) icon.innerText = faces[roll-1];
+                        const cp = this.stripState.players[this.stripState.currentPlayerIndex];
+                        this.showToast(`🎲 ${cp.name} sacó ${roll}`, 'info');
+                        setTimeout(() => this._stripMovePlayer(roll), 500);
+                    }
+                }, 80);
+            },
+
+            _stripMovePlayer(steps) {
+                const state = this.stripState;
+                const player = state.players[state.currentPlayerIndex];
+                player.position = (player.position + steps) % this._stripBoard.length;
+                this.renderStripBoard();
+                this.renderStripPlayerBars();
+                setTimeout(() => {
+                    const sq = this._stripBoard[player.position];
+                    const action = this._getStripAction(sq.type, player.gender);
+                    state.pendingAction = action;
+                    this._showStripActionModal(player, sq, action);
+                }, 350);
+            },
+
+            _showStripActionModal(player, square, action) {
+                const existing = document.getElementById('strip-action-modal');
+                if (existing) existing.remove();
+                const cfg = {
+                    beber:   {border:'border-amber-500/40 bg-amber-950/30',  title:'text-amber-200',   icon:'🥃', label:'BEBER'},
+                    reto:    {border:'border-purple-500/40 bg-purple-950/30', title:'text-purple-200',  icon:'🎭', label:'RETO'},
+                    castigo: {border:'border-rose-500/40 bg-rose-950/30',     title:'text-rose-200',    icon:'🔥', label:'CASTIGO'},
+                    premio:  {border:'border-emerald-500/40 bg-emerald-950/30',title:'text-emerald-200',icon:'🏆', label:'PREMIO'},
+                    inicio:  {border:'border-slate-500/40 bg-slate-950/30',   title:'text-slate-200',   icon:'🏠', label:'INICIO'},
+                };
+                const c = cfg[square.type]||cfg.reto;
+                const removesNote = (action.removePrenda && player.currentClothes > 0)
+                    ? `<div class="text-xs text-rose-300 font-bold text-center flex items-center justify-center gap-2 py-2 border-t border-rose-500/20 mt-1"><i class="fa-solid fa-shirt"></i> Quita 1 prenda → quedan ${player.currentClothes-1}</div>` : '';
+                const addsNote = (action.addPrenda && player.currentClothes < player.maxClothes)
+                    ? `<div class="text-xs text-emerald-300 font-bold text-center flex items-center justify-center gap-2 py-2 border-t border-emerald-500/20 mt-1"><i class="fa-solid fa-shirt"></i> Recupera 1 prenda → quedan ${player.currentClothes+1}</div>` : '';
+                const nakedNote = (player.currentClothes === 0 && action.removePrenda)
+                    ? `<div class="text-[11px] text-slate-400 italic text-center py-1">¡Ya sin prendas! — penitencia extra a elección del grupo</div>` : '';
+                const modal = document.createElement('div');
+                modal.id = 'strip-action-modal';
+                modal.className = 'fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4';
+                modal.innerHTML = `
+                    <div class="glass-card max-w-sm w-full p-6 rounded-3xl border ${c.border} space-y-4 shadow-2xl">
+                        <div class="text-center space-y-1">
+                            <div class="text-5xl mb-1">${c.icon}</div>
+                            <div class="text-xs font-black ${c.title} uppercase tracking-widest">${c.label}</div>
+                            <div class="text-base font-black text-white">${player.name}</div>
+                            <div class="text-[10px] text-slate-500">Casilla ${player.position} de ${this._stripBoard.length-1}</div>
+                        </div>
+                        <div class="p-4 rounded-2xl ${c.border} border">
+                            <p class="text-sm font-semibold text-white leading-relaxed text-center">${action.text}</p>
+                        </div>
+                        ${removesNote}${addsNote}${nakedNote}
+                        <button onclick="app.confirmStripAction()"
+                            class="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-check"></i> ¡LISTO, LO CUMPLÍ!
+                        </button>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            },
+
+            _getStripAction(type, gender) {
+                const pools = {
+                    beber: [
+                        {text:'Toma 2 tragos y quítate una prenda — sin excusas.', removePrenda:true},
+                        {text:'Shot obligatorio. Luego quítate la prenda más accesible que tengas.', removePrenda:true},
+                        {text:'Elige: toma 3 tragos seguidos O quítate una prenda ahora mismo.', removePrenda:false},
+                        {text:'Brindis con todos — y te quitas una prenda como penitencia de honor.', removePrenda:true},
+                        {text:'Toma y pasa la botella — quien la reciba también quita una prenda.', removePrenda:true},
+                    ],
+                    reto: [
+                        {text:'Baila de forma sensual 30 segundos con quien elijas. Si no puedes, quítate una prenda.', removePrenda:false},
+                        {text:'Di tu fantasía más loca en voz alta. Si no la dices, quítate una prenda.', removePrenda:false},
+                        {text:'Quitarte una prenda de forma lenta y seductora frente a todos.', removePrenda:true},
+                        {text:'Haz un striptease de 1 prenda con música imaginaria — el grupo elige cuál.', removePrenda:true},
+                        {text:'Susúrrale algo atrevido al oído a quien quieras. Si te niegas, quítate una prenda.', removePrenda:false},
+                        {text:'Imita el sonido más atrevido que puedas. Si te da vergüenza, quítate una prenda.', removePrenda:false},
+                        {text:'Recibe un trago en la boca de quien elijas. Si no, quítate una prenda.', removePrenda:false},
+                        {text:'El grupo vota qué prenda te quitas — y te la quitas ahora.', removePrenda:true},
+                        {text:'Describe sin vergüenza la prenda más íntima que llevas puesta. Si no, quítate una.', removePrenda:false},
+                        {text:'Haz una pose provocativa durante 10 segundos. Si no puedes, quítate una prenda.', removePrenda:false},
+                    ],
+                    castigo: [
+                        {text:'¡Castigo directo! El grupo vota qué prenda te quitas — ahora mismo, sin negociar.', removePrenda:true},
+                        {text:'Quitarte una prenda ya — el que tarde más de 10 segundos, quita dos.', removePrenda:true},
+                        {text:'Penitencia doble: quítate una prenda Y toma 2 shots seguidos.', removePrenda:true},
+                        {text:'El grupo elige la prenda más comprometedora. ¡A quitársela!', removePrenda:true},
+                        {text:'Sin excusas y sin negociar: una prenda al suelo ahora mismo.', removePrenda:true},
+                    ],
+                    premio: [
+                        {text:'¡Premio! Puedes ponerte una prenda que ya te quitaste.', removePrenda:false, addPrenda:true},
+                        {text:'¡Premio! Elige a otro jugador y mándalo a quitarse una prenda.', removePrenda:false},
+                        {text:'¡Premio! Estás a salvo y recuperas una prenda. ¡Salvado!', removePrenda:false, addPrenda:true},
+                        {text:'¡Premio! Puedes ponerte una prenda O mandas a quien quieras a quitarse una.', removePrenda:false, addPrenda:true},
+                    ],
+                    inicio: [
+                        {text:'¡Estás en el inicio! Presentación — di tu nombre y cuántas prendas tienes. Luego tira el dado de nuevo.', removePrenda:false},
+                    ],
+                };
+                const list = pools[type]||pools.reto;
+                return list[Math.floor(Math.random()*list.length)];
+            },
+
+            confirmStripAction() {
+                const modal = document.getElementById('strip-action-modal');
+                if (modal) modal.remove();
+                const state = this.stripState;
+                if (!state) return;
+                const action = state.pendingAction;
+                state.pendingAction = null;
+                const player = state.players[state.currentPlayerIndex];
+                if (action && action.removePrenda && player.currentClothes > 0) {
+                    player.currentClothes--;
+                } else if (action && action.addPrenda && player.currentClothes < player.maxClothes) {
+                    player.currentClothes++;
+                }
+                state.players.filter(p => p.currentClothes === 0 && !p._nakedToasted).forEach(p => {
+                    p._nakedToasted = true;
+                    this.showToast(`🫣 ¡${p.name} se quedó sin prendas!`, 'info');
+                });
+                state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
+                this.renderStripGame();
+                const next = state.players[state.currentPlayerIndex];
+                setTimeout(() => this.showToast(`Turno de ${next.name} 🎲`, 'info'), 200);
             }
         };
 
