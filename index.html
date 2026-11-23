@@ -3291,9 +3291,19 @@ JSON (sin texto extra):
   <!-- HAIR (dark brown, styled) -->
   <ellipse cx="25.5" cy="7" rx="10.5" ry="8.5" fill="#2c1a0a"/>
   <path d="M15 10 Q16 2 25.5 1.5 Q35 2 36 10 Q32 6 25.5 6 Q19 6 15 10Z" fill="#3d2010"/>
-  <!-- HEAD (flat vector style, no face features) -->
+  <!-- HEAD -->
   <circle cx="25" cy="12.5" r="10" fill="${sk}"/>
-  <circle cx="20.5" cy="10" r="3.2" fill="rgba(255,230,200,0.22)"/>
+  <!-- FACE FEATURES -->
+  <path d="M19.5 9.5 Q21.5 8.5 23 9.5" stroke="#2c1a0a" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+  <path d="M27 9.5 Q28.5 8.5 30.5 9.5" stroke="#2c1a0a" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+  <ellipse cx="21" cy="12" rx="2.2" ry="1.8" fill="white"/>
+  <circle cx="21" cy="12" r="1.3" fill="#4a3728"/>
+  <circle cx="21.5" cy="11.5" r="0.4" fill="white"/>
+  <ellipse cx="29" cy="12" rx="2.2" ry="1.8" fill="white"/>
+  <circle cx="29" cy="12" r="1.3" fill="#4a3728"/>
+  <circle cx="29.5" cy="11.5" r="0.4" fill="white"/>
+  <circle cx="25" cy="15.5" r="0.7" fill="rgba(170,80,35,0.5)"/>
+  <path d="M22.5 17.5 Q25 19.5 27.5 17.5" stroke="#c0735a" stroke-width="1" fill="none" stroke-linecap="round"/>
   <!-- NECK -->
   <path d="M22 22 L22.5 27.5 Q25 28.5 27.5 27.5 L28 22 Q25 23 22 22Z" fill="${sk}"/>
   <!-- TORSO: athletic V-shape, shoulders 36px wide, waist 22px -->
@@ -3337,9 +3347,10 @@ JSON (sin texto extra):
   <ellipse cx="12.5" cy="91.5" rx="7" ry="2.5" fill="${sk}" transform="rotate(-8,12.5,91.5)"/>
   <ellipse cx="37.5" cy="91.5" rx="7" ry="2.5" fill="${sk}" transform="rotate(8,37.5,91.5)"/>
   <!-- CLOTHING LAYERS -->
-  ${show(1) ? `<path d="M14 56 Q13 63 14 68 L36 68 Q37 63 36 56 Z" fill="#4b5563"/>
-  <line x1="25" y1="56" x2="25" y2="68" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-  <path d="M14 56 Q13 59 14 61 L36 61 Q37 59 36 56 Z" fill="rgba(255,255,255,0.08)"/>` : ''}
+  ${show(1) ? `<path d="M14 56 Q13 63 14 68 L36 68 Q37 63 36 56 Z" fill="white"/>
+  <line x1="25" y1="56" x2="25" y2="68" stroke="rgba(0,0,0,0.1)" stroke-width="1"/>
+  <path d="M14 56 Q13 59 14 61 L36 61 Q37 59 36 56 Z" fill="rgba(0,0,0,0.05)"/>
+  <path d="M14 56 Q25 58 36 56" stroke="rgba(0,0,0,0.12)" stroke-width="0.7" fill="none"/>` : ''}
   ${show(2) ? `<path d="M13 55 Q10 70 11.5 85" stroke="#1e3a5f" stroke-width="12.5" fill="none" stroke-linecap="round"/>
   <path d="M37 55 Q40 70 38.5 85" stroke="#1e3a5f" stroke-width="12.5" fill="none" stroke-linecap="round"/>
   <path d="M13 55 L37 55 L36 66 Q25 70 14 66 Z" fill="#1e3a5f"/>
@@ -3383,7 +3394,17 @@ JSON (sin texto extra):
   <path d="M36 16 Q42 24 42 33 Q40 27 37 22 Q36 19 36 16Z" fill="#3d2010" opacity="0.85"/>
   <!-- HEAD -->
   <circle cx="25" cy="12.5" r="10" fill="${sk}"/>
-  <circle cx="21" cy="10" r="3" fill="rgba(255,230,200,0.2)"/>
+  <!-- FACE FEATURES -->
+  <path d="M19.5 9.5 Q21.5 8.5 23 9.5" stroke="#2c1a0a" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+  <path d="M27 9.5 Q28.5 8.5 30.5 9.5" stroke="#2c1a0a" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+  <ellipse cx="21" cy="12" rx="2.2" ry="1.8" fill="white"/>
+  <circle cx="21" cy="12" r="1.3" fill="#4a3728"/>
+  <circle cx="21.5" cy="11.5" r="0.4" fill="white"/>
+  <ellipse cx="29" cy="12" rx="2.2" ry="1.8" fill="white"/>
+  <circle cx="29" cy="12" r="1.3" fill="#4a3728"/>
+  <circle cx="29.5" cy="11.5" r="0.4" fill="white"/>
+  <circle cx="25" cy="15.5" r="0.7" fill="rgba(170,80,35,0.5)"/>
+  <path d="M22.5 17.5 Q25 19.5 27.5 17.5" stroke="#c0735a" stroke-width="1.1" fill="none" stroke-linecap="round"/>
   <!-- NECK -->
   <path d="M22.5 22.5 L23 28 Q25 29 27 28 L27.5 22.5 Q25 23.5 22.5 22.5Z" fill="${sk}"/>
   <!-- TORSO: hourglass - bust ~30px wide, waist ~20px, hips ~32px -->
@@ -3426,16 +3447,16 @@ JSON (sin texto extra):
   <ellipse cx="11" cy="91.5" rx="6.5" ry="2.5" fill="${sk}" transform="rotate(-8,11,91.5)"/>
   <ellipse cx="39" cy="91.5" rx="6.5" ry="2.5" fill="${sk}" transform="rotate(8,39,91.5)"/>
   <!-- CLOTHING LAYERS -->
-  ${show(1) ? `<path d="M12 57 Q9 63 10 68 L40 68 Q41 63 38 57 Z" fill="#4b5563"/>
-  <line x1="25" y1="57" x2="25" y2="68" stroke="rgba(255,255,255,0.1)" stroke-width="0.8"/>
-  <path d="M12 57 Q10 60 11 62 L39 62 Q40 60 38 57 Z" fill="rgba(255,255,255,0.08)"/>` : ''}
+  ${show(1) ? `<path d="M12 57 Q9 63 10 68 L40 68 Q41 63 38 57 Z" fill="white"/>
+  <line x1="25" y1="57" x2="25" y2="68" stroke="rgba(0,0,0,0.1)" stroke-width="0.8"/>
+  <path d="M12 57 Q10 60 11 62 L39 62 Q40 60 38 57 Z" fill="rgba(0,0,0,0.05)"/>` : ''}
   ${show(2) ? `<path d="M11 65.5 Q9 75 10 86" stroke="#7c3aed" stroke-width="11.5" fill="none" stroke-linecap="round"/>
   <path d="M39 65.5 Q41 75 40 86" stroke="#7c3aed" stroke-width="11.5" fill="none" stroke-linecap="round"/>
   <path d="M11 65.5 L39 65.5 L38.5 76 Q25 80 11.5 76 Z" fill="#7c3aed"/>
   <path d="M11.5 66 Q10 74 10.5 78" stroke="rgba(255,255,255,0.1)" stroke-width="3" fill="none" stroke-linecap="round"/>` : ''}
-  ${show(3) ? `<path d="M13 29 Q16.5 40 25 35.5 Q33.5 40 37 29 Q33 26.5 25 27 Q17 26.5 13 29Z" fill="#4b5563"/>
-  <line x1="25" y1="27" x2="25" y2="35.5" stroke="rgba(255,255,255,0.15)" stroke-width="0.8"/>
-  <path d="M13 29 Q16 32 25 30.5 Q34 32 37 29" stroke="rgba(255,255,255,0.1)" stroke-width="1" fill="none"/>` : ''}
+  ${show(3) ? `<path d="M13 29 Q16.5 40 25 35.5 Q33.5 40 37 29 Q33 26.5 25 27 Q17 26.5 13 29Z" fill="white"/>
+  <line x1="25" y1="27" x2="25" y2="35.5" stroke="rgba(0,0,0,0.1)" stroke-width="0.8"/>
+  <path d="M13 29 Q16 32 25 30.5 Q34 32 37 29" stroke="rgba(0,0,0,0.1)" stroke-width="1" fill="none"/>` : ''}
   ${show(4) ? `<path d="M7.5 89.5 Q11.5 93 18 91.5 Q12 88 7.5 89.5Z" fill="#be185d"/>
   <path d="M42.5 89.5 Q38.5 93 32 91.5 Q38 88 42.5 89.5Z" fill="#be185d"/>` : ''}
   ${show(5) ? `<path d="M11.5 65.5 Q9 75 10 86" stroke="white" stroke-width="8.5" fill="none" stroke-linecap="round" opacity="0.9"/>
@@ -3531,6 +3552,7 @@ JSON (sin texto extra):
                     meta:    'bg-gradient-to-br from-amber-400/90 to-yellow-300/90 border-amber-200 text-slate-900 font-black animate-pulse',
                 };
                 const emojiMap = {inicio:'🏠',beber:'🥃',reto:'🎭',castigo:'🔥',premio:'🏆',meta:'🏁'};
+                const labelMap = {inicio:'INICIO',beber:'BEBER',reto:'RETO',castigo:'CASTIGO',premio:'PREMIO',meta:'META'};
                 grid.innerHTML = this._stripBoard.map((sq, idx) => {
                     const here = this.stripState.players.filter(p => p.position === idx);
                     const avatars = here.map(p => {
@@ -3540,7 +3562,8 @@ JSON (sin texto extra):
                     }).join('');
                     return `<div class="relative p-0.5 rounded-md border ${colorMap[sq.type]||colorMap.reto} text-center min-h-[38px] flex flex-col items-center justify-center select-none" title="${sq.type==='meta'?'🏁 META — ¡GANADOR!':sq.type.toUpperCase()+' #'+idx}">
                         <div class="text-sm leading-none">${emojiMap[sq.type]||'❓'}</div>
-                        <div class="text-[7px] text-current/60 leading-none font-mono opacity-70">${idx===0?'·':idx}</div>
+                        <div class="text-[6px] font-black uppercase leading-none tracking-tight">${labelMap[sq.type]||sq.type.toUpperCase()}</div>
+                        <div class="text-[6px] text-current/60 leading-none font-mono opacity-60">${idx===0?'·':idx}</div>
                         ${here.length?`<div class="flex flex-wrap gap-0 justify-center">${avatars}</div>`:''}
                     </div>`;
                 }).join('');
