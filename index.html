@@ -3714,7 +3714,7 @@ JSON (sin texto extra):
                 }
                 setTimeout(() => {
                     const sq = this._stripBoard[player.position];
-                    const action = this._getStripAction(sq.type, player.gender, player.position);
+                    const action = this._getStripAction(sq.type, player.gender, player.position, player.currentClothes);
                     state.pendingAction = action;
                     this._showStripActionModal(player, sq, action);
                 }, 350);
@@ -3771,7 +3771,7 @@ JSON (sin texto extra):
                 document.body.appendChild(modal);
             },
 
-            _getStripAction(type, gender, position = 1) {
+            _getStripAction(type, gender, position = 1, clothesLeft = 1) {
                 // Tiers: 1-4 = juego normal; 5-8 = modo erótico (pos 61-100)
                 const tier = position <= 20 ? 1 : position <= 40 ? 2 : position <= 55 ? 3 : position <= 60 ? 4 :
                              position <= 70 ? 5 : position <= 80 ? 6 : position <= 90 ? 7 : 8;
@@ -3873,65 +3873,42 @@ JSON (sin texto extra):
                         1: [
                             {text:'Baila 20 segundos al ritmo que pongas. Si paras antes, quítate una prenda.', removePrenda:false},
                             {text:'Di un cumplido muy atrevido a cada jugador del grupo. Si te niegas a alguno, quítate una prenda.', removePrenda:false},
-                            {text:'Cuenta un secreto que nunca le hayas dicho a nadie en este grupo. Si te niegas, quítate dos prendas.', removePrenda:false},
-                            {text:'Susúrrale algo tierno pero atrevido al oído a quien elijas del grupo.', removePrenda:false},
                             {text:'Haz la pose más ridícula posible. Si el grupo no aprueba con aplausos, quítate una prenda.', removePrenda:false},
                             {text:'Imita a un personaje famoso de forma seductora durante 30 segundos. Si nadie adivina quién es, quítate una prenda.', removePrenda:false},
-                            {text:'Di el nombre del jugador que más te atrae en este momento. Si te niegas, quítate una prenda.', removePrenda:false},
                             {text:'El jugador a tu derecha te hace una pregunta personal íntima — debes responder con total honestidad o quitarte una prenda.', removePrenda:false},
                             {text:'Muéstrale la última foto de tu celular al grupo. Si te niegas, quítate una prenda.', removePrenda:false},
                             {text:'Haz reír a alguien del grupo en menos de 15 segundos. Si no lo logras, quítate una prenda.', removePrenda:false},
                             {text:'Escribe con el dedo en la espalda de quien elijas una palabra. Si no adivina, tú pierdes una prenda.', removePrenda:false},
-                            {text:'Describe al jugador de tu derecha usando solo palabras de animales. Si se ofende, quítate una prenda.', removePrenda:false},
                             {text:'Canta 15 segundos de una canción romántica mirando al jugador que elijas. Si te detienes, pierdes una prenda.', removePrenda:false},
-                            {text:'Di 3 palabras que describan cómo te sentirías si te quedaras sin ropa ahora mismo.', removePrenda:false},
                             {text:'El grupo te hace una pregunta de verdad o reto. Si eliges verdad, responde sin mentir. Si eliges reto, quítate una prenda.', removePrenda:false},
-                            {text:'Describe físicamente a quien más te guste del grupo. Si se ruboriza, te salvas. Si no, pierdes una prenda.', removePrenda:false},
                             {text:'Imita el baile de la persona más sexy que conozcas durante 20 segundos. El grupo decide si merece prenda o no.', removePrenda:false},
-                            {text:'Di en voz alta cuántas prendas tienes ganas de quitarte esta noche. El grupo decide si eso basta o no.', removePrenda:false},
                             {text:'Cierra los ojos. El jugador a tu izquierda pone su mano en un lugar de tu cuerpo — debes adivinar dónde. Si no adivinas, prenda al suelo.', removePrenda:false},
-                            {text:'Describe tu color de ropa interior sin nombrarlo. Si alguien adivina, pierdes una prenda.', removePrenda:false},
                             {text:'Mueve las caderas seductoramente durante 15 segundos. Sin parar, sin reír.', removePrenda:false},
-                            {text:'Di qué prenda del jugador a tu izquierda más te gustaría ver en el suelo.', removePrenda:false},
-                            {text:'El grupo señala una parte de tu cuerpo. Debes dar 3 adjetivos para describirla. Si te niegas, prenda al suelo.', removePrenda:false},
-                            {text:'Haz un breve monólogo de 20 segundos sobre por qué no quieres quitarte la próxima prenda. El grupo vota si convences o no.', removePrenda:false},
-                            {text:'Di el nombre de la persona del grupo que crees que tiene la ropa interior más interesante. Esa persona toma 1 shot.', removePrenda:false},
                         ],
                         2: [
                             {text:'Baila de forma seductora 30 segundos con quien elijas. Si no, quítate dos prendas.', removePrenda:false},
-                            {text:'Di tu fantasía más loca en voz alta con todo detalle. Si no la dices completa, quítate una prenda.', removePrenda:false},
                             {text:'Haz un striptease de 1 prenda con música imaginaria — el grupo elige cuál prenda.', removePrenda:true},
-                            {text:'Describe sin vergüenza la prenda más íntima que llevas en este momento. Si no, quítate una.', removePrenda:false},
-                            {text:'Susúrrale algo atrevido y específico al oído a quien quieras. Si te niegas, quítate una prenda.', removePrenda:false},
                             {text:'Recibe un trago en la boca de quien elijas, sin usar tus manos. Si no, quítate una prenda.', removePrenda:false},
                             {text:'Siéntate en el regazo del jugador a tu izquierda 20 segundos. Si te niegas, quítate dos prendas.', removePrenda:false},
                             {text:'Deja que quien elijas te masajee los hombros 30 segundos. Luego tú decides si ellos se quitan una prenda.', removePrenda:false},
-                            {text:'El grupo te hace una pregunta atrevida y debes responderla con lujo de detalles. Si te niegas, prenda al suelo.', removePrenda:false},
                             {text:'Mantén contacto visual con quien elijas durante 30 segundos. Si te ríes o apartas la vista, quítate una prenda.', removePrenda:false},
-                            {text:'Describe paso a paso cómo te quitarías la prenda que el grupo señale — sin hacerlo todavía. Si el grupo no vota al menos 3/5, la pierdes igual.', removePrenda:false},
-                            {text:'Acércate al jugador de tu elección y susúrrale al oído algo que nunca le dirías a un desconocido. El grupo no oye.', removePrenda:false},
                             {text:'Siéntate en el suelo frente a quien elijas durante 30 segundos mirándolo. Sin hablar, sin apartar los ojos.', removePrenda:false},
                             {text:'Deja que el grupo dibuje una forma en tu espalda con un dedo. Si adivinas qué dibujaron, te salvas. Si no, prenda al suelo.', removePrenda:false},
                             {text:'Muéstrale al grupo tu prenda más cómoda y tu prenda más incómoda. El grupo elige cuál se va primero.', removePrenda:true},
-                            {text:'Di en voz alta qué es lo que más te da vergüenza de este juego. Si no dices, pierdes una prenda.', removePrenda:false},
                             {text:'Haz 10 segundos de movimiento de caderas frente a quien elijas, sin apartar la mirada.', removePrenda:false},
                             {text:'El jugador de tu derecha y el de tu izquierda deciden entre los dos qué prenda te quitarás.', removePrenda:true},
-                            {text:'Describe la última vez que te quitaste ropa delante de alguien. Con detalles. Si no dices, prenda al suelo.', removePrenda:false},
                             {text:'El grupo vota por la prenda que más quieren que te quites. Tú debes convencerlos de que se quiten otra. Si no los convences, se va la que votaron.', removePrenda:true},
                             {text:'Muéstrale al jugador a tu izquierda cómo te sentirías si llevaras una prenda menos. Sin quitártela todavía.', removePrenda:false},
                             {text:'Di en voz alta quién del grupo crees que lleva la ropa interior más interesante. Esa persona señala qué prenda pierdes tú.', removePrenda:true},
                             {text:'Siéntate en el regazo del jugador que lleve menos ropa. No te muevas durante 20 segundos.', removePrenda:false},
-                            {text:'Describe cómo te quitarías la ropa en el mejor momento de tu vida. Con música, con quién, dónde.', removePrenda:false},
                             {text:'Busca en tu celular tu playlist favorita y reproduce 10 segundos en voz alta. Si alguien baila, tú te salvas del próximo castigo.', removePrenda:false},
                         ],
                         3: [
                             {text:'Quítate una prenda de forma lenta y seductora frente a todos — el grupo elige cuál.', removePrenda:true},
                             {text:'Deja que quien elijas te quite una prenda sin que uses las manos para ayudar.', removePrenda:true},
-                            {text:'Di en voz alta qué te gustaría hacerle al jugador que más te atrae del grupo ahora mismo.', removePrenda:false},
                             {text:'Imita el sonido más erótico que puedas durante 15 segundos. Sin vergüenza, sin parar.', removePrenda:false},
                             {text:'Haz una pose provocativa durante 20 segundos mientras el grupo te observa. Si te ríes o te mueves, quítate dos prendas.', removePrenda:false},
                             {text:'Deja que el grupo dibuje algo en tu cuerpo con un dedo — sin que te rías — y luego quítate una prenda.', removePrenda:true},
-                            {text:'Describe el lugar más atrevido donde hayas tenido sexo con todos los detalles. Si no dices, quítate 2 prendas.', removePrenda:false},
                             {text:'El jugador que elijas te guía con los ojos cerrados y hace lo que quiera durante 30 segundos.', removePrenda:false},
                             {text:'Recita en voz alta y lento la prenda que más trabajo te costará quitarte. Luego quítatela.', removePrenda:true},
                             {text:'Siéntate con las piernas cruzadas frente al jugador que elijas y miráos en silencio durante 1 minuto. Sin reír.', removePrenda:false},
@@ -3948,13 +3925,11 @@ JSON (sin texto extra):
                         ],
                         4: [
                             {text:'Deja que quien elijas te quite la prenda más íntima que llevas. Con los ojos cerrados y sin que uses las manos.', removePrenda:true},
-                            {text:'Describe en detalle tu fantasía sexual más recurrente, sin omitir nada. Si no terminas, pierdes 2 prendas.', removePrenda:false},
                             {text:'Siéntate en el regazo del jugador que elijas durante 60 segundos. Sin quejarte, sin moverte.', removePrenda:false},
                             {text:'Deja que el grupo vote tu prenda más íntima — te la quitas frente a todos sin apresurarte.', removePrenda:true},
                             {text:'Haz lo que el jugador a tu izquierda te pida durante 30 segundos. Sin negociar, sin límites dentro del grupo.', removePrenda:false},
                             {text:'El jugador más desprendido del grupo te señala una prenda. Te la quitas y te quedas mirándolos 15 segundos.', removePrenda:true},
                             {text:'Deja que el grupo entero decida el orden en que te quitas lo que te queda. Pierdes 1 prenda ahora.', removePrenda:true},
-                            {text:'Describe minuciosamente qué te quitarías y en qué orden si esto fuera un juego privado con quien elijas.', removePrenda:false},
                             {text:'El grupo elige qué prenda se queda para el final. Tú te quitas la siguiente más íntima que tengas ahora.', removePrenda:true},
                             {text:'Cierra los ojos y deja que quien elijas elija por ti lo que se quita. Sin negociar, sin ver.', removePrenda:true},
                         ],
@@ -4139,12 +4114,11 @@ JSON (sin texto extra):
                     {text:'Siéntate muy cerca de quien elijas y acaricia su brazo o pierna durante 20 segundos.', removePrenda:false},
                     {text:'Coloca tu mano en el muslo de quien elijas y mantén la presión 15 segundos. Sin moverla.', removePrenda:false},
                     {text:'Deja que quien elijas te acaricie donde quiera (arriba de la cintura) durante 15 segundos.', removePrenda:false},
-                    // susurros / miradas
-                    {text:'Susúrrale al oído a quien elijas qué es lo que más te gustaría hacerle esta noche. Con detalle.', removePrenda:false},
-                    {text:'Mantén contacto visual con quien elijas durante 30 segundos. No puedes apartar los ojos.', removePrenda:false},
-                    {text:'Di en voz alta cuál parte del cuerpo del jugador que elijas más te excita. Sin rodeos.', removePrenda:false},
-                    {text:'Describe en voz alta y con detalle qué le harías al jugador que más te atrae, paso a paso.', removePrenda:false},
-                    {text:'Susúrrale en el oído a quien elijas tu fantasía erótica más recurrente. Que el grupo no oiga.', removePrenda:false},
+                    // susurros / acercamiento sensorial
+                    {text:'Coloca tu cara a 2 cm de quien elijas durante 30 segundos sin besarlo. Sin apartar los ojos.', removePrenda:false},
+                    {text:'Traza con el dedo el contorno del cuello y hombro de quien elijas durante 20 segundos. Despacio.', removePrenda:false},
+                    {text:'Recorre con los labios (sin besar) el cuello de quien elijas de lado a lado durante 15 segundos.', removePrenda:false},
+                    {text:'Siéntate a horcajadas sobre quien elijas cara a cara sin moverte durante 20 segundos.', removePrenda:false},
                     // acercamiento físico
                     {text:'Siéntate en el regazo de quien elijas durante 20 segundos. Sin moverte.', removePrenda:false},
                     {text:'Abraza a quien elijas por detrás durante 20 segundos. Mejilla contra su cuello.', removePrenda:false},
@@ -4276,8 +4250,8 @@ JSON (sin texto extra):
                     // show
                     {text:'Desvístete despacio frente a quien el grupo señale. 1 prenda. Que dure 20 segundos.', removePrenda:true},
                     {text:'Haz sonidos de placer durante 10 segundos mientras el jugador a tu izquierda te acaricia el hombro.', removePrenda:false},
-                    {text:'Describe en voz alta y sin tapujos qué te excita del jugador que el grupo señale.', removePrenda:false},
-                    {text:'Susúrrale al oído a quien el grupo señale lo que harías con ellos si fueran los dos solos.', removePrenda:false},
+                    {text:'Recorre con la lengua el cuello de quien el grupo señale durante 10 segundos. Sin parar.', removePrenda:false},
+                    {text:'Siéntate encima de quien el grupo señale cara a cara y frota tu cuerpo contra el suyo durante 15 segundos.', removePrenda:false},
                     {text:'Prenda al suelo + castigo grupal: todos te acarician el brazo en cadena, 5 segundos cada uno.', removePrenda:true},
                 ];
                 pools.castigo[6] = [
@@ -4370,68 +4344,68 @@ JSON (sin texto extra):
                 ];
                 pools.premio[5] = [
                     {text:'¡Premio! Elige quién te da un beso en los labios de al menos 5 segundos. Tú eliges.', removePrenda:false},
-                    {text:'¡Premio! Recuperas 1 prenda y eliges quién te besa en el cuello ahora mismo.', removePrenda:false, addPrenda:true},
+                    {text:'¡Premio! Elige quién te besa el cuello ahora mismo durante 10 segundos.', removePrenda:false},
                     {text:'¡Premio! Elige a 2 jugadores que deben darse un beso entre sí durante 10 segundos.', removePrenda:false},
-                    {text:'¡Premio! Recuperas 1 prenda Y mandas un beso de 8 segundos entre los 2 jugadores que elijas.', removePrenda:false, addPrenda:true},
+                    {text:'¡Premio! Mandas un beso de 8 segundos entre los 2 jugadores que elijas. Tú los diriges.', removePrenda:false},
                     {text:'¡Premio! Eliges quién del grupo te acaricia la espalda durante 20 segundos.', removePrenda:false},
-                    {text:'¡Premio! Recuperas 1 prenda. El jugador de tu elección te da un beso suave donde tú digas.', removePrenda:false, addPrenda:true},
+                    {text:'¡Premio! El jugador de tu elección te da un beso suave donde tú digas. Tú mandas dónde.', removePrenda:false},
                     {text:'¡Premio! Elige a 1 jugador: ese jugador pierde 1 prenda Y te da un beso de 5 segundos.', removePrenda:false},
                     {text:'¡Premio! Toma 1 shot gratis Y eliges quién te besa en el cuello durante 10 segundos.', removePrenda:false},
                     {text:'¡Premio! Eliges a quién del grupo hacerle un lap dance — el que lo recibe pierde 1 prenda después.', removePrenda:false},
                     {text:'¡Premio! Siéntate sobre quien elijas durante 20 segundos. Tú mandas la posición.', removePrenda:false},
-                    {text:'¡Premio! Recuperas 1 prenda + elige a quien quieras para que te acaricie donde tú digas 15 segundos.', removePrenda:false, addPrenda:true},
+                    {text:'¡Premio! El jugador que señales te acaricia donde tú digas durante 15 segundos.', removePrenda:false},
                     {text:'¡Premio! El grupo señala al jugador que más te gusta. Ese jugador pierde 1 prenda Y te da un beso.', removePrenda:false},
-                    {text:'¡Premio! Recuperas 2 prendas Y eliges a quien quieras para que te susurre su fantasía al oído.', removePrenda:false, addPrenda:true},
+                    {text:'¡Premio! Eliges a 2 jugadores que se besan entre sí y tú miras durante 20 segundos.', removePrenda:false},
                     {text:'¡Premio! Dile al grupo quién crees que tiene el cuerpo más sexy. Ese jugador te da un beso de 10 seg.', removePrenda:false},
-                    {text:'¡Premio! Recuperas 1 prenda + tú eliges qué acto sensual hace cada jugador durante 10 segundos.', removePrenda:false, addPrenda:true},
+                    {text:'¡Premio! Tú eliges qué acto sensual hace cada jugador para ti durante 10 segundos.', removePrenda:false},
                 ];
                 pools.premio[6] = [
                     {text:'¡Premio! Elige quién te da un beso apasionado de 15 segundos. Tú mandas.', removePrenda:false},
-                    {text:'¡Premio! Recuperas 1 prenda + elige a quien quieras para que te bese el cuello 20 segundos.', removePrenda:false, addPrenda:true},
+                    {text:'¡Premio! Elige a quien quieras para que te bese el cuello 20 segundos.', removePrenda:false},
                     {text:'¡Premio! Señalas a 2 jugadores: deben besarse apasionadamente 15 segundos. Tú los diriges.', removePrenda:false},
                     {text:'¡Premio doble! Elige a 2 jugadores: cada uno pierde 1 prenda Y te da un beso apasionado.', removePrenda:false},
                     {text:'¡Premio! El grupo señala quién te quita 1 prenda con los dientes. También recibes un beso.', removePrenda:false},
-                    {text:'¡Premio! Recuperas 1 prenda + miras cómo 2 jugadores que elijas se dan un beso de 20 segundos.', removePrenda:false, addPrenda:true},
-                    {text:'¡Premio especial! El grupo entero pierde 1 prenda Y tú recuperas 1. Brindis erótico.', removePrenda:false, addPrenda:true},
+                    {text:'¡Premio! Miras cómo 2 jugadores que elijas se dan un beso apasionado de 20 segundos.', removePrenda:false},
+                    {text:'¡Premio especial! El grupo entero pierde 1 prenda Y tú recibes un beso apasionado de quien elijas.', removePrenda:false},
                     {text:'¡Premio! Eliges quién te masturba por encima de la ropa interior durante 15 segundos.', removePrenda:false},
                     {text:'¡Premio! Deja que quien elijas te desabroche 1 prenda con los dientes. No tienes que quitártela aún.', removePrenda:false},
-                    {text:'¡Premio! Recuperas 1 prenda + haz un lap dance de 20 segundos sobre quien elijas.', removePrenda:false, addPrenda:true},
+                    {text:'¡Premio! Haz un lap dance de 20 segundos sobre quien elijas. El que lo recibe pierde 1 prenda.', removePrenda:false},
                     {text:'¡Premio! El jugador que señales te acaricia el cuerpo completo durante 20 segundos. Tú mandas.', removePrenda:false},
-                    {text:'¡Premio! Recuperas 2 prendas Y el jugador de tu elección te da un striptease de 1 prenda.', removePrenda:false, addPrenda:true},
+                    {text:'¡Premio! El jugador de tu elección te da un striptease de 1 prenda para ti solo.', removePrenda:false},
                     {text:'¡Premio! Señalas a 2 jugadores: uno te masturba por encima de la ropa 15 seg, el otro te besa el cuello.', removePrenda:false},
-                    {text:'¡Premio! Recuperas 1 prenda + miras cómo los jugadores que elijas se masturban mutuamente 15 seg.', removePrenda:false, addPrenda:true},
+                    {text:'¡Premio! Miras cómo los jugadores que elijas se masturban mutuamente 15 seg frente a ti.', removePrenda:false},
                     {text:'¡Premio! El jugador con más prendas pierde 1 Y tú recibes un beso apasionado de quien elijas.', removePrenda:false},
                 ];
                 pools.premio[7] = [
                     {text:'¡Premio! Elige quién te besa los senos durante 20 segundos. Ahora mismo.', removePrenda:false},
-                    {text:'¡Premio! Recuperas 1 prenda + el jugador que señales te da sexo oral durante 20 segundos.', removePrenda:false, addPrenda:true},
+                    {text:'¡Premio! El jugador que señales te da sexo oral durante 20 segundos.', removePrenda:false},
                     {text:'¡Premio! Señalas a 2 jugadores: uno te besa los senos 20 seg, otro te da sexo oral 20 seg.', removePrenda:false},
                     {text:'¡Premio! Das y recibes con quien elijas: 20 seg de sexo oral mutuamente.', removePrenda:false},
                     {text:'¡Premio! Elige a quién vas a lamer desde el cuello hasta los senos durante 30 segundos.', removePrenda:false},
                     {text:'¡Premio doble erótico! El jugador que elijas pierde 2 prendas Y te da sexo oral 25 segundos.', removePrenda:false},
                     {text:'¡Premio! El grupo entero pierde 1 prenda Y tú recibes sexo oral de quien elijas.', removePrenda:false},
-                    {text:'¡Premio! Recuperas 1 prenda + miras cómo 2 jugadores se dan sexo oral mutuamente durante 30 seg.', removePrenda:false, addPrenda:true},
+                    {text:'¡Premio! Miras cómo 2 jugadores se dan sexo oral mutuamente durante 30 seg. Tú los señalas.', removePrenda:false},
                     {text:'¡Premio especial tier 7! Decides quién te besa los senos Y quién te da sexo oral. Uno detrás del otro.', removePrenda:false},
                     {text:'¡Premio! Elige quién te masturba directamente durante 20 segundos.', removePrenda:false},
                     {text:'¡Premio! Masturbas a quien elijas directamente durante 20 segundos. Sin restricciones.', removePrenda:false},
-                    {text:'¡Premio! Recuperas 2 prendas + el grupo que señales hace un show de sexo oral entre ellos durante 30 seg.', removePrenda:false, addPrenda:true},
+                    {text:'¡Premio! Señalas a 2 jugadores: hacen un show de sexo oral entre ellos durante 30 seg frente a ti.', removePrenda:false},
                     {text:'¡Premio! Eliges a quién quieres recibir o dar: sexo oral, besos en senos O masturbación directa. Tú decides.', removePrenda:false},
                     {text:'¡Premio! El jugador de tu elección y tú os masturbáis mutuamente 20 seg frente al grupo.', removePrenda:false},
-                    {text:'¡Premio! Recuperas 1 prenda + miras cómo los 2 jugadores que elijas se dan sexo oral mutuamente.', removePrenda:false, addPrenda:true},
+                    {text:'¡Premio! Miras cómo los 2 jugadores que elijas se dan sexo oral mutuamente durante 30 seg.', removePrenda:false},
                 ];
                 pools.premio[8] = [
                     {text:'¡GRAN PREMIO! Elige quién tiene sexo contigo frente al grupo. Duración 1 minuto.', removePrenda:false},
-                    {text:'¡Premio máximo! Recuperas 2 prendas + el jugador que elijas te da sexo oral durante 1 minuto.', removePrenda:false, addPrenda:true},
+                    {text:'¡Premio máximo! El jugador que elijas te da sexo oral durante 1 minuto completo.', removePrenda:false},
                     {text:'¡Premio absoluto! Decides quién tiene sexo con quién del grupo, en qué posición y por cuánto tiempo.', removePrenda:false},
                     {text:'¡GRAN PREMIO ERÓTICO! Tú y quien elijas tienen sexo durante 2 minutos. Frente al grupo.', removePrenda:false},
                     {text:'¡Premio legendario! El grupo entero pierde 1 prenda Y tú eliges a 2 que tengan sexo entre sí durante 1 minuto.', removePrenda:false},
                     {text:'¡Premio rey/reina erótico! Elige a 2 jugadores que te den sexo oral al mismo tiempo durante 1 minuto.', removePrenda:false},
                     {text:'¡Premio definitivo! Das y recibes sexo oral con quien elijas, 1 minuto cada uno. Sin límites.', removePrenda:false},
-                    {text:'¡PREMIO TOTAL! Recuperas todas tus prendas Y el grupo hace lo que tú ordenes durante 2 minutos.', removePrenda:false, addPrenda:true},
+                    {text:'¡PREMIO TOTAL! El grupo entero hace lo que tú ordenes durante 2 minutos. Tienes el control absoluto.', removePrenda:false},
                     {text:'¡Premio 8 definitivo! Elige a 3 jugadores: cada uno te hace algo diferente durante 30 segundos. Tú mandas.', removePrenda:false},
                     {text:'¡Premio absoluto erótico! El jugador que elijas tiene sexo contigo en la posición que el grupo vote. 2 minutos.', removePrenda:false},
                     {text:'¡GRAN PREMIO! Tú ordenas: parejas, posiciones y duración. El grupo obedece. Tienes 2 minutos de poder total.', removePrenda:false},
-                    {text:'¡Premio! Recuperas 2 prendas + eliges quién te da sexo oral MIENTRAS tú tienes sexo con otro jugador.', removePrenda:false, addPrenda:true},
+                    {text:'¡Premio! Eliges quién te da sexo oral MIENTRAS tú tienes sexo con otro jugador. 1 minuto al mismo tiempo.', removePrenda:false},
                     {text:'¡Premio! Das y recibes lo que quieras con quien elijas durante 2 minutos. Frente al grupo.', removePrenda:false},
                     {text:'¡PREMIO MÁXIMO! Elige a quien quieras para que haga contigo TODO lo que tú pidas durante 2 minutos.', removePrenda:false},
                     {text:'¡Premio especial final! Decides la escena sexual más explícita que se realiza ahora mismo. Tú la diriges.', removePrenda:false},
@@ -4469,13 +4443,42 @@ JSON (sin texto extra):
                     {text:'¡CASTIGO DEFINITIVO GRUPAL! Todos dan y reciben sexo oral al mismo tiempo — el jugador actual asigna las parejas. 1 minuto.', removePrenda:false, esGrupal:false},
                 ];
                 const typePools = pools[type] || pools.reto;
+                const genderTarget = (gender === 'hombre' || gender === 'mujer') && tier >= 5
+                    ? (gender === 'hombre' ? 'una mujer del grupo' : 'un hombre del grupo')
+                    : null;
+                const noClothesAlts = {
+                    1:{text:'Sin prendas que perder — baila 15 segundos seductoramente frente a quien elijas.', removePrenda:false},
+                    2:{text:'Sin prendas que perder — siéntate en el regazo de quien elijas durante 20 segundos. Sin moverte.', removePrenda:false},
+                    3:{text:'Sin prendas que perder — dale un beso en la mejilla al jugador que el grupo señale. Luego toma 2 shots.', removePrenda:false},
+                    4:{text:'Sin prendas que perder — haz lo que el jugador a tu izquierda te pida durante 30 segundos. Sin límites.', removePrenda:false},
+                    5:{text:'Sin prendas que perder — siéntate en el regazo de quien elijas y bésalo en el cuello durante 15 segundos.', removePrenda:false},
+                    6:{text:'Sin prendas que perder — deja que quien el grupo señale te acaricie el cuerpo completo durante 20 segundos.', removePrenda:false},
+                    7:{text:'Sin prendas que perder — masturba directamente a quien el grupo señale durante 20 segundos.', removePrenda:false},
+                    8:{text:'Sin prendas que perder — ten sexo con quien el grupo elija durante 1 minuto en la posición que decidan.', removePrenda:false},
+                };
+                const finalizeAction = (act) => {
+                    if (clothesLeft === 0 && act && act.removePrenda) {
+                        return noClothesAlts[tier] || {text:'¡El grupo decide qué pasa ahora — sin límites!', removePrenda:false};
+                    }
+                    if (genderTarget) {
+                        const t = act.text
+                            .replace(/el jugador que elijas/g, genderTarget)
+                            .replace(/al jugador que elijas/g, 'a ' + genderTarget)
+                            .replace(/a quien elijas/g, 'a ' + genderTarget)
+                            .replace(/quien elijas/g, genderTarget);
+                        if (t !== act.text) return Object.assign({}, act, {text: t});
+                    }
+                    return act;
+                };
                 // Try current tier first, then lower tiers
-                for (let t = tier; t >= 1; t--) {
+                // For premio in erotic mode (tier>=5), skip tiers 1-4 to avoid addPrenda entries
+                const minFallbackTier = (type === 'premio' && tier >= 5) ? 5 : 1;
+                for (let t = tier; t >= minFallbackTier; t--) {
                     const unused = (typePools[t] || []).filter(a => !usedSet.has(a.text));
                     if (unused.length > 0) {
                         const action = unused[Math.floor(Math.random() * unused.length)];
                         usedSet.add(action.text);
-                        return action;
+                        return finalizeAction(action);
                     }
                 }
                 // All tiers below current used — try higher tiers (capped at 8 for erotic mode)
@@ -4485,7 +4488,7 @@ JSON (sin texto extra):
                     if (unused.length > 0) {
                         const action = unused[Math.floor(Math.random() * unused.length)];
                         usedSet.add(action.text);
-                        return action;
+                        return finalizeAction(action);
                     }
                 }
                 // Pool de este tipo agotado — reset solo este tipo y repick
@@ -4494,7 +4497,7 @@ JSON (sin texto extra):
                 if (fallback.length > 0) {
                     const action = fallback[Math.floor(Math.random() * fallback.length)];
                     this._usedStripActions[type].add(action.text);
-                    return action;
+                    return finalizeAction(action);
                 }
                 return {text:'¡El grupo decide qué pasa ahora — sin límites!', removePrenda:true};
             },
