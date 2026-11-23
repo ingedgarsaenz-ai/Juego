@@ -909,7 +909,7 @@
                         <span class="flex items-center gap-1 text-rose-400"><span class="w-2 h-2 rounded bg-rose-500/70 inline-block"></span>CASTIGO</span>
                         <span class="flex items-center gap-1 text-emerald-400"><span class="w-2 h-2 rounded bg-emerald-500/70 inline-block"></span>PREMIO</span>
                         <span class="flex items-center gap-1 text-red-300"><span class="w-2 h-2 rounded bg-red-700 inline-block"></span>🫣TODOS</span>
-                        <span class="flex items-center gap-1 text-amber-200"><span class="w-2 h-2 rounded bg-amber-400 inline-block"></span>🏁60</span>
+                        <span class="flex items-center gap-1 text-amber-200"><span class="w-2 h-2 rounded bg-amber-400 inline-block"></span>🏁META</span>
                     </div>
                 </div>
                 <div id="strip-board-grid" class="grid grid-cols-10 gap-0.5"></div>
@@ -2934,6 +2934,20 @@ JSON (sin texto extra):
                 {type:'castigo',erotic:true},{type:'reto',erotic:true},{type:'castigo',erotic:true},{type:'premio',erotic:true},{type:'meta',erotic:true},           // 96-100
             ],
 
+            _generateDynamicBoard(size) {
+                // size must be a multiple of 10 (e.g. maxClothes * 10)
+                const board = [{type:'inicio'}]; // position 0
+                const base = ['beber','beber','reto','beber','castigo','reto','beber','castigo','reto'];
+                const groups = size / 10;
+                for (let g = 0; g < groups; g++) {
+                    const isLast = g === groups - 1;
+                    const isEven = (g + 1) % 2 === 0;
+                    for (let p = 0; p < 9; p++) board.push({type: base[p]});
+                    board.push({type: isLast ? 'meta' : isEven ? 'castigo_todos' : 'premio'});
+                }
+                return board;
+            },
+
             initStripSetup() {
                 this.stripState = {
                     players: [
@@ -3125,9 +3139,13 @@ JSON (sin texto extra):
                 if (!data || !data.players) return;
                 const players = Object.values(data.players);
                 if (players.length < 2) { this.showToast('Mínimo 2 jugadores para iniciar.', 'error'); return; }
+                const maxClothes = Math.max(...players.map(p => p.maxClothes || 7));
+                const boardSize = Math.min(60, Math.max(10, Math.ceil(maxClothes * 6 / 10) * 10));
+                this._stripBoard = this._generateDynamicBoard(boardSize);
                 this.stripState = {
                     players: players.map(p => ({ ...p, currentClothes: p.maxClothes || 7, position: 0, _nakedToasted: false })),
-                    currentPlayerIndex: 0, pendingAction: null
+                    currentPlayerIndex: 0, pendingAction: null,
+                    boardSize: boardSize, maxPos: boardSize
                 };
                 this._usedStripActions = new Set();
                 this.navTo('strip-game');
@@ -3244,6 +3262,11 @@ JSON (sin texto extra):
 
             startStripGame() {
                 if (!this.stripState) return;
+                const maxClothes = Math.max(...this.stripState.players.map(p => p.maxClothes || 7));
+                const boardSize = Math.min(60, Math.max(10, Math.ceil(maxClothes * 6 / 10) * 10));
+                this._stripBoard = this._generateDynamicBoard(boardSize);
+                this.stripState.boardSize = boardSize;
+                this.stripState.maxPos = boardSize;
                 this.stripState.players.forEach((p, i) => {
                     if (!p.name.trim()) p.name = `Jugador ${i+1}`;
                     p.position = 0;
@@ -3577,12 +3600,13 @@ JSON (sin texto extra):
             _activateEroticMode() {
                 document.getElementById('strip-action-modal')?.remove();
                 const state = this.stripState;
-                // Convert meta at pos 60 into erotic reto, then append 40 erotic tiles
-                this._stripBoard[60] = {type:'reto', erotic:true};
+                const boardSize = state.boardSize || 60;
+                // Convert meta at the last normal tile into erotic reto, then append 40 erotic tiles
+                this._stripBoard[boardSize] = {type:'reto', erotic:true};
                 for (let i = 1; i <= 40; i++) {
                     this._stripBoard.push(this._eroticoBoard[i]);
                 }
-                state.maxPos = 100;
+                state.maxPos = boardSize + 40;
                 state.eroticoMode = true;
                 // Reset used action tracking so erotic pools start fresh
                 if (this._usedStripActions) {
@@ -3772,9 +3796,16 @@ JSON (sin texto extra):
             },
 
             _getStripAction(type, gender, position = 1, clothesLeft = 1) {
-                // Tiers: 1-4 = juego normal; 5-8 = modo erótico (pos 61-100)
-                const tier = position <= 20 ? 1 : position <= 40 ? 2 : position <= 55 ? 3 : position <= 60 ? 4 :
-                             position <= 70 ? 5 : position <= 80 ? 6 : position <= 90 ? 7 : 8;
+                // Tiers: 1-4 = juego normal (escalado al tablero dinámico); 5-8 = modo erótico (+40 casillas)
+                const boardSize = (this.stripState && this.stripState.boardSize) || 60;
+                let tier;
+                if (position > boardSize) {
+                    const rel = position - boardSize; // 1-40 dentro del tramo erótico
+                    tier = rel <= 10 ? 5 : rel <= 20 ? 6 : rel <= 30 ? 7 : 8;
+                } else {
+                    const pct = boardSize > 0 ? position / boardSize : 0;
+                    tier = pct <= 1/3 ? 1 : pct <= 2/3 ? 2 : pct <= 55/60 ? 3 : 4;
+                }
                 if (!this._usedStripActions) this._usedStripActions = {};
                 if (!this._usedStripActions[type]) this._usedStripActions[type] = new Set();
                 const usedSet = this._usedStripActions[type];
