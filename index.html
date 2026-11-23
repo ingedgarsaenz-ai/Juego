@@ -3142,12 +3142,18 @@ JSON (sin texto extra):
                 const maxClothes = Math.max(...players.map(p => p.maxClothes || 7));
                 const boardSize = Math.min(60, Math.max(10, Math.ceil(maxClothes * 6 / 10) * 10));
                 this._stripBoard = this._generateDynamicBoard(boardSize);
+                const gamePlayers = players.map(p => ({ ...p, currentClothes: p.maxClothes || 7, position: 0, _nakedToasted: false }));
                 this.stripState = {
-                    players: players.map(p => ({ ...p, currentClothes: p.maxClothes || 7, position: 0, _nakedToasted: false })),
+                    players: gamePlayers,
                     currentPlayerIndex: 0, pendingAction: null,
-                    boardSize: boardSize, maxPos: boardSize
+                    boardSize: boardSize, maxPos: boardSize, eroticoMode: false
                 };
                 this._usedStripActions = new Set();
+                // Persist to Firestore so all participants transition to the game view
+                const stripGameState = { players: gamePlayers, currentPlayerIndex: 0, boardSize, maxPos: boardSize, eroticoMode: false };
+                const roomData = { ...data, status: 'strip_playing', stripGameState };
+                this.currentRoomData = roomData;
+                this.saveRoomDoc(data.roomId, roomData).catch(e => console.error('strip game save error', e));
                 this.navTo('strip-game');
                 this.renderStripGame();
                 this.showToast(`¡Juego iniciado con ${players.length} jugadores!`, 'success');
@@ -3254,6 +3260,44 @@ JSON (sin texto extra):
 
             handleStripRoomUpdate(data) {
                 this.currentRoomData = data;
+
+                if (data.status === 'strip_playing' && data.stripGameState) {
+                    const gs = data.stripGameState;
+                    const gameView = document.getElementById('view-strip-game');
+                    const inGame = gameView && !gameView.classList.contains('hidden');
+
+                    if (!inGame) {
+                        // Transition all players from lobby to game board
+                        const boardSize = gs.boardSize || 60;
+                        this._stripBoard = this._generateDynamicBoard(boardSize);
+                        if (gs.eroticoMode) {
+                            this._stripBoard[boardSize] = {type:'reto', erotic:true};
+                            for (let i = 1; i <= 40; i++) this._stripBoard.push(this._eroticoBoard[i]);
+                        }
+                        this.stripState = { ...gs, pendingAction: null };
+                        this._usedStripActions = new Set();
+                        this.navTo('strip-game');
+                        this.renderStripGame();
+                        this.showToast('¡El juego ha comenzado!', 'success');
+                    } else {
+                        // Already in game — sync state if no action modal is in progress
+                        const modalOpen = !!document.getElementById('strip-action-modal');
+                        if (!modalOpen) {
+                            const boardSize = gs.boardSize || 60;
+                            const prevErotic = this.stripState?.eroticoMode;
+                            if (gs.eroticoMode && !prevErotic) {
+                                // Erotic mode was just activated — extend the board
+                                this._stripBoard = this._generateDynamicBoard(boardSize);
+                                this._stripBoard[boardSize] = {type:'reto', erotic:true};
+                                for (let i = 1; i <= 40; i++) this._stripBoard.push(this._eroticoBoard[i]);
+                            }
+                            this.stripState = { ...gs, pendingAction: this.stripState?.pendingAction || null };
+                            this.renderStripGame();
+                        }
+                    }
+                    return;
+                }
+
                 const lobbyView = document.getElementById('view-strip-lobby');
                 if (lobbyView && !lobbyView.classList.contains('hidden')) {
                     this.renderStripLobbyView(data);
@@ -3287,7 +3331,11 @@ JSON (sin texto extra):
                 const avatarEl = document.getElementById('strip-player-avatar-game');
                 if (avatarEl) avatarEl.innerText = cp.avatar || '🧑';
                 const btn = document.getElementById('btn-strip-dice');
-                if (btn) btn.disabled = false;
+                if (btn) {
+                    // In online games, only the current player can roll
+                    const isMyTurn = !this.currentRoomId || cp.id === this.playerId;
+                    btn.disabled = !isMyTurn;
+                }
                 const resultEl = document.getElementById('strip-dice-result');
                 if (resultEl) resultEl.innerText = '';
                 this.renderStripPlayerBars();
@@ -3617,6 +3665,19 @@ JSON (sin texto extra):
                 state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
                 this.showToast('🔞 ¡MODO ERÓTICO ACTIVADO! 40 casillas más — ¡que empiece lo bueno!', 'success');
                 setTimeout(() => this.renderStripGame(), 100);
+                // Sync to Firestore so all online players get the extended board
+                if (this.currentRoomId && this.currentRoomData) {
+                    const stripGameState = {
+                        players: state.players,
+                        currentPlayerIndex: state.currentPlayerIndex,
+                        boardSize: boardSize,
+                        maxPos: state.maxPos,
+                        eroticoMode: true
+                    };
+                    const roomData = { ...this.currentRoomData, stripGameState };
+                    this.currentRoomData = roomData;
+                    this.saveRoomDoc(this.currentRoomId, roomData).catch(() => {});
+                }
             },
 
             _getWinnerPrize() {
@@ -4556,6 +4617,19 @@ JSON (sin texto extra):
                 this.renderStripGame();
                 const next = state.players[state.currentPlayerIndex];
                 setTimeout(() => this.showToast(`Turno de ${next.name} 🎲`, 'info'), 200);
+                // Sync to Firestore so all online players see the updated state
+                if (this.currentRoomId && this.currentRoomData) {
+                    const stripGameState = {
+                        players: state.players,
+                        currentPlayerIndex: state.currentPlayerIndex,
+                        boardSize: state.boardSize,
+                        maxPos: state.maxPos,
+                        eroticoMode: state.eroticoMode || false
+                    };
+                    const roomData = { ...this.currentRoomData, stripGameState };
+                    this.currentRoomData = roomData;
+                    this.saveRoomDoc(this.currentRoomId, roomData).catch(() => {});
+                }
             }
         };
 
