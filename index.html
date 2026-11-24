@@ -3196,7 +3196,7 @@ JSON (sin texto extra):
                 };
                 this._usedStripActions = new Set();
                 // Persist to Firestore so all participants transition to the game view
-                const stripGameState = { players: gamePlayers, currentPlayerIndex: 0, boardSize, maxPos: boardSize, eroticoMode: false };
+                const stripGameState = { players: gamePlayers, currentPlayerIndex: 0, boardSize, maxPos: boardSize, eroticoMode: false, pendingAction: null };
                 const roomData = { ...data, status: 'strip_playing', stripGameState };
                 this.currentRoomData = roomData;
                 this.saveRoomDoc(data.roomId, roomData).catch(e => console.error('strip game save error', e));
@@ -3313,19 +3313,29 @@ JSON (sin texto extra):
                     const inGame = gameView && !gameView.classList.contains('hidden');
 
                     if (!inGame) {
-                        // Transition all players from lobby to game board
+                        // Transition from lobby to game (or rejoin/refresh while game is in progress)
                         const boardSize = gs.boardSize || 60;
                         this._stripBoard = this._generateDynamicBoard(boardSize, data.roomId || '');
                         if (gs.eroticoMode) {
                             this._stripBoard[boardSize] = {type:'reto', erotic:true};
                             for (let i = 1; i <= 40; i++) this._stripBoard.push(this._eroticoBoard[i]);
                         }
-                        this.stripState = { ...gs, pendingAction: null };
-                        this._usedStripActions = new Set();
+                        this.stripState = { ...gs };
                         this._stripHistory = gs.history || [];
+                        this._rebuildUsedActionsFromHistory();
                         this.navTo('strip-game');
                         this.renderStripGame();
-                        this.showToast('¡El juego ha comenzado!', 'success');
+                        if (gs.winner) {
+                            const winnerPlayer = this.stripState.players[gs.winner.playerIndex];
+                            if (winnerPlayer) this._showStripWinner(winnerPlayer, gs.winner.prize);
+                        } else if (gs.pendingAction) {
+                            // Restore action modal on rejoin/refresh — correct button per player
+                            const cp = this.stripState.players[this.stripState.currentPlayerIndex];
+                            const sq = this._stripBoard[cp.position] || { type: 'reto', erotic: false };
+                            this._showStripActionModal(cp, sq, gs.pendingAction);
+                        } else {
+                            this.showToast('¡El juego ha comenzado!', 'success');
+                        }
                     } else {
                         // Already in game — sync board and show/dismiss action modal
                         const boardSize = gs.boardSize || 60;
@@ -3335,15 +3345,24 @@ JSON (sin texto extra):
                             this._stripBoard[boardSize] = {type:'reto', erotic:true};
                             for (let i = 1; i <= 40; i++) this._stripBoard.push(this._eroticoBoard[i]);
                         }
-                        // Auto-close spectator modal when current player confirmed (pendingAction cleared)
-                        const modalEl = document.getElementById('strip-action-modal');
-                        if (modalEl && !gs.pendingAction) modalEl.remove();
-                        // Render if no modal is blocking
+                        // Auto-close action modal when pendingAction cleared OR game won
+                        const actionModal = document.getElementById('strip-action-modal');
+                        if (actionModal && (!gs.pendingAction || gs.winner)) actionModal.remove();
+                        // Auto-close winner modal when winner cleared (someone clicked continue)
+                        const winnerModal = document.getElementById('strip-winner-modal');
+                        if (winnerModal && !gs.winner) winnerModal.remove();
+                        // Render if no action modal is blocking (winner modal doesn't block state updates)
                         if (!document.getElementById('strip-action-modal')) {
-                            if (gs.history) this._stripHistory = gs.history;
+                            if (gs.history) {
+                                this._stripHistory = gs.history;
+                                this._rebuildUsedActionsFromHistory();
+                            }
                             this.stripState = { ...gs, pendingAction: gs.pendingAction || null };
                             this.renderStripGame();
-                            if (gs.pendingAction) {
+                            if (gs.winner && !document.getElementById('strip-winner-modal')) {
+                                const winnerPlayer = this.stripState.players[gs.winner.playerIndex];
+                                if (winnerPlayer) this._showStripWinner(winnerPlayer, gs.winner.prize);
+                            } else if (gs.pendingAction) {
                                 const cp = this.stripState.players[this.stripState.currentPlayerIndex];
                                 const sq = this._stripBoard[cp.position] || { type: 'reto', erotic: false };
                                 this._showStripActionModal(cp, sq, gs.pendingAction);
@@ -3374,7 +3393,7 @@ JSON (sin texto extra):
                 });
                 this.stripState.currentPlayerIndex = 0;
                 this.stripState.pendingAction = null;
-                this._usedStripActions = new Set();
+                this._usedStripActions = {};
                 this._stripHistory = [];
                 this.navTo('strip-game');
                 this.renderStripGame();
@@ -3390,7 +3409,7 @@ JSON (sin texto extra):
                 if (btn) {
                     // In online games, only the current player can roll
                     const isMyTurn = !this.currentRoomId || cp.id === this.playerId;
-                    btn.disabled = !isMyTurn;
+                    btn.disabled = !isMyTurn || !!this._diceRolling;
                 }
                 const resultEl = document.getElementById('strip-dice-result');
                 if (resultEl) resultEl.innerText = '';
@@ -3688,15 +3707,17 @@ JSON (sin texto extra):
             },
 
 
-            _showStripWinner(player) {
-                const existing = document.getElementById('strip-action-modal');
-                if (existing) existing.remove();
-                const prize = this._getWinnerPrize();
+            _showStripWinner(player, prizeOverride = null) {
+                ['strip-action-modal', 'strip-winner-modal'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.remove();
+                });
+                const prize = prizeOverride || this._getWinnerPrize();
                 const otherPlayers = this.stripState.players.filter(p => p !== player).map(p => p.name).join(', ');
                 const isEroticFinale = !!this.stripState.eroticoMode;
                 const curMax = this.stripState.maxPos || 60;
                 const modal = document.createElement('div');
-                modal.id = 'strip-action-modal';
+                modal.id = 'strip-winner-modal';
                 modal.className = 'fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4';
                 modal.innerHTML = `
                     <div class="glass-card max-w-sm w-full p-8 rounded-3xl border ${isEroticFinale ? 'border-pink-500/70 bg-pink-950/40' : 'border-amber-400/60 bg-amber-950/40'} space-y-5 shadow-2xl text-center">
@@ -3714,11 +3735,11 @@ JSON (sin texto extra):
                                 🔞 Continuar — Modo Erótico (+40 casillas)
                             </button>` : ''}
                             <div class="flex gap-3">
-                                <button onclick="app.stripState.currentPlayerIndex=(app.stripState.currentPlayerIndex+1)%app.stripState.players.length;document.getElementById('strip-action-modal').remove();app.renderStripGame();"
-                                    class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition text-sm">
-                                    Continuar jugando
-                                </button>
-                                <button onclick="document.getElementById('strip-action-modal').remove();app.navTo('menu')"
+                                ${(!this.currentRoomId || player.id === this.playerId)
+                                    ? `<button onclick="app.continueAfterWin()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition text-sm">Continuar jugando</button>`
+                                    : `<div class="flex-1 flex items-center justify-center text-xs text-slate-400 py-3"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Esperando que ${player.name} continúe…</div>`
+                                }
+                                <button onclick="document.getElementById('strip-winner-modal').remove();app.navTo('menu')"
                                     class="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-extrabold py-3 rounded-xl shadow-lg transition text-sm">
                                     🎉 ¡Celebrar!
                                 </button>
@@ -3730,8 +3751,38 @@ JSON (sin texto extra):
                 if (typeof confetti !== 'undefined') confetti({ particleCount: 180, spread: 90, origin: { y: 0.5 } });
             },
 
+
+            continueAfterWin() {
+                if (this.currentRoomId) {
+                    const state = this.stripState;
+                    const cp = state && state.players[state.currentPlayerIndex];
+                    if (cp && cp.id !== this.playerId) return;
+                }
+                const modal = document.getElementById('strip-winner-modal');
+                if (modal) modal.remove();
+                const state = this.stripState;
+                if (!state) return;
+                state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
+                this.renderStripGame();
+                if (this.currentRoomId && this.currentRoomData) {
+                    const stripGameState = {
+                        players: state.players,
+                        currentPlayerIndex: state.currentPlayerIndex,
+                        boardSize: state.boardSize,
+                        maxPos: state.maxPos,
+                        eroticoMode: state.eroticoMode || false,
+                        pendingAction: null,
+                        winner: null,
+                        history: (this._stripHistory || []).slice(-40)
+                    };
+                    const roomData = { ...this.currentRoomData, stripGameState };
+                    this.currentRoomData = roomData;
+                    this.saveRoomDoc(this.currentRoomId, roomData).catch(() => {});
+                }
+            },
+
             _activateEroticMode() {
-                document.getElementById('strip-action-modal')?.remove();
+                ['strip-action-modal', 'strip-winner-modal'].forEach(id => document.getElementById(id)?.remove());
                 const state = this.stripState;
                 const boardSize = state.boardSize || 60;
                 // Convert meta at the last normal tile into erotic reto, then append 40 erotic tiles
@@ -3757,7 +3808,10 @@ JSON (sin texto extra):
                         currentPlayerIndex: state.currentPlayerIndex,
                         boardSize: boardSize,
                         maxPos: state.maxPos,
-                        eroticoMode: true
+                        eroticoMode: true,
+                        pendingAction: null,
+                        winner: null,
+                        history: (this._stripHistory || []).slice(-40)
                     };
                     const roomData = { ...this.currentRoomData, stripGameState };
                     this.currentRoomData = roomData;
@@ -3826,6 +3880,8 @@ JSON (sin texto extra):
 
             rollStripDice() {
                 if (!this.stripState || this.stripState.pendingAction) return;
+                if (this._diceRolling) return;
+                this._diceRolling = true;
                 const btn = document.getElementById('btn-strip-dice');
                 if (btn) btn.disabled = true;
                 const cube = document.getElementById('dice-cube-3d');
@@ -3879,13 +3935,32 @@ JSON (sin texto extra):
                 this.renderStripBoard();
                 this.renderStripPlayerBars();
                 if (newPos === maxPos) {
-                    setTimeout(() => this._showStripWinner(player), 350);
+                    this._diceRolling = false;
+                    const prize = this._getWinnerPrize();
+                    setTimeout(() => this._showStripWinner(player, prize), 350);
+                    // Sync win to Firestore so all devices show the winner screen
+                    if (this.currentRoomId && this.currentRoomData) {
+                        const stripGameState = {
+                            players: state.players,
+                            currentPlayerIndex: state.currentPlayerIndex,
+                            boardSize: state.boardSize,
+                            maxPos: state.maxPos,
+                            eroticoMode: state.eroticoMode || false,
+                            pendingAction: null,
+                            winner: { playerIndex: state.currentPlayerIndex, prize },
+                            history: (this._stripHistory || []).slice(-40)
+                        };
+                        const roomData = { ...this.currentRoomData, stripGameState };
+                        this.currentRoomData = roomData;
+                        this.saveRoomDoc(this.currentRoomId, roomData).catch(() => {});
+                    }
                     return;
                 }
                 setTimeout(() => {
                     const sq = this._stripBoard[player.position];
                     const action = this._getStripAction(sq.type, player.gender, player.position, player.currentClothes);
                     state.pendingAction = action;
+                    this._diceRolling = false;
                     this._showStripActionModal(player, sq, action);
                     // Record in local history
                     if (!this._stripHistory) this._stripHistory = [];
@@ -3965,6 +4040,17 @@ JSON (sin texto extra):
                     </div>
                 `;
                 document.body.appendChild(modal);
+            },
+
+            _rebuildUsedActionsFromHistory() {
+                const rebuilt = {};
+                for (const entry of (this._stripHistory || [])) {
+                    if (entry.tileType && entry.actionText) {
+                        if (!rebuilt[entry.tileType]) rebuilt[entry.tileType] = new Set();
+                        rebuilt[entry.tileType].add(entry.actionText);
+                    }
+                }
+                this._usedStripActions = rebuilt;
             },
 
             _getStripAction(type, gender, position = 1, clothesLeft = 1) {
@@ -4094,17 +4180,17 @@ JSON (sin texto extra):
                             {text:'Recibe un trago en la boca de quien elijas, sin usar tus manos. Si no, quítate una prenda.', removePrenda:false},
                             {text:'Siéntate en el regazo del jugador a tu izquierda 20 segundos. Si te niegas, quítate dos prendas.', removePrenda:false},
                             {text:'Deja que quien elijas te masajee los hombros 30 segundos. Luego tú decides si ellos se quitan una prenda.', removePrenda:false},
-                            {text:'Mantén contacto visual con quien elijas durante 30 segundos. Si te ríes o apartas la vista, quítate una prenda.', removePrenda:false},
-                            {text:'Siéntate en el suelo frente a quien elijas durante 30 segundos mirándolo. Sin hablar, sin apartar los ojos.', removePrenda:false},
+                            {text:'Deja que quien elijas te acaricie la cintura y los hombros durante 20 segundos. Tú no puedes moverte ni hacer ningún sonido — si lo haces, quítate una prenda extra.', removePrenda:false},
+                            {text:'Siéntate en el regazo de quien elijas durante 30 segundos. Ese jugador pasa sus manos por tu cintura. Si alguno de los dos ríe, pierdes una prenda extra.', removePrenda:false},
                             {text:'Deja que el grupo dibuje una forma en tu espalda con un dedo. Si adivinas qué dibujaron, te salvas. Si no, prenda al suelo.', removePrenda:false},
                             {text:'Muéstrale al grupo tu prenda más cómoda y tu prenda más incómoda. El grupo elige cuál se va primero.', removePrenda:true},
                             {text:'Haz 10 segundos de movimiento de caderas frente a quien elijas, sin apartar la mirada.', removePrenda:false},
                             {text:'El jugador de tu derecha y el de tu izquierda deciden entre los dos qué prenda te quitarás.', removePrenda:true},
                             {text:'El grupo vota por la prenda que más quieren que te quites. Tú debes convencerlos de que se quiten otra. Si no los convences, se va la que votaron.', removePrenda:true},
-                            {text:'Muéstrale al jugador a tu izquierda cómo te sentirías si llevaras una prenda menos. Sin quitártela todavía.', removePrenda:false},
+                            {text:'El jugador que elijas pasa sus manos por tu cuerpo donde quiera durante 20 segundos — tú no puedes decirle dónde. Si alguno se ríe, ambos pierden una prenda.', removePrenda:false},
                             {text:'Di en voz alta quién del grupo crees que lleva la ropa interior más interesante. Esa persona señala qué prenda pierdes tú.', removePrenda:true},
                             {text:'Siéntate en el regazo del jugador que lleve menos ropa. No te muevas durante 20 segundos.', removePrenda:false},
-                            {text:'Busca en tu celular tu playlist favorita y reproduce 10 segundos en voz alta. Si alguien baila, tú te salvas del próximo castigo.', removePrenda:false},
+                            {text:'Haz un baile provocador de 20 segundos frente a quien elijas — caderas al frente, sin apartarte. Si el grupo puntúa menos de 3/5, quítate una prenda.', removePrenda:false},
                         ],
                         3: [
                             {text:'Quítate una prenda de forma lenta y seductora frente a todos — el grupo elige cuál.', removePrenda:true},
@@ -4114,15 +4200,15 @@ JSON (sin texto extra):
                             {text:'Deja que el grupo dibuje algo en tu cuerpo con un dedo — sin que te rías — y luego quítate una prenda.', removePrenda:true},
                             {text:'El jugador que elijas te guía con los ojos cerrados y hace lo que quiera durante 30 segundos.', removePrenda:false},
                             {text:'Recita en voz alta y lento la prenda que más trabajo te costará quitarte. Luego quítatela.', removePrenda:true},
-                            {text:'Siéntate con las piernas cruzadas frente al jugador que elijas y miráos en silencio durante 1 minuto. Sin reír.', removePrenda:false},
+                            {text:'Deja que el jugador que elijas recorra con los labios desde tu hombro hasta detrás de tu oreja. Sin moverte, sin sonidos. Si lo haces, quítate una prenda.', removePrenda:false},
                             {text:'Describe cómo te quitarías la ropa en el mejor momento de tu vida. Con música, con quién, dónde. Luego quítate una prenda.', removePrenda:true},
                             {text:'Deja que el jugador que elijas te quite una prenda usando solo sus dientes. Nada de manos.', removePrenda:true},
-                            {text:'Haz una coreografía de 20 segundos para quitarte una prenda — el grupo puntúa del 1 al 5. Si sacan menos de 3 en promedio, pierdes una extra.', removePrenda:true},
+                            {text:'Haz un lap dance de 20 segundos sobre quien el grupo señale. Luego quítate la prenda que ese jugador señale.', removePrenda:true},
                             {text:'Cierra los ojos. El jugador que elijas pone su mano en alguna parte de tu cuerpo y tú dices en voz alta cómo se siente.', removePrenda:false},
                             {text:'Di en voz alta cuál es la parte de tu cuerpo que más te gusta mostrar. Luego muéstrala.', removePrenda:false},
                             {text:'El grupo señala dos prendas. Tú eliges cuál se quita — pero la otra se quita en el siguiente turno.', removePrenda:true},
                             {text:'Deja que el jugador a tu derecha te desabroche o desate 1 prenda. Luego tú decides si terminas de quitártela — si no, pierdes 2 en el próximo turno.', removePrenda:false},
-                            {text:'Di en voz alta qué haría si tuvieras que quitarte ropa en público sin pudor alguno. Luego quítate una prenda.', removePrenda:true},
+                            {text:'Permite que quien el grupo señale te quite una prenda de tu elección usando solo la boca. Tú no puedes ayudar con las manos.', removePrenda:true},
                             {text:'Haz el mejor striptease de una prenda que puedas. El grupo puntúa: si sacan menos de 3/5 en promedio, pierdes una prenda extra.', removePrenda:true},
                             {text:'El jugador que elijas pasa sus manos por tus hombros y elige qué prenda se quita. No puedes negarte.', removePrenda:true},
                         ],
@@ -4181,11 +4267,11 @@ JSON (sin texto extra):
                             {text:'Castigo en cadena: te quitas una prenda y el jugador a tu izquierda también pierde una.', removePrenda:true},
                             {text:'1 prenda + 2 shots. Los shots los tomas tú; la prenda, la señala el grupo.', removePrenda:true},
                             {text:'El grupo tiene 10 segundos para ponerse de acuerdo en qué prenda pierdes. Si no se ponen de acuerdo, pierdes 2.', removePrenda:true},
-                            {text:'Penitencia atrevida: quítate una prenda y luego susúrrale al oído a quien elijas algo que nunca le dirías sobrio.', removePrenda:true},
+                            {text:'Penitencia íntima: quítate una prenda y deja que el jugador a tu derecha te desabroche o quite la siguiente con los dientes. Sin manos.', removePrenda:true},
                             {text:'La prenda que lleves puesta más tiempo — el grupo señala cuál creen que es, y esa se va.', removePrenda:true},
                             {text:'El jugador con más prendas también pierde una prenda — de solidaridad contigo.', removePrenda:true},
                             {text:'1 prenda al suelo. Luego el grupo decide si mereces otro castigo inmediato. Si hay mayoría, otro shot.', removePrenda:true},
-                            {text:'Penitencia expresiva: te quitas una prenda describiendo poéticamente por qué esa prenda merece caer.', removePrenda:true},
+                            {text:'Penitencia de contacto: quítate una prenda y luego pasa la lengua por el cuello del jugador que el grupo señale.', removePrenda:true},
                             {text:'El jugador a tu izquierda y el de tu derecha señalan cada uno una prenda. Las dos se van.', removePrenda:true},
                             {text:'Castigo de mayores: el jugador más mayor del grupo señala qué prenda te quitas. Sin negociar.', removePrenda:true},
                             {text:'Shot triple y 1 prenda. Los shots puedes compartirlos con quien quieras — pero la prenda se va tú solo.', removePrenda:true},
@@ -4652,7 +4738,7 @@ JSON (sin texto extra):
                 const noClothesAlts = {
                     1:{text:'Sin prendas que perder — baila 15 segundos seductoramente frente a quien elijas.', removePrenda:false},
                     2:{text:'Sin prendas que perder — siéntate en el regazo de quien elijas durante 20 segundos. Sin moverte.', removePrenda:false},
-                    3:{text:'Sin prendas que perder — dale un beso en la mejilla al jugador que el grupo señale. Luego toma 2 shots.', removePrenda:false},
+                    3:{text:'Sin prendas que perder — besa en los labios durante 5 segundos al jugador que el grupo señale, luego toma 2 shots.', removePrenda:false},
                     4:{text:'Sin prendas que perder — haz lo que el jugador a tu izquierda te pida durante 30 segundos. Sin límites.', removePrenda:false},
                     5:{text:'Sin prendas que perder — siéntate en el regazo de quien elijas y bésalo en el cuello durante 15 segundos.', removePrenda:false},
                     6:{text:'Sin prendas que perder — deja que quien el grupo señale te acaricie el cuerpo completo durante 20 segundos.', removePrenda:false},
@@ -4710,6 +4796,11 @@ JSON (sin texto extra):
                 if (modal) modal.remove();
                 const state = this.stripState;
                 if (!state) return;
+                // In online games, only the current player can confirm
+                if (this.currentRoomId) {
+                    const cp = state.players[state.currentPlayerIndex];
+                    if (cp && cp.id !== this.playerId) return;
+                }
                 const action = state.pendingAction;
                 state.pendingAction = null;
                 const player = state.players[state.currentPlayerIndex];
@@ -4736,6 +4827,7 @@ JSON (sin texto extra):
                         boardSize: state.boardSize,
                         maxPos: state.maxPos,
                         eroticoMode: state.eroticoMode || false,
+                        pendingAction: null,
                         history: (this._stripHistory || []).slice(-40)
                     };
                     const roomData = { ...this.currentRoomData, stripGameState };
